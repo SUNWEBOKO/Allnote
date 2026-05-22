@@ -1,0 +1,186 @@
+/* Claude-like Home：暖白、克制、文字优先。只作用于 cssclasses: claude-home。 */
+
+body {
+  --claude-bg: #faf7f2;
+  --claude-surface: #fffdf8;
+  --claude-surface-2: #f3eee7;
+  --claude-text: #2b2118;
+  --claude-muted: #7a6f64;
+  --claude-border: rgba(80, 65, 48, 0.14);
+  --claude-accent: #c96f4a;
+  --claude-accent-soft: rgba(201, 111, 74, 0.12);
+}
+
+.theme-light {
+  --background-primary: var(--claude-bg);
+  --background-primary-alt: #f6f1ea;
+  --background-secondary: #f1ece4;
+  --background-secondary-alt: #ebe3d8;
+  --text-normal: var(--claude-text);
+  --text-muted: var(--claude-muted);
+  --background-modifier-border: var(--claude-border);
+  --interactive-accent: var(--claude-accent);
+}
+
+.markdown-preview-view.claude-home,
+.markdown-source-view.mod-cm6.claude-home {
+  --file-line-width: min(980px, 92vw);
+  --line-height-normal: 1.68;
+  --link-color: var(--claude-accent);
+  --link-color-hover: #9f4f35;
+  background:
+    radial-gradient(circle at top left, rgba(201,111,74,.10), transparent 32rem),
+    var(--claude-bg);
+}
+
+.markdown-preview-view.claude-home .markdown-preview-sizer {
+  max-width: var(--file-line-width);
+  padding-top: 3.2rem;
+  padding-bottom: 6rem;
+}
+
+.markdown-source-view.mod-cm6.claude-home .cm-contentContainer {
+  max-width: var(--file-line-width);
+}
+
+.markdown-preview-view.claude-home h1,
+.markdown-source-view.mod-cm6.claude-home .cm-header-1 {
+  margin: 0 0 .35rem;
+  border: 0;
+  color: var(--claude-text);
+  font-family: ui-serif, Georgia, "Source Han Serif SC", "Noto Serif SC", serif;
+  font-size: clamp(2.1rem, 5vw, 3.8rem);
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+  font-weight: 650;
+}
+
+.markdown-preview-view.claude-home h1 + p {
+  margin-top: 0;
+  margin-bottom: 2.4rem;
+  color: var(--claude-muted);
+  font-size: 1.02rem;
+}
+
+.markdown-preview-view.claude-home h2,
+.markdown-source-view.mod-cm6.claude-home .cm-header-2 {
+  margin-top: 2.4rem;
+  margin-bottom: .8rem;
+  border: 0;
+  color: var(--claude-text);
+  font-size: 1.35rem;
+  letter-spacing: -0.015em;
+}
+
+.markdown-preview-view.claude-home h3,
+.markdown-source-view.mod-cm6.claude-home .cm-header-3 {
+  margin-top: 1.4rem;
+  margin-bottom: .55rem;
+  color: var(--claude-muted);
+  font-size: .92rem;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+}
+
+.markdown-preview-view.claude-home table {
+  width: 100%;
+  margin: .45rem 0 1.1rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  overflow: hidden;
+  border: 1px solid var(--claude-border);
+  border-radius: 14px;
+  background: rgba(255, 253, 248, .82);
+  box-shadow: 0 8px 24px rgba(43, 33, 24, .045);
+}
+
+.markdown-preview-view.claude-home th,
+.markdown-preview-view.claude-home td {
+  padding: .72rem .86rem;
+  border-width: 0 0 1px 0;
+  border-color: rgba(80, 65, 48, .10);
+  vertical-align: middle;
+}
+
+.markdown-preview-view.claude-home th {
+  background: rgba(80, 65, 48, .045);
+  color: var(--claude-muted);
+  font-size: .78rem;
+  font-weight: 650;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.markdown-preview-view.claude-home tr:last-child td {
+  border-bottom: 0;
+}
+
+.markdown-preview-view.claude-home tr:hover td {
+  background: rgba(201, 111, 74, .055);
+}
+
+.markdown-preview-view.claude-home a.internal-link,
+.markdown-preview-view.claude-home a.external-link {
+  color: var(--claude-accent);
+  font-weight: 560;
+  text-decoration: none;
+}
+
+.markdown-preview-view.claude-home a.internal-link:hover,
+.markdown-preview-view.claude-home a.external-link:hover {
+  color: #9f4f35;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.markdown-preview-view.claude-home code {
+  border: 1px solid rgba(80, 65, 48, .12);
+  border-radius: 7px;
+  background: rgba(80, 65, 48, .055);
+  color: var(--claude-text);
+  padding: .12em .38em;
+}
+
+.markdown-preview-view.claude-home pre {
+  border: 1px solid var(--claude-border);
+  border-radius: 14px;
+  background: var(--claude-surface);
+}
+
+.markdown-preview-view.claude-home .tasks-list-text {
+  color: var(--claude-text);
+}
+
+.markdown-preview-view.claude-home input[type="checkbox"] {
+  accent-color: var(--claude-accent);
+}
+
+.theme-dark .markdown-preview-view.claude-home,
+.theme-dark .markdown-source-view.mod-cm6.claude-home {
+  --claude-bg: #1f1b17;
+  --claude-surface: #28231e;
+  --claude-surface-2: #332b25;
+  --claude-text: #f4eee6;
+  --claude-muted: #b8aa9b;
+  --claude-border: rgba(244, 238, 230, .14);
+  --claude-accent: #d98b68;
+  background:
+    radial-gradient(circle at top left, rgba(217,139,104,.13), transparent 32rem),
+    var(--claude-bg);
+}
+
+.theme-dark .markdown-preview-view.claude-home table {
+  background: rgba(40, 35, 30, .88);
+  box-shadow: 0 10px 30px rgba(0,0,0,.24);
+}
+
+@media (max-width: 760px) {
+  .markdown-preview-view.claude-home table {
+    font-size: .92rem;
+  }
+  .markdown-preview-view.claude-home th,
+  .markdown-preview-view.claude-home td {
+    padding: .62rem .66rem;
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "conv-1779450921856-nf6v03otq",
+  "providerId": "codex",
+  "title": "Respond to Chinese greeting",
+  "titleGenerationStatus": "success",
+  "createdAt": 1779450921856,
+  "updatedAt": 1779451630231,
+  "lastResponseAt": 1779451350948,
+  "sessionId": "019e4f8a-44ad-73f2-864d-154f6d6a73a2",
+  "providerState": {
+    "threadId": "019e4f8a-44ad-73f2-864d-154f6d6a73a2",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\22\\rollout-2026-05-22T19-55-22-019e4f8a-44ad-73f2-864d-154f6d6a73a2.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "STM32源笔记/28 D153电机模块.md",
+  "usage": {
+    "inputTokens": 52154,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 51584,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 52154,
+    "percentage": 20,
+    "model": "gpt-5.4"
+  }
+}

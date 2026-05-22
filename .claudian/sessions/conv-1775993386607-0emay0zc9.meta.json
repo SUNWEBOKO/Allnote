@@ -1,0 +1,25 @@
+{
+  "id": "conv-1775993386607-0emay0zc9",
+  "providerId": "codex",
+  "title": "Convert JSON subtitles to Markdown notes",
+  "titleGenerationStatus": "success",
+  "createdAt": 1775993386607,
+  "updatedAt": 1776002969228,
+  "lastResponseAt": 1776002956224,
+  "sessionId": "019d8174-82b6-7880-8023-1eedfdf711f2",
+  "providerState": {
+    "threadId": "019d8174-82b6-7880-8023-1eedfdf711f2",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\12\\rollout-2026-04-12T19-29-49-019d8174-82b6-7880-8023-1eedfdf711f2.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 130959,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 130816,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 130959,
+    "percentage": 51,
+    "model": "gpt-5.4"
+  }
+}

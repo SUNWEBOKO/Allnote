@@ -1,0 +1,25 @@
+{
+  "id": "conv-1777444927942-7zyyuy02t",
+  "providerId": "codex",
+  "title": "配置本地 Opencode 到 Obsidian",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777444927942,
+  "updatedAt": 1777445325984,
+  "lastResponseAt": 1777445226718,
+  "sessionId": "019dd7f9-4b1c-79d3-82bb-61f7040eb483",
+  "providerState": {
+    "threadId": "019dd7f9-4b1c-79d3-82bb-61f7040eb483",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\29\\rollout-2026-04-29T14-42-12-019dd7f9-4b1c-79d3-82bb-61f7040eb483.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 62669,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 60800,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 62669,
+    "percentage": 24,
+    "model": "gpt-5.5"
+  }
+}

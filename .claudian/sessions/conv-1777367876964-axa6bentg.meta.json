@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777367876964-axa6bentg",
+  "providerId": "codex",
+  "title": "重构03电路基本定理文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777367876965,
+  "updatedAt": 1777384663951,
+  "lastResponseAt": 1777368414507,
+  "sessionId": "019dd361-9015-7ff3-aca7-cad61c0b9c92",
+  "providerState": {
+    "threadId": "019dd361-9015-7ff3-aca7-cad61c0b9c92",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\28\\rollout-2026-04-28T17-17-59-019dd361-9015-7ff3-aca7-cad61c0b9c92.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "电路分析/03 电路基本定理及应用.md",
+  "usage": {
+    "inputTokens": 69464,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 67456,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 69464,
+    "percentage": 27,
+    "model": "gpt-5.5"
+  }
+}

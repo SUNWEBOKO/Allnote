@@ -1,0 +1,26 @@
+{
+  "id": "conv-1778031435302-cchszs2q0",
+  "providerId": "codex",
+  "title": "融合并压缩曲线积分文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778031435302,
+  "updatedAt": 1778075694714,
+  "lastResponseAt": 1778032197899,
+  "sessionId": "019dfaee-9fae-7b41-b7a0-716f9fe6e59e",
+  "providerState": {
+    "threadId": "019dfaee-9fae-7b41-b7a0-716f9fe6e59e",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\06\\rollout-2026-05-06T09-37-15-019dfaee-9fae-7b41-b7a0-716f9fe6e59e.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "高等数学/高等数学曲线积分.md",
+  "usage": {
+    "inputTokens": 82251,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 81792,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 82251,
+    "percentage": 32,
+    "model": "gpt-5.5"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776676761200-rrho4uxn6",
+  "providerId": "codex",
+  "title": "Integrate section 9 with earlier sections",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776676761200,
+  "updatedAt": 1776680772666,
+  "lastResponseAt": 1776677139429,
+  "sessionId": "019daa2f-ef25-7bf2-9a6a-cfb3bffc4023",
+  "providerState": {
+    "threadId": "019daa2f-ef25-7bf2-9a6a-cfb3bffc4023",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\20\\rollout-2026-04-20T17-19-21-019daa2f-ef25-7bf2-9a6a-cfb3bffc4023.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/04 热学.md",
+  "usage": {
+    "inputTokens": 68403,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 68224,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 68403,
+    "percentage": 26,
+    "model": "gpt-5.4"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777429712917-c6v4z39wd",
+  "providerId": "codex",
+  "title": "优化重构功率1文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777429712917,
+  "updatedAt": 1777431794154,
+  "lastResponseAt": 1777430721255,
+  "sessionId": "019dd711-10b4-7e40-a704-2ae85b93605f",
+  "providerState": {
+    "threadId": "019dd711-10b4-7e40-a704-2ae85b93605f",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\29\\rollout-2026-04-29T10-28-33-019dd711-10b4-7e40-a704-2ae85b93605f.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/功率1.md",
+  "usage": {
+    "inputTokens": 55150,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 48512,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 55150,
+    "percentage": 21,
+    "model": "gpt-5.5"
+  }
+}

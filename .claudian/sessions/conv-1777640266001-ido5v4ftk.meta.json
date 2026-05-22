@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777640266001-ido5v4ftk",
+  "providerId": "codex",
+  "title": "压缩静电场例题内容",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777640266001,
+  "updatedAt": 1777645246564,
+  "lastResponseAt": 1777640538276,
+  "sessionId": "019de39d-ee8f-73e2-ab22-60cfc40efcd3",
+  "providerState": {
+    "threadId": "019de39d-ee8f-73e2-ab22-60cfc40efcd3",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\01\\rollout-2026-05-01T20-57-51-019de39d-ee8f-73e2-ab22-60cfc40efcd3.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/05 静电场.md",
+  "usage": {
+    "inputTokens": 54412,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 53120,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 54412,
+    "percentage": 21,
+    "model": "gpt-5.5"
+  }
+}

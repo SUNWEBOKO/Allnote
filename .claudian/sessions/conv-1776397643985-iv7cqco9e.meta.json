@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776397643985-iv7cqco9e",
+  "providerId": "codex",
+  "title": "优化电路分析复习文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776397643985,
+  "updatedAt": 1776482731418,
+  "lastResponseAt": 1776397926227,
+  "sessionId": "019d998c-f17b-7b20-98d1-4b004e2073c8",
+  "providerState": {
+    "threadId": "019d998c-f17b-7b20-98d1-4b004e2073c8",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\17\\rollout-2026-04-17T11-47-24-019d998c-f17b-7b20-98d1-4b004e2073c8.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "电路分析/第五单元复习指导.md",
+  "usage": {
+    "inputTokens": 95924,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 95488,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 95924,
+    "percentage": 37,
+    "model": "gpt-5.4"
+  }
+}

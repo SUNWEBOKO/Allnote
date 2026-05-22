@@ -1,0 +1,24 @@
+{
+  "id": "conv-1778461681093-56m8erypz",
+  "providerId": "codex",
+  "title": "整合课件并拆分05电学文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778461681093,
+  "updatedAt": 1778464070657,
+  "lastResponseAt": 1778462993634,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/05 电学-上.md",
+  "usage": {
+    "inputTokens": 38773,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 37248,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 38773,
+    "percentage": 15,
+    "model": "gpt-5.5"
+  }
+}

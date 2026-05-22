@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777122099023-gblja6fih",
+  "providerId": "codex",
+  "title": "Create mechanics cram notes",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777122099023,
+  "updatedAt": 1777122166860,
+  "lastResponseAt": 1777122163334,
+  "sessionId": "019dc4bb-5629-7413-95c2-7b105d759b02",
+  "providerState": {
+    "threadId": "019dc4bb-5629-7413-95c2-7b105d759b02",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\25\\rollout-2026-04-25T21-01-44-019dc4bb-5629-7413-95c2-7b105d759b02.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/01 力学.md",
+  "usage": {
+    "inputTokens": 18487,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 5504,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 18487,
+    "percentage": 7,
+    "model": "gpt-5.5"
+  }
+}

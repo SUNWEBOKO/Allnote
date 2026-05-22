@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777647402295-agpillpp7",
+  "providerId": "codex",
+  "title": "重构文档并迁移到 /freertos",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777647402296,
+  "updatedAt": 1777648040871,
+  "lastResponseAt": 1777647663080,
+  "sessionId": "019de40a-ce75-7a01-ad31-d44dd1b9558c",
+  "providerState": {
+    "threadId": "019de40a-ce75-7a01-ad31-d44dd1b9558c",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\01\\rollout-2026-05-01T22-56-46-019de40a-ce75-7a01-ad31-d44dd1b9558c.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/整理复习文档助手.md",
+  "usage": {
+    "inputTokens": 51604,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 51072,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 51604,
+    "percentage": 20,
+    "model": "gpt-5.5"
+  }
+}

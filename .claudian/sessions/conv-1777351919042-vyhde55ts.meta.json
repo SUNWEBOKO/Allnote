@@ -1,0 +1,24 @@
+{
+  "id": "conv-1777351919042-vyhde55ts",
+  "providerId": "codex",
+  "title": "融合正弦稳态电路复习笔记",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777351919043,
+  "updatedAt": 1777352781596,
+  "lastResponseAt": 1777352381096,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/正弦稳态电路分析.md",
+  "usage": {
+    "inputTokens": 18826,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 18304,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 18826,
+    "percentage": 7,
+    "model": "gpt-5.5"
+  }
+}

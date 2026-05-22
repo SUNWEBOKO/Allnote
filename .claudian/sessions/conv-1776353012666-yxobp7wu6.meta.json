@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776353012666-yxobp7wu6",
+  "providerId": "codex",
+  "title": "Merge lectures 44–46 into integral review doc",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776353012667,
+  "updatedAt": 1776392178437,
+  "lastResponseAt": 1776353483843,
+  "sessionId": "019d96e3-f82b-7172-ba1e-71a2da47f853",
+  "providerState": {
+    "threadId": "019d96e3-f82b-7172-ba1e-71a2da47f853",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T23-23-35-019d96e3-f82b-7172-ba1e-71a2da47f853.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "高等数学/仓库/01_高等数学/8. 第八章：重积分/Lecture 44：二重积分.md",
+  "usage": {
+    "inputTokens": 72297,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 72192,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 72297,
+    "percentage": 28,
+    "model": "gpt-5.3-codex"
+  }
+}

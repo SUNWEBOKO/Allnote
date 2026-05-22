@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776670997935-ppysw2rc7",
+  "providerId": "codex",
+  "title": "Reorganize 04 热血 study document",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776670997935,
+  "updatedAt": 1776676613284,
+  "lastResponseAt": 1776676600067,
+  "sessionId": "019da9d8-0844-7bc3-a254-dbe006725572",
+  "providerState": {
+    "threadId": "019da9d8-0844-7bc3-a254-dbe006725572",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\20\\rollout-2026-04-20T15-43-20-019da9d8-0844-7bc3-a254-dbe006725572.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/04 热学.md",
+  "usage": {
+    "inputTokens": 69349,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 3456,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 69349,
+    "percentage": 27,
+    "model": "gpt-5.4"
+  }
+}

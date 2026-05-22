@@ -1,0 +1,24 @@
+{
+  "id": "conv-1778031939246-se9ob2zk9",
+  "providerId": "codex",
+  "title": "融合 clippings 复习文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778031939246,
+  "updatedAt": 1778041798257,
+  "lastResponseAt": 1778032189449,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "近现代史纲要/《历史上的三峡》考前50题.md",
+  "usage": {
+    "inputTokens": 45368,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 3456,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 45368,
+    "percentage": 18,
+    "model": "gpt-5.5"
+  }
+}

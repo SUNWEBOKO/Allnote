@@ -1,0 +1,7 @@
+{
+  "accentColor": "#007AFF",
+  "theme": "moonstone",
+  "enabledCssSnippets": [
+    "home-dashboard"
+  ]
+}

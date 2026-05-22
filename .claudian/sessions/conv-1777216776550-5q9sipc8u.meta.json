@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777216776550-5q9sipc8u",
+  "providerId": "codex",
+  "title": "Inspect LaTeX formula delimiters",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777216776550,
+  "updatedAt": 1777216879508,
+  "lastResponseAt": 1777216876377,
+  "sessionId": "019dca5f-f61e-7c61-ac7c-9ed51dc4ac77",
+  "providerState": {
+    "threadId": "019dca5f-f61e-7c61-ac7c-9ed51dc4ac77",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\26\\rollout-2026-04-26T23-19-39-019dca5f-f61e-7c61-ac7c-9ed51dc4ac77.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "04 热学_完整双美元公式版.md",
+  "usage": {
+    "inputTokens": 23040,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 20864,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 23040,
+    "percentage": 9,
+    "model": "gpt-5.5"
+  }
+}

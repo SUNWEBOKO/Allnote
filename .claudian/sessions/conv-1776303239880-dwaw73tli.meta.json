@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776303239880-dwaw73tli",
+  "providerId": "codex",
+  "title": "切换到 5.3 Codex 模型",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776303239881,
+  "updatedAt": 1776303449317,
+  "lastResponseAt": 1776303417024,
+  "sessionId": "019d93ec-733c-7cd3-a4f2-182d9b2e5863",
+  "providerState": {
+    "threadId": "019d93ec-733c-7cd3-a4f2-182d9b2e5863",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T09-34-00-019d93ec-733c-7cd3-a4f2-182d9b2e5863.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 45123,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 43776,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 45123,
+    "percentage": 17,
+    "model": "gpt-5.4"
+  }
+}

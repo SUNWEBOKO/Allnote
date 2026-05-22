@@ -1,0 +1,24 @@
+{
+  "id": "conv-1778726470576-dipokc3au",
+  "providerId": "codex",
+  "title": "精简重积分应用部分",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778726470576,
+  "updatedAt": 1778727138750,
+  "lastResponseAt": 1778726870715,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "高等数学/10 重积分.md",
+  "usage": {
+    "inputTokens": 71483,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 71040,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 71483,
+    "percentage": 28,
+    "model": "gpt-5.5"
+  }
+}

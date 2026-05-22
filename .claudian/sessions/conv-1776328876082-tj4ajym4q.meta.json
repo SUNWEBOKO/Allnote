@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776328876082-tj4ajym4q",
+  "providerId": "codex",
+  "title": "Analyze MinerU GitHub repository",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776328876083,
+  "updatedAt": 1776329415751,
+  "lastResponseAt": 1776329411095,
+  "sessionId": "019d9573-ada0-78b2-af54-26ca13087a5c",
+  "providerState": {
+    "threadId": "019d9573-ada0-78b2-af54-26ca13087a5c",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T16-41-19-019d9573-ada0-78b2-af54-26ca13087a5c.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 90020,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 89984,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 90020,
+    "percentage": 35,
+    "model": "gpt-5.3-codex"
+  }
+}

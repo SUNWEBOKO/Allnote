@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777432236064-iotux2k2d",
+  "providerId": "codex",
+  "title": "融合功率1到05正弦稳态电路",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777432236064,
+  "updatedAt": 1777435240741,
+  "lastResponseAt": 1777432666357,
+  "sessionId": "019dd737-994e-75b0-ba92-d6fa40dce5f1",
+  "providerState": {
+    "threadId": "019dd737-994e-75b0-ba92-d6fa40dce5f1",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\29\\rollout-2026-04-29T11-10-38-019dd737-994e-75b0-ba92-d6fa40dce5f1.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/功率1.md",
+  "usage": {
+    "inputTokens": 75693,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 74624,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 75693,
+    "percentage": 29,
+    "model": "gpt-5.5"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "conv-1778081210296-zmwj3jrdh",
+  "providerId": "codex",
+  "title": "评估 DeepSeek 例题提取效果",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778081210297,
+  "updatedAt": 1778122677975,
+  "lastResponseAt": 1778081459602,
+  "sessionId": "019dfde6-214e-7990-a627-de97266fffbd",
+  "providerState": {
+    "threadId": "019dfde6-214e-7990-a627-de97266fffbd",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\06\\rollout-2026-05-06T23-26-50-019dfde6-214e-7990-a627-de97266fffbd.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/05 电学.md",
+  "usage": {
+    "inputTokens": 64018,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 63360,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 64018,
+    "percentage": 25,
+    "model": "gpt-5.5"
+  }
+}

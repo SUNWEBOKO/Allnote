@@ -1,0 +1,25 @@
+{
+  "id": "conv-1777425964641-emdrf1zav",
+  "providerId": "codex",
+  "title": "制定重积分课程文档融合计划",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777425964641,
+  "updatedAt": 1777428051389,
+  "lastResponseAt": 1777428044167,
+  "sessionId": "019dd6d7-e76b-74f0-b06e-448f300c6117",
+  "providerState": {
+    "threadId": "019dd6d7-e76b-74f0-b06e-448f300c6117",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\29\\rollout-2026-04-29T09-26-06-019dd6d7-e76b-74f0-b06e-448f300c6117.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 102413,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 101760,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 102413,
+    "percentage": 40,
+    "model": "gpt-5.5"
+  }
+}

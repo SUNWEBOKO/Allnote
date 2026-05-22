@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776917371115-cw3hoy08z",
+  "providerId": "codex",
+  "title": "融合静电场习题到 Markdown 笔记",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776917371115,
+  "updatedAt": 1776918169193,
+  "lastResponseAt": 1776917919507,
+  "sessionId": "019db887-6811-75e2-8203-eaba05a496bc",
+  "providerState": {
+    "threadId": "019db887-6811-75e2-8203-eaba05a496bc",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\23\\rollout-2026-04-23T12-09-35-019db887-6811-75e2-8203-eaba05a496bc.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 109209,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 109056,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 109209,
+    "percentage": 42,
+    "model": "gpt-5.4"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777710446122-90u3c0z49",
+  "providerId": "codex",
+  "title": "创建中文 Markdown 复习审稿 skill",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777710446122,
+  "updatedAt": 1777710921010,
+  "lastResponseAt": 1777710873957,
+  "sessionId": "019de7cc-c3ae-7331-b211-476dc4f14ad2",
+  "providerState": {
+    "threadId": "019de7cc-c3ae-7331-b211-476dc4f14ad2",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\02\\rollout-2026-05-02T16-27-29-019de7cc-c3ae-7331-b211-476dc4f14ad2.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/DeepSeek融合版.md",
+  "usage": {
+    "inputTokens": 40114,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 38784,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 40114,
+    "percentage": 16,
+    "model": "gpt-5.5"
+  }
+}

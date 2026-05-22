@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776327425272-x1qmuvf5x",
+  "providerId": "codex",
+  "title": "Explain how to use Obsidian Clipper",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776327425272,
+  "updatedAt": 1776328713620,
+  "lastResponseAt": 1776328465388,
+  "sessionId": "019d955d-7d74-7920-a1ed-e2f9a4090886",
+  "providerState": {
+    "threadId": "019d955d-7d74-7920-a1ed-e2f9a4090886",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T16-17-05-019d955d-7d74-7920-a1ed-e2f9a4090886.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 31674,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 18816,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 31674,
+    "percentage": 12,
+    "model": "gpt-5.3-codex"
+  }
+}

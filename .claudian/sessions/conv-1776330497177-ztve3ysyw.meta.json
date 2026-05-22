@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776330497177-ztve3ysyw",
+  "providerId": "codex",
+  "title": "Optimize Markdown review notes for chapters 8-10",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776330497177,
+  "updatedAt": 1776344687072,
+  "lastResponseAt": 1776331566950,
+  "sessionId": "019d958c-68c8-7931-b5c7-4f896f5f92a1",
+  "providerState": {
+    "threadId": "019d958c-68c8-7931-b5c7-4f896f5f92a1",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T17-08-20-019d958c-68c8-7931-b5c7-4f896f5f92a1.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "高等数学/高等数学(下)1-200.md",
+  "usage": {
+    "inputTokens": 189813,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 189696,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 189813,
+    "percentage": 73,
+    "model": "gpt-5.3-codex"
+  }
+}

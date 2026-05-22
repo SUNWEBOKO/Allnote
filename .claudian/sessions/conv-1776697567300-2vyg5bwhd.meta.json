@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776697567300-2vyg5bwhd",
+  "providerId": "codex",
+  "title": "Greet user",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776697567300,
+  "updatedAt": 1776750830919,
+  "lastResponseAt": 1776697757075,
+  "sessionId": "019dab6d-7404-7002-a6d0-1611cf0f0c8c",
+  "providerState": {
+    "threadId": "019dab6d-7404-7002-a6d0-1611cf0f0c8c",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\20\\rollout-2026-04-20T23-06-10-019dab6d-7404-7002-a6d0-1611cf0f0c8c.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 20653,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 20352,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 20653,
+    "percentage": 8,
+    "model": "gpt-5.4"
+  }
+}

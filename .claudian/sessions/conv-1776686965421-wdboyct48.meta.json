@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776686965421-wdboyct48",
+  "providerId": "codex",
+  "title": "融合线性代数复习文档到现有笔记",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776686965421,
+  "updatedAt": 1776689043029,
+  "lastResponseAt": 1776689034200,
+  "sessionId": "019daacb-b36b-7613-89e3-f62d6a9ca16a",
+  "providerState": {
+    "threadId": "019daacb-b36b-7613-89e3-f62d6a9ca16a",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\20\\rollout-2026-04-20T20-09-29-019daacb-b36b-7613-89e3-f62d6a9ca16a.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 176578,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 176128,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 176578,
+    "percentage": 68,
+    "model": "gpt-5.4"
+  }
+}

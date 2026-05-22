@@ -1,0 +1,26 @@
+{
+  "id": "conv-1778729699661-miasz7heu",
+  "providerId": "codex",
+  "title": "轻度压缩内容",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778729699661,
+  "updatedAt": 1778730135761,
+  "lastResponseAt": 1778730097221,
+  "sessionId": "019e248d-4ace-7921-84d6-1dd1fc0143c4",
+  "providerState": {
+    "threadId": "019e248d-4ace-7921-84d6-1dd1fc0143c4",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\14\\rollout-2026-05-14T11-35-00-019e248d-4ace-7921-84d6-1dd1fc0143c4.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "高等数学/11 曲线积分与曲面积分.md",
+  "usage": {
+    "inputTokens": 91621,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 91008,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 91621,
+    "percentage": 35,
+    "model": "gpt-5.5"
+  }
+}

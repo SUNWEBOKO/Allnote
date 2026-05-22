@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777214368570-tbxnyknd0",
+  "providerId": "codex",
+  "title": "创建复习文档例题摘录技能",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777214368570,
+  "updatedAt": 1777215256117,
+  "lastResponseAt": 1777215190874,
+  "sessionId": "019dca3b-469c-7d13-9b6d-7609bd63d316",
+  "providerState": {
+    "threadId": "019dca3b-469c-7d13-9b6d-7609bd63d316",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\26\\rollout-2026-04-26T22-39-35-019dca3b-469c-7d13-9b6d-7609bd63d316.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/01 力学.md",
+  "usage": {
+    "inputTokens": 46866,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 46464,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 46866,
+    "percentage": 18,
+    "model": "gpt-5.5"
+  }
+}

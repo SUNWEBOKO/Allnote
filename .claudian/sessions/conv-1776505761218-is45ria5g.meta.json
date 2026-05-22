@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776505761218-is45ria5g",
+  "providerId": "codex",
+  "title": "Fix Markdown code fence bug",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776505761218,
+  "updatedAt": 1776506549393,
+  "lastResponseAt": 1776506206369,
+  "sessionId": "019d9ffe-bd05-7c00-8daf-2d27de5f54f1",
+  "providerState": {
+    "threadId": "019d9ffe-bd05-7c00-8daf-2d27de5f54f1",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T17-49-25-019d9ffe-bd05-7c00-8daf-2d27de5f54f1.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "程序语言/Python笔记优化补充.md",
+  "usage": {
+    "inputTokens": 52973,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 51328,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 52973,
+    "percentage": 21,
+    "model": "gpt-5.4"
+  }
+}

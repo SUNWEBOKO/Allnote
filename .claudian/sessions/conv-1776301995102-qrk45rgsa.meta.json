@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776301995102-qrk45rgsa",
+  "providerId": "codex",
+  "title": "Discuss OpenAI token计费改进方案",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776301995102,
+  "updatedAt": 1776303207792,
+  "lastResponseAt": 1776303170335,
+  "sessionId": "019d93d9-7d68-7cb2-a318-0ee909846c04",
+  "providerState": {
+    "threadId": "019d93d9-7d68-7cb2-a318-0ee909846c04",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T09-13-17-019d93d9-7d68-7cb2-a318-0ee909846c04.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 72842,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 71808,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 72842,
+    "percentage": 28,
+    "model": "gpt-5.4"
+  }
+}

@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777710922668-r8qhyrch3",
+  "providerId": "codex",
+  "title": "审阅并归档DeepSeek融合版文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777710922668,
+  "updatedAt": 1777959165423,
+  "lastResponseAt": 1777711339620,
+  "sessionId": "019de7d3-fd0e-78c0-aa77-23349fcc7c78",
+  "providerState": {
+    "threadId": "019de7d3-fd0e-78c0-aa77-23349fcc7c78",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\02\\rollout-2026-05-02T16-35-23-019de7d3-fd0e-78c0-aa77-23349fcc7c78.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/DeepSeek融合版.md",
+  "usage": {
+    "inputTokens": 68950,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 65920,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 68950,
+    "percentage": 27,
+    "model": "gpt-5.5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776312784358-xnfhz3agc",
+  "providerId": "codex",
+  "title": "整理循环过程与卡诺循环复习文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776312784358,
+  "updatedAt": 1776327412648,
+  "lastResponseAt": 1776327182844,
+  "sessionId": "019d947e-203b-7d70-b95d-722c191409c6",
+  "providerState": {
+    "threadId": "019d947e-203b-7d70-b95d-722c191409c6",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T12-13-07-019d947e-203b-7d70-b95d-722c191409c6.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 107311,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 107264,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 107311,
+    "percentage": 42,
+    "model": "gpt-5.3-codex"
+  }
+}

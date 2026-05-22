@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777386783097-cagnei0xi",
+  "providerId": "codex",
+  "title": "重构文档为复习文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777386783097,
+  "updatedAt": 1777387428423,
+  "lastResponseAt": 1777387130239,
+  "sessionId": "019dd482-1377-7933-a166-c0b41e365f63",
+  "providerState": {
+    "threadId": "019dd482-1377-7933-a166-c0b41e365f63",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\28\\rollout-2026-04-28T22-33-07-019dd482-1377-7933-a166-c0b41e365f63.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "pid/PID 从不懂到会用.md",
+  "usage": {
+    "inputTokens": 54282,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 53632,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 54282,
+    "percentage": 21,
+    "model": "gpt-5.5"
+  }
+}

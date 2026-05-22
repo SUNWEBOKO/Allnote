@@ -1,0 +1,25 @@
+{
+  "id": "conv-1778075721215-bd675af41",
+  "providerId": "codex",
+  "title": "融合压缩电学文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778075721215,
+  "updatedAt": 1778076024277,
+  "lastResponseAt": 1778076015578,
+  "sessionId": "019dfd92-6085-7ed2-ad00-1bfc39a0745d",
+  "providerState": {
+    "threadId": "019dfd92-6085-7ed2-ad00-1bfc39a0745d",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\06\\rollout-2026-05-06T21-55-21-019dfd92-6085-7ed2-ad00-1bfc39a0745d.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 74331,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 73600,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 74331,
+    "percentage": 29,
+    "model": "gpt-5.5"
+  }
+}

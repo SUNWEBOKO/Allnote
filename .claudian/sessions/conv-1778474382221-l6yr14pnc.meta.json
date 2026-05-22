@@ -1,0 +1,26 @@
+{
+  "id": "conv-1778474382221-l6yr14pnc",
+  "providerId": "codex",
+  "title": "融入平面方程与曲面方程内容",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778474382221,
+  "updatedAt": 1778475152937,
+  "lastResponseAt": 1778475088599,
+  "sessionId": "019e1555-743a-7371-92dd-bf28537d05b4",
+  "providerState": {
+    "threadId": "019e1555-743a-7371-92dd-bf28537d05b4",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\11\\rollout-2026-05-11T12-39-42-019e1555-743a-7371-92dd-bf28537d05b4.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "高等数学/08 向量代数与空间解析几何.md",
+  "usage": {
+    "inputTokens": 65889,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 64384,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 65889,
+    "percentage": 25,
+    "model": "gpt-5.5"
+  }
+}

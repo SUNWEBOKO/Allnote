@@ -1,0 +1,25 @@
+{
+  "id": "conv-1775967201977-91z9g1cpl",
+  "providerId": "codex",
+  "title": "Convert PDF to Markdown",
+  "titleGenerationStatus": "success",
+  "createdAt": 1775967201977,
+  "updatedAt": 1775990566933,
+  "lastResponseAt": 1775990548018,
+  "sessionId": "019d7fe4-f7f9-7fb0-956d-fcc150499f48",
+  "providerState": {
+    "threadId": "019d7fe4-f7f9-7fb0-956d-fcc150499f48",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\12\\rollout-2026-04-12T12-13-25-019d7fe4-f7f9-7fb0-956d-fcc150499f48.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 92078,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 91392,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 92078,
+    "percentage": 36,
+    "model": "gpt-5.4"
+  }
+}

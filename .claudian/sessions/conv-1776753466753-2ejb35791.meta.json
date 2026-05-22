@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776753466753-2ejb35791",
+  "providerId": "codex",
+  "title": "整合习题课例题到01力学知识点",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776753466753,
+  "updatedAt": 1776754133925,
+  "lastResponseAt": 1776754048189,
+  "sessionId": "019daec2-5e1a-70e3-81ac-6079c948604d",
+  "providerState": {
+    "threadId": "019daec2-5e1a-70e3-81ac-6079c948604d",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\21\\rollout-2026-04-21T14-37-46-019daec2-5e1a-70e3-81ac-6079c948604d.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/01 力学.md",
+  "usage": {
+    "inputTokens": 104458,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 102784,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 104458,
+    "percentage": 40,
+    "model": "gpt-5.4"
+  }
+}

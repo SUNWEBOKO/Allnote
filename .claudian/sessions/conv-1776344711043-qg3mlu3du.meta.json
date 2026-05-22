@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776344711043-qg3mlu3du",
+  "providerId": "codex",
+  "title": "重构气体动理论复习文档逻辑与推导",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776344711043,
+  "updatedAt": 1776350061692,
+  "lastResponseAt": 1776345246872,
+  "sessionId": "019d9665-4b00-7c10-ae42-c15b26e79580",
+  "providerState": {
+    "threadId": "019d9665-4b00-7c10-ae42-c15b26e79580",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T21-05-14-019d9665-4b00-7c10-ae42-c15b26e79580.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/气体动理论.md",
+  "usage": {
+    "inputTokens": 58089,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 57728,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 58089,
+    "percentage": 22,
+    "model": "gpt-5.3-codex"
+  }
+}

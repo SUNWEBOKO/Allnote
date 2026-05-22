@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777387884806-yoif8r298",
+  "providerId": "codex",
+  "title": "添加 openpyxl 基础知识介绍",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777387884806,
+  "updatedAt": 1777388109099,
+  "lastResponseAt": 1777388032242,
+  "sessionId": "019dd492-e270-7f82-911a-e50b26b87e40",
+  "providerState": {
+    "threadId": "019dd492-e270-7f82-911a-e50b26b87e40",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\28\\rollout-2026-04-28T22-51-29-019dd492-e270-7f82-911a-e50b26b87e40.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "程序语言/Python笔记.md",
+  "usage": {
+    "inputTokens": 40110,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 37760,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 40110,
+    "percentage": 16,
+    "model": "gpt-5.5"
+  }
+}

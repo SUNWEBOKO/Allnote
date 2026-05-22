@@ -1,0 +1,26 @@
+{
+  "id": "conv-1779203054513-qkn0n3u1l",
+  "providerId": "codex",
+  "title": "支持文档中的 \\oiint_S",
+  "titleGenerationStatus": "success",
+  "createdAt": 1779203054513,
+  "updatedAt": 1779450733641,
+  "lastResponseAt": 1779203163026,
+  "sessionId": "019e40c4-1ea7-7092-9b92-e668006baccf",
+  "providerState": {
+    "threadId": "019e40c4-1ea7-7092-9b92-e668006baccf",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\19\\rollout-2026-05-19T23-04-15-019e40c4-1ea7-7092-9b92-e668006baccf.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/05 静电场.md",
+  "usage": {
+    "inputTokens": 24720,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 19840,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 24720,
+    "percentage": 10,
+    "model": "gpt-5.5"
+  }
+}

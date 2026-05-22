@@ -1,0 +1,25 @@
+{
+  "id": "conv-1778646165029-94i22fsea",
+  "providerId": "codex",
+  "title": "整理三相电路复习文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778646165029,
+  "updatedAt": 1778684039366,
+  "lastResponseAt": 1778646878255,
+  "sessionId": "019e1f92-ad7c-7dd3-8949-06e48d06ab9a",
+  "providerState": {
+    "threadId": "019e1f92-ad7c-7dd3-8949-06e48d06ab9a",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\13\\rollout-2026-05-13T12-22-47-019e1f92-ad7c-7dd3-8949-06e48d06ab9a.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 86414,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 85888,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 86414,
+    "percentage": 33,
+    "model": "gpt-5.5"
+  }
+}

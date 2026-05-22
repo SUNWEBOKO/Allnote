@@ -1,0 +1,25 @@
+{
+  "id": "conv-1777959208452-065to1aox",
+  "providerId": "codex",
+  "title": "优化 Obsidian 插件与界面",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777959208452,
+  "updatedAt": 1777977316807,
+  "lastResponseAt": 1777977311196,
+  "sessionId": "019df6a0-9bb7-7983-a23f-f52d419bf609",
+  "providerState": {
+    "threadId": "019df6a0-9bb7-7983-a23f-f52d419bf609",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\05\\rollout-2026-05-05T13-33-34-019df6a0-9bb7-7983-a23f-f52d419bf609.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 111980,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 111488,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 111980,
+    "percentage": 43,
+    "model": "gpt-5.5"
+  }
+}

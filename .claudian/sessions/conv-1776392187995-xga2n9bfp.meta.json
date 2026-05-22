@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776392187995-xga2n9bfp",
+  "providerId": "codex",
+  "title": "Verify Codex update rumor",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776392187995,
+  "updatedAt": 1776393665395,
+  "lastResponseAt": 1776393649827,
+  "sessionId": "019d9939-bf8b-7a20-9614-ddf0dc12ca6c",
+  "providerState": {
+    "threadId": "019d9939-bf8b-7a20-9614-ddf0dc12ca6c",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\17\\rollout-2026-04-17T10-16-31-019d9939-bf8b-7a20-9614-ddf0dc12ca6c.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 67110,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 65920,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 67110,
+    "percentage": 26,
+    "model": "gpt-5.3-codex"
+  }
+}

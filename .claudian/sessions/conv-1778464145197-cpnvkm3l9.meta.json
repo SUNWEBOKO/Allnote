@@ -1,0 +1,25 @@
+{
+  "id": "conv-1778464145197-cpnvkm3l9",
+  "providerId": "codex",
+  "title": "合并文档到05电学下并去重压缩",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778464145197,
+  "updatedAt": 1778473681532,
+  "lastResponseAt": 1778464835615,
+  "sessionId": "019e14b9-3fd2-7313-a0eb-3b23a69e844d",
+  "providerState": {
+    "threadId": "019e14b9-3fd2-7313-a0eb-3b23a69e844d",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\11\\rollout-2026-05-11T09-49-05-019e14b9-3fd2-7313-a0eb-3b23a69e844d.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 87851,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 86912,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 87851,
+    "percentage": 34,
+    "model": "gpt-5.5"
+  }
+}

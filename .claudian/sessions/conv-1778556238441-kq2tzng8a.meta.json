@@ -1,0 +1,24 @@
+{
+  "id": "conv-1778556238441-kq2tzng8a",
+  "providerId": "codex",
+  "title": "融合多元函数微分学笔记",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778556238442,
+  "updatedAt": 1778556602294,
+  "lastResponseAt": 1778556583801,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "高等数学/09 多元函数微分学.md",
+  "usage": {
+    "inputTokens": 25502,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 6528,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 25502,
+    "percentage": 10,
+    "model": "gpt-5.5"
+  }
+}

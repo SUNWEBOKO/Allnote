@@ -1,0 +1,26 @@
+{
+  "id": "conv-1778727691474-xpldmjdeb",
+  "providerId": "codex",
+  "title": "优化循环中的 q 吸收符号",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778727691474,
+  "updatedAt": 1778728309330,
+  "lastResponseAt": 1778728273005,
+  "sessionId": "019e246e-a574-7fe3-b435-8793302a54ed",
+  "providerState": {
+    "threadId": "019e246e-a574-7fe3-b435-8793302a54ed",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\14\\rollout-2026-05-14T11-01-31-019e246e-a574-7fe3-b435-8793302a54ed.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/04 热学.md",
+  "usage": {
+    "inputTokens": 95319,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 93056,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 95319,
+    "percentage": 37,
+    "model": "gpt-5.5"
+  }
+}

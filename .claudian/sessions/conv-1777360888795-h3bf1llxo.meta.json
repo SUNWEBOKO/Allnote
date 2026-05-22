@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777360888795-h3bf1llxo",
+  "providerId": "codex",
+  "title": "精简答题过程",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777360888795,
+  "updatedAt": 1777361832618,
+  "lastResponseAt": 1777361064666,
+  "sessionId": "019dd2f6-ee4e-7b12-8792-86fc7534977c",
+  "providerState": {
+    "threadId": "019dd2f6-ee4e-7b12-8792-86fc7534977c",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\28\\rollout-2026-04-28T15-21-31-019dd2f6-ee4e-7b12-8792-86fc7534977c.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/习题4.md",
+  "usage": {
+    "inputTokens": 39584,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 38784,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 39584,
+    "percentage": 15,
+    "model": "gpt-5.5"
+  }
+}

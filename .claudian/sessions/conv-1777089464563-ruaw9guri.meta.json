@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777089464563-ruaw9guri",
+  "providerId": "codex",
+  "title": "重构力学复习笔记",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777089464563,
+  "updatedAt": 1777090099202,
+  "lastResponseAt": 1777090062014,
+  "sessionId": "019dc2c9-568d-7400-99c0-915e8594109d",
+  "providerState": {
+    "threadId": "019dc2c9-568d-7400-99c0-915e8594109d",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\25\\rollout-2026-04-25T11-57-48-019dc2c9-568d-7400-99c0-915e8594109d.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/01 力学.md",
+  "usage": {
+    "inputTokens": 85494,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 85376,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 85494,
+    "percentage": 33,
+    "model": "gpt-5.5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "conv-1777361883781-q1f9cl03u",
+  "providerId": "codex",
+  "title": "融合习题4到文档知识点",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777361883781,
+  "updatedAt": 1777362413827,
+  "lastResponseAt": 1777362261442,
+  "sessionId": "019dd306-1d1e-7693-9a19-fd86e2cfd3e5",
+  "providerState": {
+    "threadId": "019dd306-1d1e-7693-9a19-fd86e2cfd3e5",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\28\\rollout-2026-04-28T15-38-06-019dd306-1d1e-7693-9a19-fd86e2cfd3e5.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 58126,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 57216,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 58126,
+    "percentage": 22,
+    "model": "gpt-5.5"
+  }
+}

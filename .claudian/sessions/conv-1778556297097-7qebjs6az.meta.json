@@ -1,0 +1,24 @@
+{
+  "id": "conv-1778556297097-7qebjs6az",
+  "providerId": "codex",
+  "title": "压缩文档例题解答内容",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778556297097,
+  "updatedAt": 1778556871864,
+  "lastResponseAt": 1778556827524,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "电路分析/05  正弦稳态电路.md",
+  "usage": {
+    "inputTokens": 19995,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 6528,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 19995,
+    "percentage": 8,
+    "model": "gpt-5.5"
+  }
+}

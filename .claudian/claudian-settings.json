@@ -1,0 +1,75 @@
+{
+  "userName": "",
+  "permissionMode": "yolo",
+  "model": "gpt-5.5",
+  "thinkingBudget": "off",
+  "effortLevel": "high",
+  "serviceTier": "fast",
+  "enableAutoTitleGeneration": true,
+  "titleGenerationModel": "",
+  "excludedTags": [],
+  "mediaFolder": "",
+  "systemPrompt": "",
+  "persistentExternalContextPaths": [],
+  "sharedEnvironmentVariables": "",
+  "envSnippets": [],
+  "customContextLimits": {},
+  "keyboardNavigation": {
+    "scrollUpKey": "w",
+    "scrollDownKey": "s",
+    "focusInputKey": "i"
+  },
+  "locale": "en",
+  "providerConfigs": {
+    "codex": {
+      "enabled": true,
+      "safeMode": "workspace-write",
+      "cliPath": "c:\\Users\\mechreuo\\.codex\\bin\\codex.exe",
+      "cliPathsByHost": {
+        "DESKTOP-NV1BSBN": "c:\\Users\\mechreuo\\.codex\\bin\\codex.exe"
+      },
+      "reasoningSummary": "detailed",
+      "environmentVariables": "OPENAI_MODEL=gpt-5.5",
+      "environmentHash": "OPENAI_MODEL=gpt-5.5",
+      "installationMethodsByHost": {
+        "DESKTOP-NV1BSBN": "native-windows"
+      },
+      "wslDistroOverridesByHost": {}
+    },
+    "claude": {
+      "safeMode": "acceptEdits",
+      "cliPath": "",
+      "cliPathsByHost": {},
+      "loadUserSettings": true,
+      "enableChrome": false,
+      "enableBangBash": false,
+      "enableOpus1M": false,
+      "enableSonnet1M": false,
+      "lastModel": "opus",
+      "environmentVariables": "",
+      "environmentHash": ""
+    }
+  },
+  "settingsProvider": "codex",
+  "savedProviderModel": {
+    "codex": "gpt-5.5",
+    "claude": "opus"
+  },
+  "savedProviderEffort": {
+    "codex": "high",
+    "claude": "high"
+  },
+  "savedProviderServiceTier": {
+    "codex": "fast"
+  },
+  "savedProviderThinkingBudget": {
+    "codex": "off",
+    "claude": "medium"
+  },
+  "lastCustomModel": "",
+  "maxTabs": 3,
+  "tabBarPosition": "input",
+  "enableAutoScroll": true,
+  "openInMainTab": false,
+  "hiddenProviderCommands": {}
+}

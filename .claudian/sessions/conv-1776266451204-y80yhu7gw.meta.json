@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776266451204-y80yhu7gw",
+  "providerId": "codex",
+  "title": "Summarize FreeRTOS task states video",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776266451204,
+  "updatedAt": 1776301954358,
+  "lastResponseAt": 1776268291799,
+  "sessionId": "019d91bb-1980-7241-bc7b-7febb52d0986",
+  "providerState": {
+    "threadId": "019d91bb-1980-7241-bc7b-7febb52d0986",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\15\\rollout-2026-04-15T23-20-51-019d91bb-1980-7241-bc7b-7febb52d0986.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 205077,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 192384,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 205077,
+    "percentage": 79,
+    "model": "gpt-5.4"
+  }
+}

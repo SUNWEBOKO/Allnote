@@ -1,0 +1,25 @@
+{
+  "id": "conv-1777436489706-yb7ylyjp5",
+  "providerId": "codex",
+  "title": "评估 DeepSeek 融合重积分内容效果",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777436489707,
+  "updatedAt": 1777437365086,
+  "lastResponseAt": 1777436931790,
+  "sessionId": "019dd778-7893-7540-9b48-ae08eeca1c38",
+  "providerState": {
+    "threadId": "019dd778-7893-7540-9b48-ae08eeca1c38",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\29\\rollout-2026-04-29T12-21-29-019dd778-7893-7540-9b48-ae08eeca1c38.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 82256,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 81792,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 82256,
+    "percentage": 32,
+    "model": "gpt-5.5"
+  }
+}

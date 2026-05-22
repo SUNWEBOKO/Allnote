@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776393675306-ke9cjucnh",
+  "providerId": "codex",
+  "title": "Reply to a Chinese greeting",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776393675306,
+  "updatedAt": 1776397563839,
+  "lastResponseAt": 1776397480088,
+  "sessionId": "019d9968-32e8-75f0-910a-401a5c2354c4",
+  "providerState": {
+    "threadId": "019d9968-32e8-75f0-910a-401a5c2354c4",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\17\\rollout-2026-04-17T11-07-16-019d9968-32e8-75f0-910a-401a5c2354c4.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 102951,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 102656,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 102951,
+    "percentage": 40,
+    "model": "gpt-5.3-codex"
+  }
+}

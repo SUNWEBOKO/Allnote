@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776482812521-07fz5mvkm",
+  "providerId": "codex",
+  "title": "Reorganize 数学建模教程文档结构",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776482812521,
+  "updatedAt": 1776490860796,
+  "lastResponseAt": 1776483078083,
+  "sessionId": "019d9ea0-9107-7203-896d-b35aa25c2783",
+  "providerState": {
+    "threadId": "019d9ea0-9107-7203-896d-b35aa25c2783",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\18\\rollout-2026-04-18T11-26-56-019d9ea0-9107-7203-896d-b35aa25c2783.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/01 力学.md",
+  "usage": {
+    "inputTokens": 62277,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 62208,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 62277,
+    "percentage": 24,
+    "model": "gpt-5.4"
+  }
+}

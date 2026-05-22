@@ -1,0 +1,25 @@
+{
+  "id": "conv-1778473922784-e5b4zd97x",
+  "providerId": "codex",
+  "title": "整合格林公式到曲线积分笔记",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778473922784,
+  "updatedAt": 1778474351907,
+  "lastResponseAt": 1778474334308,
+  "sessionId": "019e154e-71a4-7952-8578-8c10d0002c8f",
+  "providerState": {
+    "threadId": "019e154e-71a4-7952-8578-8c10d0002c8f",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\11\\rollout-2026-05-11T12-32-03-019e154e-71a4-7952-8578-8c10d0002c8f.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 97489,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 97152,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 97489,
+    "percentage": 38,
+    "model": "gpt-5.5"
+  }
+}

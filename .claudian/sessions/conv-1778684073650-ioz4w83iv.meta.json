@@ -1,0 +1,26 @@
+{
+  "id": "conv-1778684073650-ioz4w83iv",
+  "providerId": "codex",
+  "title": "检查费米速度平方推导",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778684073650,
+  "updatedAt": 1778684253534,
+  "lastResponseAt": 1778684217649,
+  "sessionId": "019e21d5-1a91-77d1-80f0-f10945f6d61c",
+  "providerState": {
+    "threadId": "019e21d5-1a91-77d1-80f0-f10945f6d61c",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\13\\rollout-2026-05-13T22-54-34-019e21d5-1a91-77d1-80f0-f10945f6d61c.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/03 气体动理论.md",
+  "usage": {
+    "inputTokens": 37817,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 29056,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 37817,
+    "percentage": 15,
+    "model": "gpt-5.5"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "conv-1778931884346-yoy7pap7b",
+  "providerId": "codex",
+  "title": "总结 Clippings 文档",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778931884347,
+  "updatedAt": 1778933652347,
+  "lastResponseAt": 1778932332067,
+  "sessionId": "019e309a-629d-7691-8768-553d44fcf014",
+  "providerState": {
+    "threadId": "019e309a-629d-7691-8768-553d44fcf014",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\16\\rollout-2026-05-16T19-44-44-019e309a-629d-7691-8768-553d44fcf014.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 84243,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 82816,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 84243,
+    "percentage": 33,
+    "model": "gpt-5.5"
+  }
+}

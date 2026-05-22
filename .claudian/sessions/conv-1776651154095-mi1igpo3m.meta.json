@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776651154095-mi1igpo3m",
+  "providerId": "codex",
+  "title": "融合文档并补充到04 热学",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776651154095,
+  "updatedAt": 1776655016219,
+  "lastResponseAt": 1776655013460,
+  "sessionId": "019da8a9-3e29-7221-89f3-b2347c538d78",
+  "providerState": {
+    "threadId": "019da8a9-3e29-7221-89f3-b2347c538d78",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\20\\rollout-2026-04-20T10-12-37-019da8a9-3e29-7221-89f3-b2347c538d78.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 223355,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 178944,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 223355,
+    "percentage": 86,
+    "model": "gpt-5.4"
+  }
+}

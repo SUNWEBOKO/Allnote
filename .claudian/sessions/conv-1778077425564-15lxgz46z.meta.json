@@ -1,0 +1,26 @@
+{
+  "id": "conv-1778077425564-15lxgz46z",
+  "providerId": "codex",
+  "title": "重做静电场与电势融合笔记",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778077425564,
+  "updatedAt": 1778079152988,
+  "lastResponseAt": 1778078262541,
+  "sessionId": "019dfdac-6024-7c41-a46f-965ec71b2e52",
+  "providerState": {
+    "threadId": "019dfdac-6024-7c41-a46f-965ec71b2e52",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\06\\rollout-2026-05-06T22-23-45-019dfdac-6024-7c41-a46f-965ec71b2e52.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/05 电学.md",
+  "usage": {
+    "inputTokens": 81170,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 80768,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 81170,
+    "percentage": 31,
+    "model": "gpt-5.5"
+  }
+}

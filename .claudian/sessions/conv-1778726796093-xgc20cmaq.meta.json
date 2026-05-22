@@ -1,0 +1,24 @@
+{
+  "id": "conv-1778726796093-xgc20cmaq",
+  "providerId": "codex",
+  "title": "修正例题嵌入位置",
+  "titleGenerationStatus": "success",
+  "createdAt": 1778726796094,
+  "updatedAt": 1778727137189,
+  "lastResponseAt": 1778726976354,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "电路分析/05  正弦稳态电路.md",
+  "usage": {
+    "inputTokens": 41034,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 38784,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 41034,
+    "percentage": 16,
+    "model": "gpt-5.5"
+  }
+}

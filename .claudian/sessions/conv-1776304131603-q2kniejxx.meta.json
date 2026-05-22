@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776304131603-q2kniejxx",
+  "providerId": "codex",
+  "title": "Analyze Bilibili video link BV1KA411B7zK p8",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776304131604,
+  "updatedAt": 1776309979212,
+  "lastResponseAt": 1776309976630,
+  "sessionId": "019d93fa-153b-74e0-87b0-b5c19626e5f2",
+  "providerState": {
+    "threadId": "019d93fa-153b-74e0-87b0-b5c19626e5f2",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\16\\rollout-2026-04-16T09-48-53-019d93fa-153b-74e0-87b0-b5c19626e5f2.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 131332,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 118016,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 131332,
+    "percentage": 51,
+    "model": "gpt-5.3-codex"
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "id": "conv-1776667801620-2yk9a4hil",
+  "providerId": "codex",
+  "title": "优化 Obsidian 美观方案",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776667801620,
+  "updatedAt": 1776669512138,
+  "lastResponseAt": 1776668286506,
+  "sessionId": "019da9a7-4383-74c1-8096-80028d254a15",
+  "providerState": {
+    "threadId": "019da9a7-4383-74c1-8096-80028d254a15",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\20\\rollout-2026-04-20T14-50-04-019da9a7-4383-74c1-8096-80028d254a15.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "usage": {
+    "inputTokens": 38440,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 38272,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 38440,
+    "percentage": 15,
+    "model": "gpt-5.4"
+  }
+}

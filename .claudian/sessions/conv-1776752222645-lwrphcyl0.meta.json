@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776752222645-lwrphcyl0",
+  "providerId": "codex",
+  "title": "修改第二章例题融入与解答",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776752222645,
+  "updatedAt": 1776753239014,
+  "lastResponseAt": 1776753236304,
+  "sessionId": "019daeaf-6c21-72a2-be7c-d63cc3b3d3d6",
+  "providerState": {
+    "threadId": "019daeaf-6c21-72a2-be7c-d63cc3b3d3d6",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\21\\rollout-2026-04-21T14-17-05-019daeaf-6c21-72a2-be7c-d63cc3b3d3d6.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/01 力学.md",
+  "usage": {
+    "inputTokens": 81150,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 80768,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 81150,
+    "percentage": 31,
+    "model": "gpt-5.4"
+  }
+}

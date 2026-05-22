@@ -1,0 +1,26 @@
+{
+  "id": "conv-1777390180748-hz3jq4bur",
+  "providerId": "codex",
+  "title": "改用回路电流法求解电路例题",
+  "titleGenerationStatus": "success",
+  "createdAt": 1777390180748,
+  "updatedAt": 1777391655638,
+  "lastResponseAt": 1777391511121,
+  "sessionId": "019dd4b5-ed22-7ea3-88d2-7a2454fccb0e",
+  "providerState": {
+    "threadId": "019dd4b5-ed22-7ea3-88d2-7a2454fccb0e",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\28\\rollout-2026-04-28T23-29-45-019dd4b5-ed22-7ea3-88d2-7a2454fccb0e.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "电路分析/02 电阻电路的一般分析方法.md",
+  "usage": {
+    "inputTokens": 86651,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 85888,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 86651,
+    "percentage": 34,
+    "model": "gpt-5.5"
+  }
+}

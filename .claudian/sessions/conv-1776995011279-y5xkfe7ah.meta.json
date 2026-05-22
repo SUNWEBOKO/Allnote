@@ -1,0 +1,26 @@
+{
+  "id": "conv-1776995011279-y5xkfe7ah",
+  "providerId": "codex",
+  "title": "重写文档例题解答过程",
+  "titleGenerationStatus": "success",
+  "createdAt": 1776995011280,
+  "updatedAt": 1776995700627,
+  "lastResponseAt": 1776995679812,
+  "sessionId": "019dbd28-17fa-7f23-9726-26fbd19dbfed",
+  "providerState": {
+    "threadId": "019dbd28-17fa-7f23-9726-26fbd19dbfed",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\04\\24\\rollout-2026-04-24T09-43-34-019dbd28-17fa-7f23-9726-26fbd19dbfed.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "Clippings/课堂复习文档总结.md",
+  "usage": {
+    "inputTokens": 47885,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 46976,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 47885,
+    "percentage": 19,
+    "model": "gpt-5.5"
+  }
+}

@@ -1,0 +1,240 @@
+{
+  "main": {
+    "id": "d88170e500d0c4a5",
+    "type": "split",
+    "children": [
+      {
+        "id": "2ab3c351a565a15e",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "60ab46812c3820b0",
+            "type": "leaf",
+            "state": {
+              "type": "empty",
+              "state": {},
+              "icon": "lucide-file",
+              "title": "新标签页"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "0f45913d3366934f",
+    "type": "split",
+    "children": [
+      {
+        "id": "b9f019a9b121a06a",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "ea4e104d3309e775",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "文件列表"
+            }
+          },
+          {
+            "id": "6136022e343d8f58",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "搜索"
+            }
+          },
+          {
+            "id": "9e367b6907005ede",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "书签"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 312.5026054382324
+  },
+  "right": {
+    "id": "c1c5e03e9b49331f",
+    "type": "split",
+    "children": [
+      {
+        "id": "1679777c802e9fc2",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "daf64a6a000e80a8",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "电路分析/06 三相电路.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "06 三相电路 的反向链接列表"
+            }
+          },
+          {
+            "id": "4eca34df1f9aead3",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "电路分析/06 三相电路.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "06 三相电路 的出链列表"
+            }
+          },
+          {
+            "id": "6a64478e6ed5b551",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "标签"
+            }
+          },
+          {
+            "id": "5761740d80a488c0",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "添加笔记属性"
+            }
+          },
+          {
+            "id": "9be4d080cd03b30e",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "电路分析/06 三相电路.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "06 三相电路 的大纲"
+            }
+          },
+          {
+            "id": "9329b8e65e8be4df",
+            "type": "leaf",
+            "state": {
+              "type": "claudian-view",
+              "state": {},
+              "icon": "bot",
+              "title": "Claudian"
+            }
+          }
+        ],
+        "currentTab": 5
+      }
+    ],
+    "direction": "horizontal",
+    "width": 606.5
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:打开快速切换": false,
+      "graph:查看关系图谱": false,
+      "canvas:新建白板": false,
+      "daily-notes:打开/创建今天的日记": false,
+      "templates:插入模板": false,
+      "command-palette:打开命令面板": false,
+      "bases:新建数据库": false,
+      "nutstore-sync:Start sync": false,
+      "nutstore-sync:Stop sync": false,
+      "claudian:Open Claudian": false,
+      "obsidian-excalidraw-plugin:New drawing": false,
+      "pdf-plus:PDF++: Toggle auto-copy": false,
+      "pdf-plus:PDF++: Toggle auto-focus": false,
+      "pdf-plus:PDF++: Toggle auto-paste": false
+    }
+  },
+  "active": "60ab46812c3820b0",
+  "lastOpenFiles": [
+    "STM32源笔记/24 互补滤波.md",
+    "STM32源笔记/23 MPU6050和MPU6500.md",
+    "STM32源笔记/27 PID控制算法.md",
+    "STM32源笔记/28 D153电机模块.md",
+    "STM32源笔记/22 I2C通信.md",
+    "Clippings/非正弦周期电路Qwen.md",
+    "Clippings/非正弦周期电路DS.md",
+    "Clippings/非正弦周期电路ds.md",
+    "Clippings/非正弦周期电路原稿.md",
+    "Clippings/非正弦周期电路Kimi.md",
+    "Clippings/测试.md",
+    "Clippings/GLM.md",
+    "Clippings/Benchmark & Compare the Best AI Models.md",
+    "Clippings/Kimi.md",
+    "Clippings/Benchmark & Compare the Best AI Models 1.md",
+    "Clippings/Qwen.md",
+    "Clippings/DeepSeek.md",
+    "Clippings/DeepSeek 1.md",
+    "Clippings/Deepseek.md",
+    "Clippings/大模型多维专业能力综合测评报告.md",
+    "Clippings/GLM5.1.md",
+    "Clippings/Deepseekv4pro.md",
+    "Clippings/Qwen3.7max.md",
+    "大学物理/06 恒定磁场.md",
+    "数学建模教程/_sidebar.md",
+    "大学物理/05 静电场.md",
+    "电路分析/电路分析.pdf",
+    "output/imagegen/gpt-image-2-chat-photo.png",
+    "output/imagegen/random-photo.png",
+    "output/imagegen/rightcodes-skill-test.png",
+    "Clippings/subtitle_1779245248353.txt",
+    "Clippings/subtitle_1779245252977.txt",
+    "Pasted image 20260519224015.png",
+    "线性代数.pdf",
+    "ESP32",
+    "大学物理/05 电学-下.md.bak-20260518-compress",
+    "大学物理/05 电学-上.md.bak-20260518-compress",
+    "Clippings/未命名"
+  ]
+}
