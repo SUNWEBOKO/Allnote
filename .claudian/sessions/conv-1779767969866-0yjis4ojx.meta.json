@@ -1,0 +1,16 @@
+{
+  "id": "conv-1779767969866-0yjis4ojx",
+  "providerId": "codex",
+  "title": "优化格式排版",
+  "titleGenerationStatus": "success",
+  "createdAt": 1779767969866,
+  "updatedAt": 1779768075560,
+  "lastResponseAt": 1779767982564,
+  "sessionId": "019e6270-08dd-74d1-879b-e84c6661e53c",
+  "providerState": {
+    "threadId": "019e6270-08dd-74d1-879b-e84c6661e53c",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\26\\rollout-2026-05-26T11-59-35-019e6270-08dd-74d1-879b-e84c6661e53c.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/06 恒定磁场.md"
+}

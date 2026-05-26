@@ -1,9 +1,9 @@
 {
   "userName": "",
   "permissionMode": "yolo",
-  "model": "gpt-5.5",
+  "model": "gpt-5.4",
   "thinkingBudget": "off",
-  "effortLevel": "high",
+  "effortLevel": "xhigh",
   "serviceTier": "fast",
   "enableAutoTitleGeneration": true,
   "titleGenerationModel": "",
@@ -52,11 +52,11 @@
   },
   "settingsProvider": "codex",
   "savedProviderModel": {
-    "codex": "gpt-5.5",
+    "codex": "gpt-5.4",
     "claude": "opus"
   },
   "savedProviderEffort": {
-    "codex": "high",
+    "codex": "xhigh",
     "claude": "high"
   },
   "savedProviderServiceTier": {

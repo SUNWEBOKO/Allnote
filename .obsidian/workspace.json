@@ -4,17 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "2ab3c351a565a15e",
+        "id": "e57ea65535d1365f",
         "type": "tabs",
         "children": [
           {
-            "id": "60ab46812c3820b0",
+            "id": "11886a7a72768efa",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "电路分析/06 三相电路.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "新标签页"
+              "title": "06 三相电路"
             }
           }
         ]
@@ -74,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 312.5026054382324
+    "width": 200
   },
   "right": {
     "id": "c1c5e03e9b49331f",
@@ -176,7 +180,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 606.5
+    "width": 606.5,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -196,41 +201,47 @@
       "pdf-plus:PDF++: Toggle auto-paste": false
     }
   },
-  "active": "60ab46812c3820b0",
+  "active": "11886a7a72768efa",
   "lastOpenFiles": [
+    "电路分析/05 正弦稳态电路.md",
+    "电路分析/assets/e7d3fc038b71096660fda0750d76268530f4f0476efb0c6e301eb9ca91b7d19a.jpg",
+    "电路分析/assets/b235d4d5966666da684c436c2aa94bb83b8020c9f60bd932ba4e9a0e79d179da.jpg",
+    "电路分析/assets/2652d79b2e7f68dba6ae0893d5db921e0efe79e66d27374d4bb461a5d3a65c0e.jpg",
+    "电路分析/assets/918fe272a05004e8cb42e4b82369fcff8f485afcc5e14fb5a9a88d0555347336.jpg",
+    "电路分析/assets/77d6efceec48e94f1e48696226c176252313ad251592b6569918e83fb612347f.jpg",
+    "电路分析/img/f42373fb45ca1e619a239d1d173f5c16.jpg",
+    "电路分析/img/0b7177fd9e0734bcba0e791829e38fb6.png",
+    "英语/英语作文.md",
+    "英语/英语六级急救班核心知识手册.md",
+    "英语/六级1000高频词.md",
     "STM32源笔记/24 互补滤波.md",
-    "STM32源笔记/23 MPU6050和MPU6500.md",
-    "STM32源笔记/27 PID控制算法.md",
-    "STM32源笔记/28 D153电机模块.md",
-    "STM32源笔记/22 I2C通信.md",
-    "Clippings/非正弦周期电路Qwen.md",
-    "Clippings/非正弦周期电路DS.md",
-    "Clippings/非正弦周期电路ds.md",
-    "Clippings/非正弦周期电路原稿.md",
-    "Clippings/非正弦周期电路Kimi.md",
-    "Clippings/测试.md",
-    "Clippings/GLM.md",
-    "Clippings/Benchmark & Compare the Best AI Models.md",
-    "Clippings/Kimi.md",
-    "Clippings/Benchmark & Compare the Best AI Models 1.md",
-    "Clippings/Qwen.md",
-    "Clippings/DeepSeek.md",
-    "Clippings/DeepSeek 1.md",
-    "Clippings/Deepseek.md",
-    "Clippings/大模型多维专业能力综合测评报告.md",
-    "Clippings/GLM5.1.md",
-    "Clippings/Deepseekv4pro.md",
-    "Clippings/Qwen3.7max.md",
-    "大学物理/06 恒定磁场.md",
-    "数学建模教程/_sidebar.md",
-    "大学物理/05 静电场.md",
+    "微分方程3B1B/01 微分方程概论.md",
+    "深度学习/00-PyTorch简介与课程概述.md",
+    "数学建模教程/00-绪论走进数学建模的大门.md",
+    "数学建模教程/10-图像、文本与信号数据.md",
+    "数学建模教程/09-机器学习与统计模型.md",
+    "数学建模教程/08-时间序列.md",
+    "数学建模教程/07-权重生成与评价模型.md",
+    "数学建模教程/06-数据处理与拟合模型.md",
+    "数学建模教程/05-进化计算与群体智能.md",
+    "数学建模教程/04-复杂网络与图论模型.md",
+    "数学建模教程/03-函数极值与规划模型.md",
+    "数学建模教程/02-微分方程与动力系统.md",
+    "数学建模教程/01-解析方法与几何模型.md",
+    "电路分析/08 非正弦周期电路.md",
+    "电路分析/08 非正弦周期电路.md",
+    "电路分析/06 三相电路.md",
+    "电路分析/07 耦合电感电路.md",
+    "线性代数/线性代数学习笔记.md",
+    "线性代数/第4讲 相似矩阵与二次型.md",
+    "高等数学下册串讲复习笔记.md",
+    "线性代数/第1讲 行列式.md",
     "电路分析/电路分析.pdf",
     "output/imagegen/gpt-image-2-chat-photo.png",
     "output/imagegen/random-photo.png",
     "output/imagegen/rightcodes-skill-test.png",
     "Clippings/subtitle_1779245248353.txt",
     "Clippings/subtitle_1779245252977.txt",
-    "Pasted image 20260519224015.png",
     "线性代数.pdf",
     "ESP32",
     "大学物理/05 电学-下.md.bak-20260518-compress",

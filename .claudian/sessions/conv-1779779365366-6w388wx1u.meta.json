@@ -1,0 +1,16 @@
+{
+  "id": "conv-1779779365366-6w388wx1u",
+  "providerId": "codex",
+  "title": "把07 和08 做文档融合",
+  "titleGenerationStatus": "failed",
+  "createdAt": 1779779365366,
+  "updatedAt": 1779779382068,
+  "lastResponseAt": 1779779378009,
+  "sessionId": "019e631d-eaba-7a53-84ee-8325ac44d873",
+  "providerState": {
+    "threadId": "019e631d-eaba-7a53-84ee-8325ac44d873",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\26\\rollout-2026-05-26T15-09-30-019e631d-eaba-7a53-84ee-8325ac44d873.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "电路分析/05 正弦稳态电路.md"
+}

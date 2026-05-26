@@ -1,0 +1,14 @@
+{
+  "id": "conv-1779779355411-2e2rescq5",
+  "providerId": "codex",
+  "title": "做一个格式清晰，内容完善",
+  "titleGenerationStatus": "failed",
+  "createdAt": 1779779355411,
+  "updatedAt": 1779779401566,
+  "lastResponseAt": 1779779392951,
+  "sessionId": null,
+  "providerState": {
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "电路分析/05 正弦稳态电路.md"
+}

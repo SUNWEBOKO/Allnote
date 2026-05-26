@@ -1,0 +1,26 @@
+{
+  "id": "conv-1779768117680-gznkowme8",
+  "providerId": "codex",
+  "title": "优化一下格式",
+  "titleGenerationStatus": "failed",
+  "createdAt": 1779768117680,
+  "updatedAt": 1779776411844,
+  "lastResponseAt": 1779768512823,
+  "sessionId": "019e6272-4a15-7cf3-941d-aa1106dcd0a8",
+  "providerState": {
+    "threadId": "019e6272-4a15-7cf3-941d-aa1106dcd0a8",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\26\\rollout-2026-05-26T12-02-02-019e6272-4a15-7cf3-941d-aa1106dcd0a8.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/06 恒定磁场.md",
+  "usage": {
+    "inputTokens": 78106,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 77696,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 78106,
+    "percentage": 30,
+    "model": "gpt-5.4"
+  }
+}
