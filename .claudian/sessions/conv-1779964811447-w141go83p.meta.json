@@ -1,0 +1,26 @@
+{
+  "id": "conv-1779964811447-w141go83p",
+  "providerId": "codex",
+  "title": "你好",
+  "titleGenerationStatus": "failed",
+  "createdAt": 1779964811447,
+  "updatedAt": 1779964844532,
+  "lastResponseAt": 1779964844532,
+  "sessionId": "019e6e2b-9941-7fc0-803b-87172b01d3f2",
+  "providerState": {
+    "threadId": "019e6e2b-9941-7fc0-803b-87172b01d3f2",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\05\\28\\rollout-2026-05-28T18-40-16-019e6e2b-9941-7fc0-803b-87172b01d3f2.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "STM32源笔记/28 D153电机模块.md",
+  "usage": {
+    "inputTokens": 21634,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 18816,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 21634,
+    "percentage": 8,
+    "model": "gpt-5.5"
+  }
+}

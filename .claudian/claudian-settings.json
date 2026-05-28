@@ -1,7 +1,7 @@
 {
   "userName": "",
   "permissionMode": "yolo",
-  "model": "gpt-5.4",
+  "model": "gpt-5.5",
   "thinkingBudget": "off",
   "effortLevel": "xhigh",
   "serviceTier": "fast",
@@ -52,7 +52,7 @@
   },
   "settingsProvider": "codex",
   "savedProviderModel": {
-    "codex": "gpt-5.4",
+    "codex": "gpt-5.5",
     "claude": "opus"
   },
   "savedProviderEffort": {
