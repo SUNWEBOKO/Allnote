@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "227d567f1a2d61eb",
+        "id": "1b45e9e4298cb80b",
         "type": "tabs",
         "children": [
           {
-            "id": "23b3b4d0e22326df",
+            "id": "b03c9e8a83dd37bd",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "STM32源笔记/28 D153电机模块.md",
+                "file": "B站精品/05 人工智能核心原理总结.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "28 D153电机模块"
+              "title": "05 人工智能核心原理总结"
             }
           }
         ]
@@ -78,7 +78,7 @@
       }
     ],
     "direction": "horizontal",
-    "width": 200
+    "width": 307.5026054382324
   },
   "right": {
     "id": "c1c5e03e9b49331f",
@@ -180,7 +180,8 @@
       }
     ],
     "direction": "horizontal",
-    "width": 606.5
+    "width": 606.5,
+    "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
@@ -200,34 +201,44 @@
       "pdf-plus:PDF++: Toggle auto-paste": false
     }
   },
-  "active": "23b3b4d0e22326df",
+  "active": "b03c9e8a83dd37bd",
   "lastOpenFiles": [
-    "STM32源笔记/D153C 电机驱动控制.md",
-    "STM32源笔记/D153C 编码器测速系统.md",
-    "Clippings/D153C 电机驱动控制.md",
-    "Clippings/D153C 编码器测速系统.md",
-    "Clippings/平衡车电机编码器测速系统详解k.md",
-    "Clippings/平衡车电机编码器测速系统详解q.md",
-    "Clippings/平衡车电机编码器测速系统详解.md",
-    "Clippings/28 D153电机模块.md",
-    "Clippings/直流电机开环调速控制与HAL库.md",
-    "Clippings/直流电机开环调速控制与 HAL 库.md",
-    "Clippings/直流电机开环调速控制与 HAL 库驱动实现.md",
-    "Clippings/直流电机开环调速控制 HAL 库.md",
-    "大学物理/恒定磁场_带电粒子_载流导线_磁介质_学习手册.md",
-    "Clippings/直流电机调速控制.md",
-    "大学物理/06 恒定磁场.md",
-    "大学物理/07 电磁感应.md",
-    "高等数学/11 曲线积分与曲面积分.md",
-    "程序语言/Python笔记.md",
-    "程序语言/C语言笔记.md",
-    "大学物理/05 静电场.md",
-    "大学物理/03 气体动理论.md",
-    "高等数学下册串讲复习笔记.md",
-    "大学物理/04 热学.md",
-    "大学物理/02 相对论.md",
+    "STM32源笔记/00 STM32源笔记总览.md",
+    "converted.md",
+    "高等数学/12 无穷级数.md",
+    "大学物理/06 磁场与磁介质.md",
     "大学物理/01 力学.md",
-    "电路分析/06 三相电路.md",
+    "大学物理/04 热学.md",
+    "大学物理/05 静电场与电势.md",
+    "大学物理/07 电磁感应.md",
+    "电路分析/07 耦合电感电路.md",
+    "电路分析/08 非正弦周期电路.md",
+    "Clippings/电路作业解答.md",
+    "电路分析/电路分析题集.md",
+    "程序语言/计算机程序设计复习.md",
+    "微分方程3B1B/06 矩阵指数与微分方程.md",
+    "微分方程3B1B/05 指数函数几何意义.md",
+    "微分方程3B1B/03 热方程的求解方法.md",
+    "微分方程3B1B/02 热方程与偏微分方程.md",
+    "微分方程3B1B/01 微分方程概论.md",
+    "线性代数/线性代数学习笔记.md",
+    "英语/英语六级急救班核心知识手册.md",
+    "PCB设计/10 DCDC降压模块.md",
+    "PCB设计/02b 原理图绘制操作.md",
+    "大学物理/02 狭义相对论.md",
+    "Clippings/subtitle_1780288172732.txt",
+    "Clippings/subtitle_1780288176955.txt",
+    "Clippings/subtitle_1780288180936.txt",
+    "Clippings/subtitle_1780288183193.txt",
+    "Clippings/subtitle_1780288188526.txt",
+    "Clippings/subtitle_1780288192774.txt",
+    "Clippings/subtitle_1780288157440.txt",
+    "Clippings/subtitle_1780288161069.txt",
+    "Clippings/subtitle_1780288163414.txt",
+    "Clippings/subtitle_1780288166301.txt",
+    "大学物理/02 相对论.md",
+    "大学物理/03 气体动理论.md",
+    "高等数学/12 无穷级数.backup-20260531-2250.md",
     "电路分析/assets/e7d3fc038b71096660fda0750d76268530f4f0476efb0c6e301eb9ca91b7d19a.jpg",
     "电路分析/assets/b235d4d5966666da684c436c2aa94bb83b8020c9f60bd932ba4e9a0e79d179da.jpg",
     "电路分析/assets/2652d79b2e7f68dba6ae0893d5db921e0efe79e66d27374d4bb461a5d3a65c0e.jpg",
@@ -235,16 +246,8 @@
     "电路分析/assets/77d6efceec48e94f1e48696226c176252313ad251592b6569918e83fb612347f.jpg",
     "电路分析/img/f42373fb45ca1e619a239d1d173f5c16.jpg",
     "电路分析/img/0b7177fd9e0734bcba0e791829e38fb6.png",
-    "电路分析/电路分析.pdf",
     "output/imagegen/gpt-image-2-chat-photo.png",
     "output/imagegen/random-photo.png",
-    "output/imagegen/rightcodes-skill-test.png",
-    "Clippings/subtitle_1779245248353.txt",
-    "Clippings/subtitle_1779245252977.txt",
-    "线性代数.pdf",
-    "ESP32",
-    "大学物理/05 电学-下.md.bak-20260518-compress",
-    "大学物理/05 电学-上.md.bak-20260518-compress",
-    "Clippings/未命名"
+    "output/imagegen/rightcodes-skill-test.png"
   ]
 }

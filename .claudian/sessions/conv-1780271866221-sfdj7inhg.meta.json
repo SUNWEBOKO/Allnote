@@ -1,0 +1,26 @@
+{
+  "id": "conv-1780271866221-sfdj7inhg",
+  "providerId": "codex",
+  "title": "整理文档格式与编号",
+  "titleGenerationStatus": "success",
+  "createdAt": 1780271866222,
+  "updatedAt": 1780385148246,
+  "lastResponseAt": 1780381368631,
+  "sessionId": "019e8078-e2e8-79a0-84cb-9285688b4500",
+  "providerState": {
+    "threadId": "019e8078-e2e8-79a0-84cb-9285688b4500",
+    "sessionFilePath": "C:\\Users\\mechreuo\\.codex\\sessions\\2026\\06\\01\\rollout-2026-06-01T07-57-51-019e8078-e2e8-79a0-84cb-9285688b4500.jsonl",
+    "transcriptRootPath": "C:\\Users\\mechreuo\\.codex\\sessions"
+  },
+  "currentNote": "大学物理/06 恒定磁场.md",
+  "usage": {
+    "inputTokens": 69652,
+    "cacheCreationInputTokens": 0,
+    "cacheReadInputTokens": 68992,
+    "contextWindow": 258400,
+    "contextWindowIsAuthoritative": true,
+    "contextTokens": 69652,
+    "percentage": 27,
+    "model": "gpt-5.5"
+  }
+}
