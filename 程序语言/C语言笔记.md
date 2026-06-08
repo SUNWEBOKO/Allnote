@@ -1,6 +1,7 @@
 # C 语言笔记
 
-> 这份笔记按“能写程序 → 能看懂内存 → 能组织工程 → 能避坑”的顺序整理。  
+> 这份笔记按“能写程序 → 能看懂内存 → 能组织工程 → 能避坑”的顺序整理。
+
 ---
 
 ## 1. 学习主线
@@ -183,6 +184,8 @@ int case;        // 错误，case 是关键字
 | `unsigned int` | 4 | 无符号整型 | `%u` | `%u` |
 | `float` | 4 | 单精度浮点 | `%f` | `%f` |
 | `double` | 8 | 双精度浮点 | `%f` | `%lf` |
+
+说明：`printf` 中 `float` 会先提升为 `double`，所以用 `%f`；`scanf` 需要写入目标变量，`float` 用 `%f`，`double` 用 `%lf`。
 
 跨平台代码不要假设 `int`、`long` 的大小。嵌入式和协议代码建议使用：
 
@@ -454,6 +457,8 @@ printf("A=%d, B=%d\n", a, b);
 | 十六进制 | `%x` / `%X` |
 | 指针 | `%p` |
 | `size_t` | `%zu` |
+
+打印指针时，实参建议转成 `void *`，例如 `printf("%p\n", (void *)p);`。
 
 宽度与精度：
 
@@ -835,7 +840,7 @@ int b[5] = {1, 2};   // {1, 2, 0, 0, 0}
 
 ```c
 for (size_t i = 0; i < sizeof(a) / sizeof(a[0]); i++) {
-    printf("%d\n", a[i]);2
+    printf("%d\n", a[i]);
 }
 ```
 
@@ -950,8 +955,8 @@ char s[] = "hello";
 字符串常量与字符数组不同：
 
 ```c
-char *p = "hello";     // 指向只读字符串常量，不要修改
-char arr[] = "hello";  // 拷贝到数组，可以修改
+const char *p = "hello"; // 指向只读字符串常量，不要修改
+char arr[] = "hello";    // 拷贝到数组，可以修改
 
 // p[0] = 'H';          // 未定义行为
 arr[0] = 'H';           // 正确
@@ -1194,8 +1199,8 @@ while ((*status & 0x01) == 0) {
 例子：
 
 ```c
-char *p = "hello";      // p 在栈上，"hello" 通常在只读区
-char arr[] = "hello";   // arr 在当前作用域的栈上或静态区，取决于定义位置
+const char *p = "hello"; // p 在栈上，"hello" 通常在只读区
+char arr[] = "hello";    // arr 在当前作用域的栈上或静态区，取决于定义位置
 ```
 
 ---
@@ -1239,17 +1244,18 @@ int *p = malloc(n * sizeof(*p));
 
 ### 12.3 `realloc` 安全写法
 
-不要直接覆盖原指针：
+不要直接覆盖原指针，否则失败时原地址会丢失：
 
 ```c
 int *tmp = realloc(arr, new_n * sizeof(arr[0]));
 if (tmp == NULL) {
-    // arr 仍然有效，可以继续释放或使用
-    free(arr);
+    // arr 仍然有效；不要把 arr 覆盖掉
     return -1;
 }
 arr = tmp;
 ```
+
+如果当前函数决定放弃这块内存，可以在错误路径里释放 `arr`；但不要在 `realloc` 失败时先把原指针覆盖掉。
 
 ### 12.4 常见问题
 
@@ -1264,6 +1270,8 @@ arr = tmp;
 分配前检查乘法溢出：
 
 ```c
+#include <stdint.h>
+
 if (n > SIZE_MAX / sizeof(*p)) {
     return -1;
 }

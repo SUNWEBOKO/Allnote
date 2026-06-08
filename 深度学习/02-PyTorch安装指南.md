@@ -1,136 +1,167 @@
-# 02 PyTorch安装指南
+# 02 PyTorch 安装指南
 
-## 安装前提：Anaconda
+## 本章定位
 
-安装 PyTorch 之前需要先完成 Anaconda 的安装。Anaconda 是一个 Python 发行版，自带包管理器 `conda`，用于管理 Python 环境和第三方库。安装完成后，可以通过 Anaconda 提供的命令行界面创建虚拟环境，并在其中安装 PyTorch。
+本章完成 PyTorch 的安装与验证。推荐思路是：用 conda 管理 Python 环境，在该环境中按 PyTorch 官网给出的命令安装 PyTorch。这样既能保持环境隔离，又能尽量跟随官方当前支持的安装方式。
 
-## PyTorch 官网与版本选择
+> 具体命令可能随 PyTorch 版本更新而变化。实际安装时以 PyTorch 官网 Get Started 页面生成的命令为准。
 
-在 PyTorch 官网（[pytorch.org](https://pytorch.org)）的安装页面中，提供了多种版本的配置选项。用户需要根据自己的操作系统（Windows / Linux / Mac）、包管理器（pip / conda）、计算平台（CPU / GPU）以及 PyTorch 版本（Stable / Preview）进行选择。
+## 安装前检查
 
-### CPU 版本与 GPU 版本
+### 确认 Python 环境
 
-PyTorch 的 CPU 版本和 GPU 版本针对不同的硬件设计：
-
-- **CPU 版本**：计算依赖于中央处理器（CPU），适合模型较小、数据集不大的项目。当项目规模较小时，CPU 的训练速度是可以接受的。
-- **GPU 版本**：计算依赖于图形处理器（GPU，即显卡），利用 GPU 的并行计算能力对模型训练进行加速。当训练复杂的大模型或处理大规模数据时，GPU 版本能显著提高训练速度。
-
-### CUDA 版本选择
-
-在 GPU 版本的配置选项中，会列出不同的 CUDA 版本号（如 CUDA 11.7、CUDA 11.8），具体安装哪一个取决于电脑中显卡驱动的版本。CUDA 是 NVIDIA 推出的并行计算平台，PyTorch 的 GPU 版本需要借助 CUDA 来调用 GPU 进行计算。
-
-## 检查硬件环境
-
-### 确认显卡型号
-
-通过任务管理器可以查看电脑是否配备 NVIDIA 显卡：右键任务栏 -> 任务管理器 -> 性能选项卡，可以看到 GPU 项及其型号。**只有 NVIDIA 品牌的显卡才支持 GPU 版本的 PyTorch**，Intel、AMD 等厂商的显卡不支持。
-
-### 确认驱动版本与 CUDA 兼容性
-
-打开 NVIDIA 控制面板 -> 帮助 -> 系统信息，可以查看到当前显卡驱动的版本号。前往 NVIDIA 官网的驱动兼容性列表，对照驱动版本号可以确定支持哪些 CUDA 版本。驱动版本向下兼容 CUDA——即高版本驱动可以支持低版本 CUDA，但低版本驱动无法支持高版本 CUDA。
-
-如果当前驱动版本过旧，不在兼容列表中，有两种解决方案：
-1. 前往 NVIDIA 官网升级显卡驱动。
-2. 放弃 GPU 版本，直接安装 CPU 版本。
-
-## 创建 conda 虚拟环境
-
-Anaconda 安装完成后，打开 Anaconda Prompt（命令行界面），默认处于 `base` 基础环境。建议为 PyTorch 单独创建一个虚拟环境，避免与其它项目的依赖冲突。
-
-创建虚拟环境的命令：
+先创建并激活课程环境：
 
 ```bash
-conda create -n pytorch_cpu
+conda create -n dl-pytorch python=3.12
+conda activate dl-pytorch
+python --version
+where python
 ```
 
-其中 `-n` 参数后跟环境名称，可按需命名（如 `pytorch_cpu`、`pytorch_gpu`）。
+`where python` 输出的第一个路径应位于当前 conda 环境中，而不是系统 Python 或其他项目环境。
 
-创建完成后，可以用以下命令查看当前所有的 conda 环境：
+### 确认是否需要 GPU 版
+
+PyTorch 可以安装 CPU 版或 GPU 版：
+
+- **CPU 版**：不依赖 NVIDIA 显卡，安装最简单，适合入门、小模型和课程实验。
+- **GPU 版**：需要 NVIDIA 显卡和兼容驱动，训练速度更快，适合较大模型和图像任务。
+
+如果只是完成鸢尾花分类、基础 MLP、简单 CNN 学习，CPU 版已经足够。GPU 版主要用于后续更大规模的深度学习实验。
+
+## 检查 NVIDIA GPU 与驱动
+
+如果准备安装 GPU 版，先在终端执行：
 
 ```bash
-conda info -e
+nvidia-smi
 ```
 
-列表中包含 `base` 环境（安装 Anaconda 时自动创建）以及新创建的虚拟环境。
+若命令能显示显卡型号、驱动版本和 CUDA Version，说明 NVIDIA 驱动可用。这里显示的 CUDA Version 表示当前驱动最高兼容的 CUDA 运行时版本，不等于你必须手动安装对应版本的 CUDA Toolkit。
 
-激活虚拟环境：
+普通 PyTorch pip 安装包通常自带所需 CUDA 运行时组件。多数学习场景只需要安装合适版本的显卡驱动和 PyTorch，不需要单独安装完整 CUDA Toolkit 与 cuDNN。
+
+如果 `nvidia-smi` 不存在或没有 NVIDIA 显卡，直接安装 CPU 版。
+
+## 选择安装命令
+
+进入 PyTorch 官网安装页面，按自己的环境选择：
+
+- PyTorch Build：Stable。
+- OS：Windows / Linux / macOS。
+- Package：Pip。
+- Language：Python。
+- Compute Platform：CPU 或某个 CUDA 版本。
+
+官网会生成安装命令。不要凭记忆套旧命令，尤其不要把过时 CUDA 版本写死到笔记或脚本里。
+
+## 安装 CPU 版
+
+在已激活的 conda 环境中执行：
 
 ```bash
-conda activate pytorch_cpu
+python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cpu
 ```
 
-激活后，命令行提示符前的 `(base)` 会变为 `(pytorch_cpu)`，表示当前已进入该虚拟环境。
+CPU 版适合所有机器，验证代码和课程小项目最稳定。
 
-## 安装 CPU 版本
+## 安装 GPU 版
 
-激活虚拟环境后，在 PyTorch 官网选择对应配置（PyTorch 2.0、Windows、Conda、Python、CPU），官网会生成对应的安装命令。将命令复制到命令行中执行：
+如果 `nvidia-smi` 正常，并且驱动支持官网列出的 CUDA 版本，可以选择 CUDA 版。例如选择 CUDA 12.6 时，命令通常类似：
 
 ```bash
-conda install pytorch torchvision torchaudio cpuonly
+python -m pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu126
 ```
 
-执行后，conda 会自动解析并下载 PyTorch 及其依赖库，输入 `y` 确认安装即可。
+如果官网当前推荐的是 CUDA 12.8 或其他版本，就使用官网生成的对应命令。
 
-### 安装失败的处理
+安装 GPU 版时重点检查两件事：
 
-PyTorch 的安装资源存储在海外服务器，国内访问可能存在网络延迟，导致安装失败。三个常用解决办法：
+- 显卡必须是 NVIDIA CUDA 设备。
+- 驱动版本要足够新，能支持所选 PyTorch CUDA 运行时。
 
-1. **切换网络环境**：如从无线切换为有线，或使用手机热点重试，通常多试几次即可成功。
-2. **换源**（更换国内镜像源）：将 conda 的默认下载地址从国外服务器切换至国内镜像，可以大幅提升下载速度。但 PyTorch 官方文档不推荐换源，因为可能引入兼容性问题。
-3. **科学上网**：通过代理工具提升下载稳定性。
+## 安装常用配套库
 
-## 安装 GPU 版本
-
-### CUDA 与 cuDNN 准备
-
-GPU 版本需要提前确认驱动支持的 CUDA 版本。通过 NVIDIA 控制面板获取驱动版本后，对照兼容性列表选择合适的 CUDA 版本。安装 GPU 版本 PyTorch 时，官网命令中需要指定对应的 CUDA 版本号。
-
-### 安装步骤
-
-新建一个虚拟环境（如 `pytorch_gpu`），激活后，在官网选择 GPU 对应配置（如 CUDA 11.8），获取命令并执行：
+课程后续会使用 pandas、numpy、matplotlib、scikit-learn、tqdm 和 Jupyter，可在同一环境中安装：
 
 ```bash
-conda install pytorch torchvision torchaudio pytorch-cuda=11.8
+conda install numpy pandas matplotlib scikit-learn tqdm jupyter
 ```
 
-安装过程与 CPU 版本相同，conda 会自动处理依赖。
-
-### pip 安装方式（备选）
-
-除 conda 外，也可以用 pip 安装 PyTorch。PyTorch 官网同样提供了 pip 安装命令，以 CPU 版本为例：
+如果 conda 解析依赖很慢，也可以改用 pip：
 
 ```bash
-pip install torch torchvision torchaudio
+python -m pip install numpy pandas matplotlib scikit-learn tqdm jupyter
 ```
 
-pip 安装更轻量，但需要手动处理 CUDA 驱动和 cuDNN 等底层依赖。conda 会一并处理这些非 Python 依赖，而 pip 只负责 Python 包本身，因此 conda 通常是更省心的选择。
+同一个环境中尽量避免反复混用多个渠道安装同一批核心库。环境乱了时，新建环境往往比修补更快。
 
 ## 验证安装
 
-安装完成后，在对应的虚拟环境中依次执行以下验证步骤。
-
-### 导入 PyTorch
-
-```python
-python
->>> import torch
-```
-
-如果没有报错，说明 PyTorch 已成功安装。
-
-### 检查 CUDA 可用性
-
-```python
->>> torch.cuda.is_available()
-```
-
-- CPU 版本返回 `False`。
-- GPU 版本如果安装正确且驱动兼容，返回 `True`，表示 CUDA 可用，PyTorch 可以调用 GPU 进行计算。
-
-### 退出虚拟环境
+进入 Python：
 
 ```bash
-conda deactivate
+python
 ```
 
-执行后命令行提示符回到 `(base)`，表示已退出当前虚拟环境。
+执行：
+
+```python
+import torch
+
+print(torch.__version__)
+print(torch.cuda.is_available())
+print(torch.version.cuda)
+```
+
+含义如下：
+
+- `torch.__version__`：当前安装的 PyTorch 版本。
+- `torch.cuda.is_available()`：当前环境是否能调用 CUDA。
+- `torch.version.cuda`：当前 PyTorch 包对应的 CUDA 运行时版本；CPU 版通常为 `None`。
+
+CPU 版返回 `False` 是正常的。GPU 版如果返回 `False`，通常需要检查驱动、安装命令、环境解释器是否选错。
+
+也可以做一次张量计算：
+
+```python
+x = torch.randn(2, 3)
+print(x)
+
+if torch.cuda.is_available():
+    x = x.to("cuda")
+    print(x.device)
+```
+
+## 常见问题
+
+### pip 安装很慢或失败
+
+PyTorch 轮子文件体积较大，网络不稳定时容易失败。优先重试官方命令，必要时更换网络。镜像源可能滞后或缺少 CUDA 包，使用前要确认包来源和版本一致。
+
+### 明明装了 GPU 版，CUDA 仍不可用
+
+按顺序检查：
+
+1. 是否有 NVIDIA 显卡。
+2. `nvidia-smi` 是否能运行。
+3. 是否在当前 conda 环境中安装了 PyTorch。
+4. VS Code/Jupyter 是否选择了同一个解释器。
+5. 驱动是否支持所选 CUDA 版本。
+
+### 是否必须安装 CUDA Toolkit
+
+普通 PyTorch 学习和训练通常不需要单独安装完整 CUDA Toolkit。只有在需要编译自定义 CUDA 扩展、使用特定底层库或做 CUDA 开发时，才需要额外安装。
+
+### conda install pytorch 命令还能不能用
+
+旧教程中常见 `conda install pytorch torchvision torchaudio ...`。如果官网仍为你的平台提供 conda 命令，可以按官网来；如果官网当前推荐 pip，就在 conda 环境中用 `python -m pip` 安装 PyTorch。
+
+## 本章速记
+
+- conda 负责环境隔离，PyTorch 安装命令以官网为准。
+- 入门优先 CPU 版；有 NVIDIA 显卡且驱动合适再装 GPU 版。
+- GPU 版通常只需要 NVIDIA 驱动和 PyTorch CUDA 包，不必手动安装完整 CUDA Toolkit。
+- 安装后必须用 `import torch` 和 `torch.cuda.is_available()` 验证。
+- 运行代码的解释器必须和安装 PyTorch 的环境一致。

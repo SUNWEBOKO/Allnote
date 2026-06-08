@@ -92,7 +92,7 @@ print(type(name))
 
 输出：
 
-```python
+```text
 <class 'str'>
 ```
 
@@ -208,11 +208,11 @@ print(2 <= 5)   # True
 
 ### 4. 逻辑运算符
 
-```python
-and   # 与：两边都为 True，结果才是 True
-or    # 或：只要有一边为 True，结果就是 True
-not   # 非：取反
-```
+| 运算符 | 含义 |
+|---|---|
+| `and` | 与：两边都为 `True`，结果才是 `True` |
+| `or` | 或：只要有一边为 `True`，结果就是 `True` |
+| `not` | 非：对布尔值取反 |
 
 例子：
 
@@ -293,6 +293,8 @@ print(course.replace('p', 'j')) # 替换字符
 print('python' in course)       # 判断是否包含
 ```
 
+`find()` 找不到时返回 `-1`；如果只关心是否包含，直接用 `in` 更清晰。
+
 常见易错点：变量名要保持一致，例如 `course` 不要误写成 `couerse`。
 
 ---
@@ -361,11 +363,11 @@ nums = [3, 1, 5]
 nums.append(10)     # 末尾添加
 nums.insert(1, 99)  # 指定位置插入
 nums.remove(5)      # 删除指定值
-nums.pop()          # 删除最后一个元素
-nums.clear()        # 清空列表
 nums.sort()         # 升序排序
 nums.reverse()      # 反转
+nums.pop()          # 删除最后一个元素
 print(len(nums))    # 长度
+nums.clear()        # 清空列表
 ```
 
 ---
@@ -402,7 +404,23 @@ print(coordinates[0])  # 10
 
 ---
 
-### 2. 拆包
+### 2. 单元素元组
+
+只有一个元素的元组必须写逗号：
+
+```python
+single = (10,)
+not_tuple = (10)
+
+print(type(single))     # <class 'tuple'>
+print(type(not_tuple))  # <class 'int'>
+```
+
+括号本身不是关键，逗号才是元组语法的核心。
+
+---
+
+### 3. 拆包
 
 ```python
 coordinates = (10, 20)
@@ -495,7 +513,7 @@ for key, value in person.items():
 
 ```python
 unique_numbers = {1, 2, 3, 2}
-print(unique_numbers)  # {1, 2, 3}
+print(unique_numbers)  # 重复的 2 只保留一个，显示顺序不固定
 ```
 
 ---
@@ -531,7 +549,7 @@ age = 18
 
 if age >= 18:
     print("Adult")
-elif age > 13:
+elif age >= 13:
     print("Teenager")
 else:
     print("Child")
@@ -567,7 +585,7 @@ for i in range(5):
 
 输出：
 
-```python
+```text
 0
 1
 2
@@ -634,7 +652,7 @@ for i in range(5):
 
 输出：
 
-```python
+```text
 0
 1
 3
@@ -733,6 +751,16 @@ def greet(name, greeting="Hello"):
 ```
 
 如果调用时不传 `greeting`，函数会使用默认值 `"Hello"`。
+
+默认参数不要直接写可变对象，例如列表或字典。需要默认空列表时，用 `None` 再在函数内部创建：
+
+```python
+def add_item(item, items=None):
+    if items is None:
+        items = []
+    items.append(item)
+    return items
+```
 
 ---
 
@@ -838,6 +866,8 @@ except ValueError:
 1. 防止程序直接崩溃
 2. 给用户更友好的提示
 3. 便于调试和维护
+
+不要用空的 `except:` 把所有错误都吞掉。初学阶段优先捕获明确的异常类型，例如 `ValueError`、`FileNotFoundError`。
 
 ---
 
@@ -1242,15 +1272,20 @@ import openpyxl as xl
 from openpyxl.chart import BarChart, Reference
 
 
-def process_workbook(filename):
-    wb = xl.load_workbook(filename)
+def process_workbook(input_filename, output_filename=None):
+    wb = xl.load_workbook(input_filename)
     sheet = wb["Sheet1"]
 
     # 计算折后价格并写入第 4 列
     for row in range(2, sheet.max_row + 1):
         cell = sheet.cell(row, 3)
-        corrected_price = cell.value * 0.9
-        sheet.cell(row, 4).value = corrected_price
+        try:
+            price = float(cell.value)
+        except (TypeError, ValueError):
+            continue
+
+        corrected_price = price * 0.9
+        sheet.cell(row=row, column=4).value = corrected_price
 
     # 选择第 4 列数据作为图表数据源
     values = Reference(
@@ -1265,10 +1300,12 @@ def process_workbook(filename):
     chart.add_data(values)
     sheet.add_chart(chart, "E2")
 
-    wb.save(filename)
+    if output_filename is None:
+        output_filename = input_filename
+    wb.save(output_filename)
 
 
-process_workbook("transactions.xlsx")
+process_workbook("transactions.xlsx", "transactions_updated.xlsx")
 ```
 
 ---
@@ -1280,19 +1317,21 @@ process_workbook("transactions.xlsx")
 函数名建议写成：
 
 ```python
-def process_workbook(filename):
+def process_workbook(input_filename, output_filename=None):
     ...
 ```
 
-`process` 表示“处理”，`workbook` 表示“工作簿”。
+`process` 表示“处理”，`workbook` 表示“工作簿”；`input_filename` 和 `output_filename` 分别表示输入文件和输出文件。
 
 #### （2）覆盖原文件
 
+如果保存到原路径，会直接覆盖原 Excel 文件：
+
 ```python
-wb.save(filename)
+wb.save(input_filename)
 ```
 
-这会直接覆盖原 Excel 文件。如果不想覆盖，建议另存为：
+更稳妥的做法是另存为新文件：
 
 ```python
 wb.save("transactions_updated.xlsx")

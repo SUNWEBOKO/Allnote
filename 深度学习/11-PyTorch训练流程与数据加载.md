@@ -1,99 +1,250 @@
-# 11 PyTorch训练流程与数据加载
+# 11 PyTorch 训练流程与数据加载
 
-## PyTorch 在神经网络训练中的角色
+## 本章定位
 
-深度学习框架（如 PyTorch）的核心价值在于将神经网络训练中的重复性工作封装为可直接调用的 API，让开发者不再需要从零实现梯度计算、参数更新等底层逻辑。在完整的训练流程中，PyTorch 负责数据加载、模型搭建、损失计算、自动求导、参数更新五个关键环节，每一环都提供了高度封装的接口。
+PyTorch 把深度学习训练中的重复工作封装成几个核心组件：`Dataset`、`DataLoader`、`nn.Module`、损失函数、优化器和 Autograd。本章把这些组件串成一条完整训练链路，为后续鸢尾花实战做准备。
 
-## 训练集（Training Set）的概念
+## PyTorch 训练的五个组件
 
-训练一个神经网络模型，首先需要准备训练集。训练集是一组带标签的数据样本，模型通过反复观察这些样本中的特征与标签之间的对应关系，逐步学习到从输入到输出的映射函数。训练集的质量和规模直接影响模型的最终性能。
+一个标准训练脚本通常包含：
 
-## 数据加载器（DataLoader）
+- **数据集 `Dataset`**：定义如何读取单个样本。
+- **数据加载器 `DataLoader`**：把样本组成 batch，并负责打乱、多进程加载等。
+- **模型 `nn.Module`**：定义网络结构和前向传播。
+- **损失函数 `loss_fn`**：衡量预测与标签之间的差距。
+- **优化器 `optimizer`**：根据梯度更新模型参数。
 
-### 数据集加载的两种方式
+训练循环负责把这些组件连接起来。
 
-PyTorch 提供两种数据集加载方式：一是使用框架内置的专用加载 API，二是自定义数据加载类。
+## Dataset：定义单个样本如何读取
 
-内置 API 针对特定任务做了适配。例如图像识别任务中，PyTorch 提供了专门的加载函数，但要求数据集遵循特定的目录结构——第一级目录为类别名称，每个类别目录下存放对应类别的图片。这种方式的优点是开箱即用，缺点是要求数据集格式固定。
+自定义数据集通常继承 `torch.utils.data.Dataset`，并实现两个方法：
 
-实际项目中的数据往往更加复杂。不同数据集的存储方式和组织结构各不相同：有的数据集类别目录分明，有的则将所有图片混在一起，另外附带一个标注文件来记录每张图片的类别。对于这类非标准结构的数据集，内置 API 无法直接加载，必须通过自定义数据加载类来处理。
+```python
+from torch.utils.data import Dataset
 
-### 自定义数据加载
 
-PyTorch 提供了 `torch.utils.data.DataLoader` 和 `torch.utils.data.Dataset` 两个基类来支持自定义数据加载。用户通过继承 `Dataset` 并实现 `__len__` 和 `__getitem__` 方法，可以灵活地加载任意格式的数据集。`DataLoader` 则负责将 `Dataset` 输出的样本组装成小批量（batch），并提供多线程加载、数据打乱等功能。
+class CustomDataset(Dataset):
+    def __len__(self):
+        return len(self.labels)
 
-## 从数据到模型的完整训练流程
+    def __getitem__(self, index):
+        return self.features[index], self.labels[index]
+```
 
-### 第一步：模型搭建
+`__len__` 返回样本数量；`__getitem__` 根据索引返回一个样本和对应标签。
 
-使用 `torch.nn.Module` 来定义神经网络结构。通过继承 `nn.Module` 并在 `__init__` 中定义网络层、在 `forward` 中定义前向传播逻辑，可以快速搭建各种结构的神经网络。
+数据集内部可以完成：
 
-### 第二步：前向传播与损失计算
+- 文件读取。
+- 标签映射。
+- 数值类型转换。
+- 特征标准化。
+- 图像预处理。
 
-模型接收输入数据后产生预测输出，需要将预测值与真实标签（ground truth）进行比较，衡量二者之间的差距。这个差距由损失函数（Loss Function）量化。
+## DataLoader：批量封装样本
 
-PyTorch 在 `torch.nn` 模块中预置了多种常用损失函数，例如：
+`DataLoader` 接收一个 `Dataset`，按 batch 输出数据：
 
-- `nn.CrossEntropyLoss`：交叉熵损失，适用于分类任务
-- `nn.MSELoss`：均方误差损失（平方差损失），适用于回归任务
+```python
+from torch.utils.data import DataLoader
 
-使用时只需实例化对应的损失函数类，再将预测值和真值传入即可，无需手动实现损失函数的计算细节。
+train_loader = DataLoader(
+    train_dataset,
+    batch_size=16,
+    shuffle=True,
+)
+```
 
-### 第三步：自动求导与反向传播
+关键参数：
 
-求得损失值之后，需要计算损失对每个模型参数的梯度，即反向传播（backpropagation）。PyTorch 的自动求导机制（Autograd）将这一步骤简化为一行代码：
+- `batch_size`：每个 batch 的样本数。
+- `shuffle`：是否在每个 epoch 打乱样本顺序。
+- `num_workers`：使用多少子进程加载数据，Windows 入门阶段可以先设为 0。
+- `drop_last`：是否丢弃最后一个不足 batch_size 的 batch。
+
+训练集通常 `shuffle=True`，验证集和测试集通常 `shuffle=False`。
+
+## 模型：继承 nn.Module
+
+模型负责把输入张量转换为输出张量：
+
+```python
+import torch.nn as nn
+
+
+class IrisNet(nn.Module):
+    def __init__(self):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.Linear(4, 12),
+            nn.ReLU(),
+            nn.Linear(12, 6),
+            nn.ReLU(),
+            nn.Linear(6, 3),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+```
+
+层结构写在 `__init__` 中，计算逻辑写在 `forward` 中。调用 `model(inputs)` 时会自动执行 `forward`。
+
+## 损失函数
+
+分类任务常用：
+
+```python
+loss_fn = nn.CrossEntropyLoss()
+```
+
+使用要求：
+
+- 模型输出形状为 `(batch_size, num_classes)`。
+- 标签形状为 `(batch_size,)`。
+- 标签类型为 `torch.long` / `torch.int64`。
+- 模型输出是 logits，不需要先 softmax。
+
+回归任务常用：
+
+```python
+loss_fn = nn.MSELoss()
+```
+
+具体选择取决于任务目标。
+
+## 优化器
+
+优化器负责参数更新：
+
+```python
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+```
+
+常用优化器：
+
+- `SGD`：基础梯度下降，可配合 momentum。
+- `Adam`：自适应学习率，入门项目常用。
+- `AdamW`：Adam 的改进版本，常用于现代深度学习模型。
+
+优化器只会更新传入的参数。如果某些参数 `requires_grad=False`，即使传入优化器也不会产生梯度更新。
+
+## 设备管理
+
+训练时模型和数据必须在同一个设备：
+
+```python
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = model.to(device)
+```
+
+训练循环中：
+
+```python
+inputs = inputs.to(device)
+labels = labels.to(device)
+```
+
+如果模型在 GPU、数据在 CPU，会报设备不一致错误。
+
+## 标准训练循环
+
+完整结构如下：
+
+```python
+for epoch in range(num_epochs):
+    model.train()
+
+    for inputs, labels in train_loader:
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        optimizer.zero_grad(set_to_none=True)
+        outputs = model(inputs)
+        loss = loss_fn(outputs, labels)
+        loss.backward()
+        optimizer.step()
+```
+
+顺序不能随意打乱：
+
+```text
+清梯度 -> 前向传播 -> 算损失 -> 反向传播 -> 更新参数
+```
+
+## 验证循环
+
+验证不更新参数：
+
+```python
+model.eval()
+correct = 0
+total = 0
+
+with torch.inference_mode():
+    for inputs, labels in val_loader:
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+
+        outputs = model(inputs)
+        preds = outputs.argmax(dim=1)
+        correct += (preds == labels).sum().item()
+        total += labels.size(0)
+
+acc = correct / total
+```
+
+验证时使用 `model.eval()` 和 `torch.inference_mode()`，可以避免 Dropout/BatchNorm 状态错误，也能减少内存占用。
+
+## Autograd：自动求导
+
+PyTorch 的 Autograd 会在前向传播时记录计算图。只要张量参与了可求导运算，且相关参数 `requires_grad=True`，调用：
 
 ```python
 loss.backward()
 ```
 
-`backward()` 会自动计算损失函数关于所有可训练参数的梯度，并将梯度值累加在各参数的 `.grad` 属性中。这一机制依托 PyTorch 的动态计算图（computational graph），在每次前向传播时自动构建，反向传播后可以手动或自动释放。
+就会自动计算损失对参数的梯度。
 
-### 第四步：参数更新（梯度下降）
-
-得到梯度后，按照梯度下降公式更新模型参数：
-
-```
-新参数 = 旧参数 - 学习率 × 梯度
-```
-
-PyTorch 通过优化器（Optimizer）封装了这一过程。首先需要选择一个优化算法（如 SGD、Adam）并传入模型参数和学习率：
+查看梯度：
 
 ```python
-optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
+for name, param in model.named_parameters():
+    print(name, param.grad)
 ```
 
-然后在每个训练步中调用：
+通常不需要手动修改梯度，除非在做梯度裁剪、梯度累积等高级训练技巧。
+
+## 常见错误
+
+### 标签形状错误
+
+`CrossEntropyLoss` 要求标签形状是 `(batch_size,)`，不是 `(batch_size, 1)`，也不是 one-hot。
+
+### 忘记清空梯度
+
+每个 batch 前需要：
 
 ```python
-optimizer.step()
+optimizer.zero_grad(set_to_none=True)
 ```
 
-`step()` 会根据优化器内部维护的梯度下降规则，自动更新模型中所有权重和偏置（bias）。整个过程无需手动编写参数更新的循环逻辑。
+否则梯度会累加。
 
-## 完整训练循环伪代码
+### 模型和数据不在同一设备
 
-将上述步骤组合起来，一个典型的训练循环如下：
+确保模型、输入、标签都 `.to(device)`。
 
-```python
-for epoch in range(num_epochs):
-    for inputs, labels in dataloader:
-        # 前向传播
-        outputs = model(inputs)
-        loss = criterion(outputs, labels)
+### 训练和验证模式混用
 
-        # 反向传播
-        optimizer.zero_grad()  # 清空上一轮梯度
-        loss.backward()        # 自动求导
+训练前 `model.train()`，验证/测试前 `model.eval()`。
 
-        # 参数更新
-        optimizer.step()       # 梯度下降
-```
+## 本章速记
 
-其中 `optimizer.zero_grad()` 用于在每个训练步开始时将梯度清零，避免梯度跨步累积。
-
-## PyTorch 自动求导机制（Autograd）简介
-
-Autograd 是 PyTorch 的核心组件之一，实现自动微分的功能。当一个张量（Tensor）设置了 `requires_grad=True`，其上执行的所有操作都会被追踪记录，构成一个动态计算图。调用 `backward()` 时，Autograd 沿计算图反向传播，按照链式法则计算损失对每个叶子节点的梯度。
-
-这一机制让研究者可以专注于模型架构和训练策略的设计，而不必手动推导和实现复杂的梯度表达式。Autograd 对任意可微操作都有效，无论是线性变换、激活函数还是自定义操作。
+- `Dataset` 管单个样本，`DataLoader` 管 batch。
+- `nn.Module` 管模型结构，`forward` 管前向传播。
+- `loss.backward()` 算梯度，`optimizer.step()` 更新参数。
+- 分类任务用 `CrossEntropyLoss` 时，输出 logits，标签是一维 `int64`。
+- 训练、验证、测试要分别写清楚，避免数据泄漏。

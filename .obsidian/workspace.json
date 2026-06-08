@@ -11,10 +11,14 @@
             "id": "63611cce6750c79c",
             "type": "leaf",
             "state": {
-              "type": "empty",
-              "state": {},
+              "type": "markdown",
+              "state": {
+                "file": "STM32源笔记/31 滑动窗口滤波.md",
+                "mode": "source",
+                "source": false
+              },
               "icon": "lucide-file",
-              "title": "新标签页"
+              "title": "31 滑动窗口滤波"
             }
           }
         ]
@@ -197,17 +201,22 @@
       "pdf-plus:PDF++: Toggle auto-paste": false
     }
   },
-  "active": "ea4e104d3309e775",
+  "active": "63611cce6750c79c",
   "lastOpenFiles": [
+    "STM32源笔记/30 一阶低通滤波（EMA）.md",
+    "大学物理/大学物理五道题详细解答.md",
+    "大学物理/07 电磁感应.md",
+    "大学物理/06 磁场与磁介质.md",
+    "大学生心理健康教育完整题库.md",
+    "大学物理/05 静电场与电势.md",
+    "程序语言/Python数学建模常用库基础.md",
+    "物理作业.md",
     "心理健康教育.md",
     "高等数学/12 无穷级数.md",
-    "大学物理/06 磁场与磁介质.md",
-    "大学物理/07 电磁感应.md",
     "金工题库整理.md",
     "电路分析/10 非线性元器件与小信号分析.md",
     "大学物理/03 气体动理论.md",
     "大学物理/04 热学.md",
-    "大学物理/05 静电场与电势.md",
     "B站精品/05 人工智能核心原理总结.md",
     "STM32源笔记/00 STM32源笔记总览.md",
     "converted.md",
@@ -220,11 +229,6 @@
     "微分方程3B1B/06 矩阵指数与微分方程.md",
     "微分方程3B1B/05 指数函数几何意义.md",
     "微分方程3B1B/03 热方程的求解方法.md",
-    "微分方程3B1B/02 热方程与偏微分方程.md",
-    "微分方程3B1B/01 微分方程概论.md",
-    "线性代数/线性代数学习笔记.md",
-    "英语/英语六级急救班核心知识手册.md",
-    "PCB设计/10 DCDC降压模块.md",
     "Clippings/subtitle_1780288172732.txt",
     "Clippings/subtitle_1780288176955.txt",
     "Clippings/subtitle_1780288180936.txt",

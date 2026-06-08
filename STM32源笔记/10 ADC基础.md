@@ -48,11 +48,15 @@ STM32F103 的 ADC 时钟上限约为 **14 MHz**，单次最短转换时间约 1�
 
 ### 1.2 电压换算公式
 
-$$V_{in} \approx \frac{ADC\_value}{4095} \times V_{ref}$$
+$$
+V_{\text{in}} \approx \frac{ADC_{\text{value}}}{4095} \times V_{\text{ref}}
+$$
 
 示例：若 ADC 读到 2048，Vref = 3.3V，则：
 
-$$V_{in} \approx \frac{2048}{4095} \times 3.3 \approx 1.65V$$
+$$
+V_{\text{in}} \approx \frac{2048}{4095} \times 3.3 \approx 1.65\ \mathrm{V}
+$$
 
 ---
 

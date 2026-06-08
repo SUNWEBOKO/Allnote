@@ -129,15 +129,23 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef *hadc)
 
 ### 5.1 第一步：ADC → NTC 电阻
 
-$$R_{ntc} = R_{pullup} \times \frac{ADC}{4095 - ADC}$$
+若电路是“上拉电阻接 $V_{\text{ref}}$、NTC 接地”，电阻换算为：
+
+$$
+R_{\text{ntc}} = R_{\text{pullup}} \times \frac{ADC}{4095 - ADC}
+$$
 
 ### 5.2 第二步：电阻 → 温度（Beta 公式）
 
-$$\frac{1}{T(K)} = \frac{1}{T_0} + \frac{\ln(R_{ntc} / R_0)}{B}$$
+$$
+\frac{1}{T_K} = \frac{1}{T_0} + \frac{\ln(R_{\text{ntc}} / R_0)}{B}
+$$
 
-$$T(°C) = T(K) - 273.15$$
+$$
+T_C = T_K - 273.15
+$$
 
-其中 `R0`、`B` 是 NTC 规格书参数，`R_pullup` 是电路上拉电阻。
+其中 $R_0$、$B$ 是 NTC 规格书参数，$R_{\text{pullup}}$ 是电路上拉电阻，$T_K$ 为开尔文温度，$T_C$ 为摄氏温度。
 
 ---
 
@@ -145,9 +153,13 @@ $$T(°C) = T(K) - 273.15$$
 
 固定按 3.3V 换算存在误差（供电波动、线路压降）。利用内部 Vrefint（约 1.2V 基准）反推实际 Vref：
 
-$$V_{ref\_actual} \approx \frac{1.2 \times 4095}{ADC_{vrefint}}$$
+$$
+V_{\text{ref,actual}} \approx \frac{1.2 \times 4095}{ADC_{\text{vrefint}}}
+$$
 
-$$V_{channel} \approx \frac{ADC_{channel}}{4095} \times V_{ref\_actual}$$
+$$
+V_{\text{channel}} \approx \frac{ADC_{\text{channel}}}{4095} \times V_{\text{ref,actual}}
+$$
 
 ---
 
@@ -179,7 +191,7 @@ ADC Continuous + DMA Circular → 数组自动循环更新
 
 ### 温度换算两步
 ```text
-ADC → R_ntc → Beta 公式 → T(°C)
+ADC → $R_{\text{ntc}}$ → Beta 公式 → $T_C$
 ```
 
 ### 电压修正
