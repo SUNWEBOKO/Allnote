@@ -191,7 +191,7 @@ ADC Continuous + DMA Circular → 数组自动循环更新
 
 ### 温度换算两步
 ```text
-ADC → $R_{\text{ntc}}$ → Beta 公式 → $T_C$
+ADC → R_ntc → Beta 公式 → T_C
 ```
 
 ### 电压修正

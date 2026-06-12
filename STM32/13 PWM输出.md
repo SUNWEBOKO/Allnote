@@ -32,7 +32,9 @@ PWM（Pulse Width Modulation，脉冲宽度调制）本质是**固定频率下�
 
 对于 LED、电机等有惯性/积分效应的负载，PWM 可呈现宏观等效电压：
 
-$$V_{avg} \approx V_{high} \times D$$
+$$
+V_{avg} \approx V_{high} \times D
+$$
 
 示例（`V_high = 3.3V`）：
 
@@ -80,9 +82,13 @@ CNT >= CCR  → 输出无效电平（低电平）
 
 ### 3.3 频率与占空比公式
 
-$$f_{pwm} = \frac{f_{tim}}{(PSC + 1) \times (ARR + 1)}$$
+$$
+f_{pwm} = \frac{f_{tim}}{(PSC + 1) \times (ARR + 1)}
+$$
 
-$$Duty = \frac{CCR}{ARR + 1} \quad (\text{PWM1, 上计数, 高有效})$$
+$$
+Duty = \frac{CCR}{ARR + 1} \quad (\text{PWM1, 上计数, 高有效})
+$$
 
 ---
 

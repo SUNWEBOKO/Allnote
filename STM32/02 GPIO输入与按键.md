@@ -35,9 +35,9 @@
 
 开发板 K1 按键的典型电路：
 
-text
-
-3.3V ──\[上拉电阻\]── PB12 ──\[按键\]── GND
+```text
+3.3V ──[上拉电阻]── PB12 ──[按键]── GND
+```
 
 ### 2.2 电平状态
 
@@ -46,10 +46,10 @@ text
 | 松开 | 3.3V 通过上拉电阻到 PB12 | 高电平 |
 | 按下 | PB12 被直接拉到 GND | 低电平 |
 
-text
-
+```text
 K1 松开 → PB12 = 高电平
 K1 按下 → PB12 = 低电平
+```
 
 这种“默认高、按下变低”的结构称为 **上拉输入**。
 
@@ -61,10 +61,10 @@ K1 按下 → PB12 = 低电平
 
 机械按键在接通和断开的瞬间，触点会在几毫秒内多次弹跳，产生一连串高低脉冲。对单片机而言，这足以让程序误判为“按了很多次”。
 
-text
-
-实际按下一次：\_\_\_\_\_\_\_\_/\\/\\/\\\_/\\/\\\_\_/~~\\\_\_\_\_\_\_\_\_\_\_\_
+```text
+实际按下一次：________/\/\/\/\_/\/\_/~~\___________
                    按下    弹跳    稳定
+```
 
 ### 3.2 常用消抖手段
 
@@ -81,17 +81,16 @@ text
 #### 3.2.2 软件延时消抖
 
 最简单的软件消抖方式：检测到电平变化后，延时 20 ms 再次读取，若电平一致则确认按键动作。
-
-c
-
-if (HAL\_GPIO\_ReadPin(KEY\_Port, KEY\_Pin) \== GPIO\_PIN\_RESET)
+```c
+if (HAL_GPIO_ReadPin(KEY_Port, KEY_Pin) == GPIO_PIN_RESET)
 {
-    HAL\_Delay(20);                 // 延时 20ms，等待抖动过去
-    if (HAL\_GPIO\_ReadPin(KEY\_Port, KEY\_Pin) \== GPIO\_PIN\_RESET)
+    HAL_Delay(20);                 // 延时 20ms，等待抖动过去
+    if (HAL_GPIO_ReadPin(KEY_Port, KEY_Pin) == GPIO_PIN_RESET)
     {
         // 确认按键确实按下，执行相应动作
     }
 }
+```
 
 **阻塞问题**：`HAL_Delay(20)` 会完全占用 CPU 长达 20 ms。在这段时间内，主循环无法刷新 OLED、响应串口数据或处理其他传感器。如果主循环本来需要频繁刷新显示，任何阻塞延时都会导致明显的卡顿或数据丢失。因此，软件延时消抖只适合功能极其单一、对实时性几乎无要求的简单实验。
 
@@ -107,40 +106,40 @@ if (HAL\_GPIO\_ReadPin(KEY\_Port, KEY\_Pin) \== GPIO\_PIN\_RESET)
 
 **第 1 层：读取硬件状态**
 
-c
-
-uint8\_t Key\_GetState(void)
+```c
+uint8_t Key_GetState(void)
 {
-    if (HAL\_GPIO\_ReadPin(GPIOB, GPIO\_PIN\_1) \== GPIO\_PIN\_RESET)  return 1;
-    if (HAL\_GPIO\_ReadPin(GPIOA, GPIO\_PIN\_6) \== GPIO\_PIN\_RESET)  return 2;
-    if (HAL\_GPIO\_ReadPin(GPIOA, GPIO\_PIN\_4) \== GPIO\_PIN\_RESET)  return 3;
+    if (HAL_GPIO_ReadPin(GPIOB, GPIO_PIN_1) == GPIO_PIN_RESET)  return 1;
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_6) == GPIO_PIN_RESET)  return 2;
+    if (HAL_GPIO_ReadPin(GPIOA, GPIO_PIN_4) == GPIO_PIN_RESET)  return 3;
     return 0;   // 无按键按下
 }
+```
 
 `Key_GetState()` 只根据当前 GPIO 电平返回按键编号，不做任何延时或判断。它为上层提供纯粹的“此刻硬件状态”。
 
 **第 2 层：定时采样与事件检测**
 
-c
-
-static uint8\_t count;
-static uint8\_t Cur\_State, Pre\_State;
-static uint8\_t Key\_Num;               // 事件缓冲区
-void Key\_Tick(void)
+```c
+static uint8_t count;
+static uint8_t Cur_State, Pre_State;
+static uint8_t Key_Num;               // 事件缓冲区
+void Key_Tick(void)
 {
     count++;
-    if (count \>= 20)                  // 约 20ms 判断一次
+    if (count >= 20)                  // 约 20ms 判断一次
     {
-        count \= 0;
-        Pre\_State \= Cur\_State;        // 记录上一次的状态
-        Cur\_State \= Key\_GetState();   // 读取当前状态
+        count = 0;
+        Pre_State = Cur_State;        // 记录上一次的状态
+        Cur_State = Key_GetState();   // 读取当前状态
         // 检测松手事件：上次有键按下 且 本次无键按下
-        if (Pre\_State != 0 && Cur\_State \== 0)
+        if (Pre_State != 0 && Cur_State == 0)
         {
-            Key\_Num \= Pre\_State;      // 产生一个按键事件
+            Key_Num = Pre_State;      // 产生一个按键事件
         }
     }
 }
+```
 
 `Key_Tick()` 需要被一个周期为 1 ms 的定时器中断调用（见第 4 节的定时器配置）。每进入一次中断，内部计数加 1，每 20 次（即 20 ms）进行一次完整的消抖判断。20 ms 的间隔正好跨过机械触点的弹跳期，因此连续两次采样若出现 `(有键 → 无键)` 的变化，就认为发生了一次稳定、完整的“按下然后松开”动作，并把按键编号存入 `Key_Num`。
 
@@ -149,18 +148,18 @@ void Key\_Tick(void)
 
 **第 3 层：消费事件**
 
-c
-
-uint8\_t Key\_GetNum(void)
+```c
+uint8_t Key_GetNum(void)
 {
-    if (Key\_Num != 0)
+    if (Key_Num != 0)
     {
-        uint8\_t temp \= Key\_Num;
-        Key\_Num \= 0;            // 读取后立即清零，保证事件一次性消费
+        uint8_t temp = Key_Num;
+        Key_Num = 0;            // 读取后立即清零，保证事件一次性消费
         return temp;
     }
     return 0;                   // 无事件
 }
+```
 
 `Key_GetNum()` 在主循环中被频繁调用。有事件时，它返回按键编号并立刻将事件清除；没有事件时，它立即返回 0，不做任何等待。这种“非阻塞”特性使得按键处理可以和 OLED 刷新、串口通信等自由交替执行，互不拖累。
 
@@ -193,9 +192,8 @@ $$
 
 `HAL_GPIO_ReadPin()` 是最基础的 GPIO 输入读取函数：
 
-c
-
-if (HAL\_GPIO\_ReadPin(K1\_GPIO\_Port, K1\_Pin) \== GPIO\_PIN\_RESET)
+```c
+if (HAL_GPIO_ReadPin(K1_GPIO_Port, K1_Pin) == GPIO_PIN_RESET)
 {
     // 按键按下（低电平）
 }
@@ -203,6 +201,7 @@ else
 {
     // 按键松开（高电平）
 }
+```
 
 | 返回值 | 含义 |
 | --- | --- |
@@ -219,16 +218,16 @@ else
 
 当前电平直接决定 LED 状态：
 
-c
-
-if (HAL\_GPIO\_ReadPin(K1\_GPIO\_Port, K1\_Pin) \== GPIO\_PIN\_RESET)
+```c
+if (HAL_GPIO_ReadPin(K1_GPIO_Port, K1_Pin) == GPIO_PIN_RESET)
 {
-    HAL\_GPIO\_WritePin(LED\_GPIO\_Port, LED\_Pin, GPIO\_PIN\_SET);   // 按下 → 亮
+    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_SET);   // 按下 → 亮
 }
 else
 {
-    HAL\_GPIO\_WritePin(LED\_GPIO\_Port, LED\_Pin, GPIO\_PIN\_RESET); // 松开 → 灭
+    HAL_GPIO_WritePin(LED_GPIO_Port, LED_Pin, GPIO_PIN_RESET); // 松开 → 灭
 }
+```
 
 此逻辑不关心消抖细节，即使有抖动，LED 仅短暂闪烁，肉眼难以察觉。
 
@@ -240,16 +239,16 @@ else
 
 最简单的实现是在检测到按下后，执行动作并原地等待松手：
 
-c
-
-if (HAL\_GPIO\_ReadPin(K2\_GPIO\_Port, K2\_Pin) \== GPIO\_PIN\_RESET)
+```c
+if (HAL_GPIO_ReadPin(K2_GPIO_Port, K2_Pin) == GPIO_PIN_RESET)
 {
-    HAL\_GPIO\_TogglePin(LED\_GPIO\_Port, LED\_Pin);                // 翻转一次
-    while (HAL\_GPIO\_ReadPin(K2\_GPIO\_Port, K2\_Pin) \== GPIO\_PIN\_RESET)
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);                // 翻转一次
+    while (HAL_GPIO_ReadPin(K2_GPIO_Port, K2_Pin) == GPIO_PIN_RESET)
     {
         // 死等松手，防止长按连翻
     }
 }
+```
 
 这段代码在功能上是正确的，适合初学理解“边沿”与“电平”的区别。但 `while` 循环会完全阻塞主循环，在按键被按住期间，显示、通信等一切任务都会停止。因此，在 OLED 刷新、串口通信等稍复杂场景中，这种阻塞式等待将酿成严重卡顿。
 
@@ -257,13 +256,13 @@ if (HAL\_GPIO\_ReadPin(K2\_GPIO\_Port, K2\_Pin) \== GPIO\_PIN\_RESET)
 
 配合第 3 节中实现的非阻塞消抖模块，翻转逻辑可以改写为极其轻量的形式：
 
-c
-
-uint8\_t key \= Key\_GetNum();        // 尝试消费一个按键事件
-if (key \== 2)                       // 假设按键2用于翻转
+```c
+uint8_t key = Key_GetNum();        // 尝试消费一个按键事件
+if (key == 2)                       // 假设按键2用于翻转
 {
-    HAL\_GPIO\_TogglePin(LED\_GPIO\_Port, LED\_Pin);
+    HAL_GPIO_TogglePin(LED_GPIO_Port, LED_Pin);
 }
+```
 
 执行逻辑：
 
@@ -310,21 +309,21 @@ if (key \== 2)                       // 假设按键2用于翻转
 
 ### 核心概念
 
-text
-
+```text
 GPIO 输入 = 读外部电路给引脚的电平
 上拉输入：默认高，按下变低
 消抖的核心思路：
   延时法   → 按下后等一会儿再确认
   状态机法 → 由定时中断周期性采样，在稳定后捕捉状态变化
+```
 
 ### 非阻塞消抖三层职责
 
-text
-
-Key\_GetState()  →  读 GPIO 电平（瞬时状态）
-Key\_Tick()      →  定时采样 + 消抖 + 松手检测（在中断中运行）
-Key\_GetNum()    →  消费按键事件（主循环中，不阻塞）
+```text
+Key_GetState()  →  读 GPIO 电平（瞬时状态）
+Key_Tick()      →  定时采样 + 消抖 + 松手检测（在中断中运行）
+Key_GetNum()    →  消费按键事件（主循环中，不阻塞）
+```
 
 ### 核心 API
 
@@ -335,11 +334,11 @@ Key\_GetNum()    →  消费按键事件（主循环中，不阻塞）
 
 ### 按键逻辑口诀
 
-text
-
+```text
 按住亮、松开灭        → 直接读电平
 按一次翻转一次（简单版） → 检测电平变化 + while 等松手
-按一次翻转一次（工程版） → 调用 Key\_GetNum() 消费事件
+按一次翻转一次（工程版） → 调用 Key_GetNum() 消费事件
+```
 
 ### 最重要的一句话
 
