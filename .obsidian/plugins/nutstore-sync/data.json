@@ -9,7 +9,7 @@
   "loginMode": "sso",
   "confirmBeforeSync": true,
   "confirmBeforeDeleteInAutoSync": true,
-  "syncMode": "loose",
+  "syncMode": "strict",
   "filterRules": {
     "exclusionRules": [
       {
@@ -42,7 +42,7 @@
   "skipLargeFiles": {
     "maxSize": "30 MB"
   },
-  "realtimeSync": false,
+  "realtimeSync": true,
   "startupSyncDelaySeconds": 0,
   "autoSyncIntervalSeconds": 300
 }
