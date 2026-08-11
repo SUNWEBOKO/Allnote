@@ -4,21 +4,21 @@
     "type": "split",
     "children": [
       {
-        "id": "d6281926baf2b7fc",
+        "id": "083aa18be9d07bbc",
         "type": "tabs",
         "children": [
           {
-            "id": "31e00f009dcae72e",
+            "id": "062a7622ab6df6fa",
             "type": "leaf",
             "state": {
               "type": "markdown",
               "state": {
-                "file": "电路分析/03 电路基本定理及应用.md",
+                "file": "高等数学/04 一元函数微分学的应用.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "03 电路基本定理及应用"
+              "title": "04 一元函数微分学的应用"
             }
           }
         ]
@@ -41,7 +41,9 @@
               "type": "file-explorer",
               "state": {
                 "sortOrder": "alphabetical",
-                "autoReveal": false
+                "autoReveal": false,
+                "showSearch": false,
+                "searchQuery": ""
               },
               "icon": "lucide-folder-closed",
               "title": "文件列表"
@@ -191,53 +193,54 @@
       "markdown-importer:打开 Markdown 格式转换器": false
     }
   },
-  "active": "ea4e104d3309e775",
+  "active": "062a7622ab6df6fa",
   "lastOpenFiles": [
-    "数学建模/01-解析方法与几何模型.md",
-    "数学建模/00-绪论-走进数学建模的大门.md",
-    "微分方程3B1B/01 微分方程概论.md",
-    "线性代数/线性代数.md",
-    "微分方程3B1B/00 学习路线.md",
-    "英语/考前高频词.md",
-    "大学生心理健康教育完整题库.md",
-    "PCB设计/04 -下单制造.md",
-    "PCB设计/02 - 原理图绘制.md",
-    "PCB设计/01 -课程介绍与软件安装.md",
-    "PCB设计/11 - 阶段总结.md",
-    "PCB设计/10 - DCDC降压模块.md",
-    "PCB设计/09 - 嘉立创SMT下单.md",
-    "PCB设计/08 - 实战充电手电筒.md",
-    "PCB设计/07 -PCB焊接方法.md",
-    "PCB设计/06 -自主设计原理图.md",
-    "PCB设计/05 - STM32最小系统讲解.md",
-    "PCB设计/03 - PCB绘制.md",
-    "pcb绘制/下单制造.md",
-    "pcb绘制/stm32最小系统.md",
-    "pcb绘制/pcb绘制.md",
-    "pcb绘制/原理图绘制.md",
+    "C语言/17-多字节字符与本地化.md",
+    "C语言/16-命令行与环境.md",
+    "C语言/15-多文件工程.md",
+    "C语言/14-文件读写与持久化.md",
+    "C语言/13-预处理与宏.md",
+    "C语言/12-自定义类型.md",
+    "C语言/11-指针与动态内存.md",
+    "C语言/10-输入输出与文本解析.md",
+    "C语言/09-字符串.md",
+    "C语言/08-函数与职责拆分.md",
+    "C语言/07-数组与一组数据.md",
+    "高等数学/01 函数.md",
+    "C语言/06-条件分支与循环.md",
+    "C语言/05-表达式与运算符.md",
+    "C语言/04-数据类型与数值边界.md",
+    "C语言/03-变量作用域与存储属性.md",
+    "C语言/02-程序的基本形状.md",
+    "C语言/01-认识C语言与编译.md",
+    "高等数学/05 一元函数积分学.md",
+    "高等数学/06 一元函数积分学的应用.md",
+    "高等数学/07 常微分方程.md",
+    "C语言/docs/enum.md",
+    "C语言/docs/cli.md",
+    "高等数学/04 一元函数微分学的应用.md",
+    "C语言/docs/specifier.md",
+    "C语言/docs/preprocessor.md",
+    "STM32标准库入门教程/assets/ppt/slide-038.png",
+    "STM32标准库入门教程/assets/ppt/slide-039.png",
+    "STM32标准库入门教程/assets/ppt/slide-040.png",
+    "STM32标准库入门教程/assets/ppt/slide-021.png",
+    "STM32标准库入门教程/assets/ppt/slide-024.png",
+    "STM32标准库入门教程/assets/ppt/slide-017.png",
+    "STM32标准库入门教程/assets/ppt/slide-013.png",
+    "STM32标准库入门教程/assets/ppt/slide-010.png",
+    "STM32标准库入门教程/assets/ppt/slide-007.png",
+    "未命名.base",
+    "STM32标准库入门教程/STM32入门教程.pptx",
+    "未命名.canvas",
+    "STM32HAL库入门教程/image/Pasted image 20260728134020.png",
+    "STM32HAL库入门教程/image",
     "pcb绘制",
-    "数学建模/04-复杂网络与图论模型.md",
-    "数学建模/03-函数极值与规划模型.md",
-    "数学建模/05-进化计算与群体智能.md",
-    "数学建模/06-数据处理与拟合模型.md",
-    "电路分析/img/9da6995fe08df1d33958ccba87b31c30.jpeg",
-    "电路分析/img/0b7177fd9e0734bcba0e791829e38fb6.png",
     "高等数学/11 曲线积分与曲面积分.md.4a12e0b45fa1fcc3016377b309c12e61.tmp",
     "Clippings/subtitle_1780288172732.txt",
     "Clippings/subtitle_1780288176955.txt",
     "Clippings/subtitle_1780288180936.txt",
     "Clippings/subtitle_1780288183193.txt",
-    "Clippings/subtitle_1780288188526.txt",
-    "Clippings/subtitle_1780288192774.txt",
-    "Clippings/subtitle_1780288157440.txt",
-    "Clippings/subtitle_1780288161069.txt",
-    "电路分析/assets/e7d3fc038b71096660fda0750d76268530f4f0476efb0c6e301eb9ca91b7d19a.jpg",
-    "电路分析/assets/b235d4d5966666da684c436c2aa94bb83b8020c9f60bd932ba4e9a0e79d179da.jpg",
-    "电路分析/assets/2652d79b2e7f68dba6ae0893d5db921e0efe79e66d27374d4bb461a5d3a65c0e.jpg",
-    "电路分析/assets/918fe272a05004e8cb42e4b82369fcff8f485afcc5e14fb5a9a88d0555347336.jpg",
-    "电路分析/assets/77d6efceec48e94f1e48696226c176252313ad251592b6569918e83fb612347f.jpg",
-    "电路分析/img/f42373fb45ca1e619a239d1d173f5c16.jpg",
-    "output/imagegen/gpt-image-2-chat-photo.png",
-    "output/imagegen/random-photo.png"
+    "Clippings/subtitle_1780288188526.txt"
   ]
 }

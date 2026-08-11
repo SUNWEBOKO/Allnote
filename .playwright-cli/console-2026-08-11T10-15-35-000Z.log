@@ -1,0 +1,6 @@
+[    2888ms] [LOG] Browser detection: {name: Chrome, version: 151, min: 93} @ https://chat.qwen.ai/s/t_af61085a-86ba-4ca9-a3b4-9cee7fe388a6?fev=0.2.83:57
+[    2889ms] [LOG] Modern features support: true @ https://chat.qwen.ai/s/t_af61085a-86ba-4ca9-a3b4-9cee7fe388a6?fev=0.2.83:57
+[    3254ms] [LOG] Tue Aug 11 2026 18:15:38 GMT+0800 (中国标准时间) @ https://o.alicdn.com/frontend-lib/common-lib/jquery.min.js:0
+[    4022ms] [LOG] %c [APLUS] -- APLUS INIT SUCCESS background:#3B82FE; padding: 4px; padding-right: 8px; border-radius: 4px; color: #fff; @ :1
+[    6058ms] [ERROR] Failed to load resource: the server responded with a status of 401 (Unauthorized) @ https://chat.qwen.ai/api/v1/auths/:0
+[    7029ms] [LOG] Tue Aug 11 2026 18:15:41 GMT+0800 (中国标准时间) @ https://g.alicdn.com/AWSC/et/1.83.41/et_f.js:1

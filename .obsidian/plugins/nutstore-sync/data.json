@@ -4,7 +4,7 @@
   "remoteDir": "",
   "remoteCacheDir": "",
   "useGitStyle": false,
-  "conflictStrategy": "skip",
+  "conflictStrategy": "diff-match-patch",
   "oauthResponseText": "8K-b8NHhVf8AZoJao6VeKDG_avbv0x6pcIFGfUfCs2R5TEZxdFp6IxOkVYx9FpVNteOFBPoro74PejDgBW3emHgavbbqCfu0neRRKLLDg_thd9SdGIempsz-xctAXX_dnFktGVMwr3WgjNPcF9NrcrjsCnFfmNLUsnlLhET9aeOj_58XmQ",
   "loginMode": "sso",
   "confirmBeforeSync": true,
@@ -43,6 +43,7 @@
     "maxSize": "30 MB"
   },
   "realtimeSync": true,
-  "startupSyncDelaySeconds": 0,
-  "autoSyncIntervalSeconds": 300
+  "startupSyncDelaySeconds": 3,
+  "autoSyncIntervalSeconds": 180,
+  "language": "zh"
 }
