@@ -2,6 +2,8 @@
 
 ## 本章闭环
 
+本章的 `6-1` 到 `6-8` 是 8 个独立实验工程。每个工程只加入当前实验对应的 `Hardware`、`System` 和 `User` 文件；不要把多个实验的 `TIM2_IRQHandler()`、`PWM.c` 或 `Encoder.c` 同时加入一个工程，否则会发生重复定义或同一引脚复用冲突。
+
 定时器的核心是一个由时钟驱动的计数器。围绕同一个 `CNT`，STM32 又加入了预分频、自动重装、捕获比较和主从触发等电路，于是得到四类常用功能：
 
 ```text
@@ -203,6 +205,37 @@ void TIM2_IRQHandler(void)
 
 `Number` 同时被中断和主程序访问，应声明为 `volatile`。中断函数应保持简短；OLED 刷屏等耗时操作放在主循环中，只在中断里更新状态。
 
+参考工程目录为 `6-1 定时器定时中断`。加入 `System/Timer.c`、`System/Timer.h`，并在 `User/main.c` 中加入 `OLED.c`、`OLED.h`、`OLED_Font.h` 后，主程序可直接写成：
+
+```c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "Timer.h"
+
+volatile uint16_t Number;
+
+int main(void)
+{
+    OLED_Init();
+    Timer_Init();
+    OLED_ShowString(1, 1, "Num:");
+
+    while (1)
+    {
+        OLED_ShowNum(1, 5, Number, 5);
+    }
+}
+
+void TIM2_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+    {
+        Number++;
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+    }
+}
+```
+
 ### 1.10 实验 `6-2`：定时器外部时钟
 
 本实验把对射式红外传感器的 DO 接到 PA0。PA0 是 TIM2_ETR，外部每产生一个有效边沿，`CNT` 加一；`ARR = 10 - 1` 时，计满 10 次后更新并清零。
@@ -234,6 +267,39 @@ TIM_TimeBaseInit(TIM2, &timeBase);
 ```
 
 `TIM_ExtTRGPSC_OFF` 表示 ETR 不额外分频；`NonInverted` 表示不反相；滤波参数 `0x0F` 适合课程中的机械式/传感器慢脉冲，但会增加延迟并限制最高输入频率。高速、边沿干净的外部时钟应按信号频率重新选择滤波参数。
+
+参考工程目录为 `6-2 定时器外部时钟`。把上面的初始化封装在 `System/Timer.c` 的 `Timer_Init()` 中，并提供 `Timer_GetCounter()`。主程序与参考例程一致：
+
+```c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "Timer.h"
+
+volatile uint16_t Number;
+
+int main(void)
+{
+    OLED_Init();
+    Timer_Init();
+    OLED_ShowString(1, 1, "Num:");
+    OLED_ShowString(2, 1, "CNT:");
+
+    while (1)
+    {
+        OLED_ShowNum(1, 5, Number, 5);
+        OLED_ShowNum(2, 5, Timer_GetCounter(), 5);
+    }
+}
+
+void TIM2_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+    {
+        Number++;
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+    }
+}
+```
 
 ## 2. 输出比较与 PWM
 
@@ -428,6 +494,8 @@ while (1)
 
 这里 `compare` 恰好与百分比相同，是因为 `ARR + 1 = 100`；换成其他 `ARR` 后，`CCR` 不能再直接当成百分比。
 
+参考工程目录为 `6-3 PWM驱动LED呼吸灯`。加入 `Hardware/PWM.c`、`Hardware/PWM.h`、`System/Delay.c`、`System/Delay.h`，并在 `main.c` 中调用 `PWM_Init()`；LED 信号线接 `PA0/TIM2_CH1`。
+
 #### 引脚重映射
 
 TIM2_CH1 默认在 PA0，也可通过 TIM2 部分重映射 1 移到 PA15。PA15 上电默认属于 JTAG，因此还需关闭 JTAG、保留 SWD：
@@ -473,6 +541,41 @@ void Servo_SetAngle(float angle)
 
 实际使用时应先限制角度，再做映射。不同舵机的安全脉宽范围可能小于 0.5~2.5 ms。
 
+参考工程目录为 `6-4 PWM驱动舵机`。完整文件关系为：`Hardware/PWM.c/.h`、`Hardware/Servo.c/.h`、`Hardware/Key.c/.h`、`System/Delay.c/.h`。舵机信号线接 `PA1/TIM2_CH2`，按键接 `PB1`。主程序如下：
+
+```c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "Servo.h"
+#include "Key.h"
+
+uint8_t KeyNum;
+float Angle;
+
+int main(void)
+{
+    OLED_Init();
+    Servo_Init();
+    Key_Init();
+    OLED_ShowString(1, 1, "Angle:");
+
+    while (1)
+    {
+        KeyNum = Key_GetNum();
+        if (KeyNum == 1)
+        {
+            Angle += 30;
+            if (Angle > 180)
+            {
+                Angle = 0;
+            }
+        }
+        Servo_SetAngle(Angle);
+        OLED_ShowNum(1, 7, (uint16_t)Angle, 3);
+    }
+}
+```
+
 ### 2.10 实验 `6-5`：PWM 驱动直流电机
 
 PA2 对应 TIM2_CH3；PA4、PA5 作为方向控制输出。课程将 `ARR = 100 - 1`、`PSC = 36 - 1`，得到 20 kHz PWM，既保留 1% 分辨率，又把开关声移到大多数人可听范围上限附近。
@@ -509,6 +612,41 @@ void Motor_SetSpeed(int8_t speed)
 ```
 
 接口约定 `speed` 为 `-100~100`：符号控制方向，绝对值控制占空比。调用者应先限幅，避免把超范围或 `INT8_MIN` 传入该函数。
+
+参考工程目录为 `6-5 PWM驱动直流电机`。加入 `Hardware/PWM.c/.h`、`Hardware/Motor.c/.h`、`Hardware/Key.c/.h`、`System/Delay.c/.h`。`PWMA` 接 `PA2/TIM2_CH3`，方向控制接 `PA4`、`PA5`，TB6612 的 `STBY` 必须拉高，逻辑地与 STM32 共地。主程序如下：
+
+```c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "Motor.h"
+#include "Key.h"
+
+uint8_t KeyNum;
+int8_t Speed;
+
+int main(void)
+{
+    OLED_Init();
+    Motor_Init();
+    Key_Init();
+    OLED_ShowString(1, 1, "Speed:");
+
+    while (1)
+    {
+        KeyNum = Key_GetNum();
+        if (KeyNum == 1)
+        {
+            Speed += 20;
+            if (Speed > 100)
+            {
+                Speed = -100;
+            }
+        }
+        Motor_SetSpeed(Speed);
+        OLED_ShowSignedNum(1, 7, Speed, 3);
+    }
+}
+```
 
 ## 3. 输入捕获与 PWMI
 
@@ -671,6 +809,31 @@ uint32_t IC_GetFreq(void)
 
 课程配套源码使用 `1000000 / (CCR1 + 1)`，用于修正自测时观察到的固定一计数偏差。这个 `+1` 不是输入捕获的通用公式：边沿与计数时钟的相位、同步电路和读取方式都可能改变误差方向。测外部信号时应保留原始捕获值，用已知频率校准后再决定是否补偿。
 
+参考工程目录为 `6-6 输入捕获模式测频率`。工程中同时加入 `Hardware/PWM.c/.h` 与 `Hardware/IC.c/.h`：`PA0/TIM2_CH1` 输出测试 PWM，用导线接到 `PA6/TIM3_CH1` 输入。主程序如下：
+
+```c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "PWM.h"
+#include "IC.h"
+
+int main(void)
+{
+    OLED_Init();
+    PWM_Init();
+    IC_Init();
+
+    OLED_ShowString(1, 1, "Freq:00000Hz");
+    PWM_SetPrescaler(720 - 1);
+    PWM_SetCompare1(50);
+
+    while (1)
+    {
+        OLED_ShowNum(1, 6, IC_GetFreq(), 5);
+    }
+}
+```
+
 ### 3.8 实验 `6-7`：PWMI 测频率和占空比
 
 把单通道初始化替换为 PWMI 快捷配置，其余触发源和 Reset 从模式保持不变：
@@ -703,6 +866,33 @@ uint32_t IC_GetDuty(void)
     uint16_t period = TIM_GetCapture1(TIM3);
     uint16_t high = TIM_GetCapture2(TIM3);
     return period == 0 ? 0 : (uint32_t)high * 100 / period;
+}
+```
+
+参考工程目录为 `6-7 PWMI模式测频率占空比`。接线与 `6-6` 相同，主程序只需把显示改为频率和占空比两行：
+
+```c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "PWM.h"
+#include "IC.h"
+
+int main(void)
+{
+    OLED_Init();
+    PWM_Init();
+    IC_Init();
+
+    OLED_ShowString(1, 1, "Freq:00000Hz");
+    OLED_ShowString(2, 1, "Duty:00%");
+    PWM_SetPrescaler(720 - 1);
+    PWM_SetCompare1(50);
+
+    while (1)
+    {
+        OLED_ShowNum(1, 6, IC_GetFreq(), 5);
+        OLED_ShowNum(2, 6, IC_GetDuty(), 2);
+    }
 }
 ```
 
@@ -808,6 +998,39 @@ void Encoder_Init(void)
 
     TIM_SetCounter(TIM3, 0);
     TIM_Cmd(TIM3, ENABLE);
+}
+```
+
+参考工程目录为 `6-8 编码器接口测速`。加入 `Hardware/Encoder.c/.h`、`System/Timer.c/.h`，编码器 A/B 相分别接 `PA6/TIM3_CH1`、`PA7/TIM3_CH2`。TIM2 每 1 s 产生一次更新中断，主程序如下：
+
+```c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "Timer.h"
+#include "Encoder.h"
+
+volatile int16_t Speed;
+
+int main(void)
+{
+    OLED_Init();
+    Timer_Init();
+    Encoder_Init();
+    OLED_ShowString(1, 1, "Speed:");
+
+    while (1)
+    {
+        OLED_ShowSignedNum(1, 7, Speed, 5);
+    }
+}
+
+void TIM2_IRQHandler(void)
+{
+    if (TIM_GetITStatus(TIM2, TIM_IT_Update) == SET)
+    {
+        Speed = Encoder_Get();
+        TIM_ClearITPendingBit(TIM2, TIM_IT_Update);
+    }
 }
 ```
 

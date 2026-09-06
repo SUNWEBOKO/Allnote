@@ -1,24 +1,47 @@
 # 第 4 章 OLED 调试显示
 
-
 ## 本章闭环
 
-把 OLED 当作调试终端，显示字符串、十进制数、十六进制数和二进制数。此章重点是调用现成模块，不要求立即重写 OLED 底层驱动。
-
-![OLED 模块](../assets/ppt/slide-038.png)
+把 OLED 当作调试终端，完成一次“接线 -> 加入驱动 -> 编译下载 -> 显示数据”的最小闭环。课程示例使用 0.96 寸四针 I2C OLED，驱动为 GPIO 模拟 I2C。
 
 ## 1. 硬件连接
 
-课程主要使用四针 I2C OLED：`GND`、`VCC`、`SCL`、`SDA`。课程驱动用 GPIO 模拟 I2C，具体引脚以驱动文件和接线图为准；不要仅凭模块丝印猜测。
+本章使用四针 I2C OLED：
 
-![四针与七针 OLED 接口](../assets/ppt/slide-039.png)
+| OLED | STM32F103C8T6 | 说明 |
+| --- | --- | --- |
+| GND | GND | 必须共地 |
+| VCC | 3.3V | 不要直接接 5V，除非模块明确支持 |
+| SCL | PB8 | 课程 `OLED.c` 的时钟线 |
+| SDA | PB9 | 课程 `OLED.c` 的数据线 |
+
+课程驱动在 `OLED.c` 中通过开漏输出模拟 I2C，不使用 STM32 的硬件 I2C 外设。若你的模块是 7 针 SPI 版本，必须改用资料中的 `7针脚SPI版本` 驱动，不能只改接线。
+
+![OLED 模块](../assets/ppt/slide-038.png)
 
 ## 2. 加入工程
 
-1. 将对应版本的 `OLED.c`、`OLED.h`、`OLED_Font.h` 复制到 `Hardware`。
-2. 把 `OLED.c` 加入 Keil 的 `Hardware` Group。
-3. 把 `Hardware` 加入 Include Paths。
+从参考资料 `程序源码\STM32Project-无注释版\1-4 OLED驱动函数模块\4针脚I2C版本` 复制三个文件到工程的 `Hardware` 目录：
+
+```text
+OLED.c
+OLED.h
+OLED_Font.h
+```
+
+然后在 Keil 中：
+
+1. 把 `OLED.c` 加入 `Hardware` Group。
+2. 把 `Hardware` 目录加入 Include Paths。
+3. 确认 `OLED_Font.h` 与 `OLED.c` 在同一目录，或把它所在目录加入 Include Paths。
 4. 在 `main.c` 中包含 `OLED.h`。
+
+> [!important]
+> 只添加 `OLED.h` 不能完成链接；`OLED.c` 必须加入工程。`OLED_Font.h` 没有单独的函数，但缺失会导致字模数组未定义。
+
+## 3. 第一个可运行例程
+
+新建 `User/main.c`，直接使用下面的完整代码。它与参考工程 `4-1 OLED显示屏/User/main.c` 的显示内容一致：
 
 ```c
 #include "stm32f10x.h"
@@ -27,41 +50,59 @@
 int main(void)
 {
     OLED_Init();
-    OLED_ShowString(1, 1, "STM32");
-    OLED_ShowNum(2, 1, 12345, 5);
-    OLED_ShowHexNum(3, 1, 0xA55A, 4);
 
-    while (1) {}
+    OLED_ShowChar(1, 1, 'A');
+    OLED_ShowString(1, 3, "HelloWorld!");
+    OLED_ShowNum(2, 1, 12345, 5);
+    OLED_ShowSignedNum(2, 7, -66, 2);
+    OLED_ShowHexNum(3, 1, 0xAA55, 4);
+    OLED_ShowBinNum(4, 1, 0xAA55, 16);
+
+    while (1)
+    {
+    }
 }
 ```
 
-![OLED 常用驱动函数](../assets/ppt/slide-040.png)
+下载后应看到：第 1 行显示 `A HelloWorld!`，第 2 行显示 `12345` 和带符号数，第 3 行显示十六进制，第 4 行显示 16 位二进制。
 
-## 3. 坐标和数字长度
+## 4. 驱动函数与坐标
 
-课程字符库通常按 4 行、每行 16 个半角字符组织，行列从 1 开始。`OLED_ShowNum(Line, Column, Number, Length)` 的 `Length` 是固定显示位数，不是数值本身长度；位数不足通常补 0，位数过小会截断高位。
+课程驱动的字符坐标从 1 开始：4 行、每行最多 16 个半角字符。常用接口如下：
 
-显示有符号量用 `OLED_ShowSignedNum()`；查看寄存器、地址和通信数据用十六进制；检查单个位时用二进制显示最直观。
+| 函数 | 参数含义 | 示例 |
+| --- | --- | --- |
+| `OLED_ShowChar` | 行、列、单个 ASCII 字符 | `OLED_ShowChar(1, 1, 'A');` |
+| `OLED_ShowString` | 行、起始列、ASCII 字符串 | `OLED_ShowString(1, 3, "STM32");` |
+| `OLED_ShowNum` | 行、列、无符号数、固定位数 | `OLED_ShowNum(2, 1, 123, 5);` |
+| `OLED_ShowSignedNum` | 行、列、带符号数、数字位数 | `OLED_ShowSignedNum(2, 7, -66, 2);` |
+| `OLED_ShowHexNum` | 行、列、十六进制数、固定位数 | `OLED_ShowHexNum(3, 1, 0xA55A, 4);` |
+| `OLED_ShowBinNum` | 行、列、二进制数、固定位数 | `OLED_ShowBinNum(4, 1, 0x55, 8);` |
 
-## 4. OLED 的调试价值
+`Length` 是显示位数，不是数值的实际位数。位数不足时会在左侧补 `0`；位数过小时只显示低位。例如 `OLED_ShowNum(1, 1, 12345, 3)` 只显示 `345`。
 
-调试不是“最终能显示就行”，而是让看不见的状态可观察。例如：
+## 5. 把 OLED 接入后续实验
+
+OLED 适合作为状态观察窗口。推荐只更新变化区域：
 
 ```c
-OLED_ShowNum(1, 1, ADC_Value, 4);
-OLED_ShowSignedNum(2, 1, Speed, 5);
-OLED_ShowHexNum(3, 1, StatusReg, 2);
+OLED_ShowString(1, 1, "ADC:");
+OLED_ShowNum(1, 6, ADC_Value, 4);
+OLED_ShowHexNum(2, 1, StatusReg, 2);
 ```
 
-主循环频繁全屏清除会闪烁，应只更新变化区域。中断函数中不要执行完整 OLED 刷新：软件 I2C 慢且阻塞，应在中断中只更新变量，主循环再显示。
+不要在中断函数中调用 `OLED_Clear()` 或整屏刷新。当前驱动是软件 I2C，刷新过程较慢且会阻塞；中断中只更新计数器或标志位，主循环再把变量显示出来。
 
-## 5. 常见故障
+## 6. 验收与排错
 
-- 全黑：先查供电、共地、接口版本和 SCL/SDA 引脚。
-- 显示乱码：驱动与屏幕控制器/地址不匹配，或 `OLED_Font.h` 未加入。
-- 编译链接错误：只包含头文件但没有把 `OLED.c` 加入工程。
-- 运行后卡顿：在高频循环或中断中大量刷新。
+| 现象 | 优先检查 |
+| --- | --- |
+| 全黑 | VCC/GND、PB8/PB9、I2C 版本、模块是否需要上拉 |
+| 编译找不到 `OLED.h` | Include Paths 是否包含 `Hardware` |
+| 链接找不到 `OLED_Init` | `OLED.c` 是否已加入 Keil 工程 |
+| 显示乱码 | `OLED_Font.h` 是否存在，驱动与控制器是否匹配 |
+| 画面闪烁或程序卡顿 | 是否在高频循环中反复 `OLED_Clear()`，是否在 ISR 中刷新 |
 
 ## 本章小结
 
-OLED 是后续章节的观察窗口。先保证驱动模块独立通过，再把它接入其他实验；出现问题时才能判断故障来自显示模块还是被测外设。
+先用 `4-1 OLED显示屏` 的完整例程确认 PB8/PB9 和驱动文件没有问题，再把 OLED 作为第 5~7 章的观察窗口。这样后续实验出现异常时，可以先排除显示模块本身的问题。

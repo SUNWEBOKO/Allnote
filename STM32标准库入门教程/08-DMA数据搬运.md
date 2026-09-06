@@ -1,269 +1,293 @@
 # 第 8 章 DMA 数据搬运
 
+## 学习目标与前置知识
+
+学完本章后，你应能：
+
+- 用“源地址、目的地址、数据宽度、地址自增、传输次数、触发方式”推导 DMA 配置；
+- 区分存储器到存储器复制、外设到存储器采集和存储器到外设发送；
+- 使用 STM32F10x 标准外设库完成一次性 DMA 复制；
+- 使用 ADC 扫描模式和 DMA 循环模式连续保存多路采样结果；
+- 根据“无数据、数据覆盖、结果错位、重复启动失败”等现象定位问题。
+
+默认平台为课程使用的 `STM32F103C8T6`，标准外设库为 `STM32F10x_StdPeriph_Lib_V3.5.0`，系统时钟为 `72MHz`。开始前应已掌握 GPIO、OLED、ADC 单通道和 ADC 多通道配置，尤其要理解：**ADC 规则组可以连续转换多个通道，但只有一个规则组数据寄存器 `ADC1->DR`。**
+
 ## 本章闭环
 
-DMA 按固定规则在两个地址之间搬运数据，让 CPU 不必逐项执行读写。本章完成两个实验：
+DMA（Direct Memory Access，直接存储器访问）按照预先配置的规则，在两个地址之间自动搬运数据。CPU 只负责初始化、启动或处理完成事件，不必逐个执行读写指令。
 
-| 工程 | 数据路径 | 触发方式 |
-| --- | --- | --- |
-| `8-1 DMA数据转运` | `DataA[] -> DMA1_Channel1 -> DataB[]` | 存储器到存储器，软件启动 |
-| `8-2 DMA+AD多通道` | `ADC1->DR -> DMA1_Channel1 -> AD_Value[]` | ADC 转换完成产生硬件请求 |
+本章使用课程资料中的两个工程：
 
-配置始终围绕六个问题展开：从哪里读、写到哪里、一次搬多宽、地址是否自增、搬多少次、由谁触发。理解这条主线后，存储器复制和 ADC 扫描只是两组不同参数。
+| 工程 | 数据路径 | 触发方式 | 运行结果 |
+| --- | --- | --- | --- |
+| `8-1 DMA数据转运` | `DataA[] -> DMA1_Channel1 -> DataB[]` | 软件触发 | 启动后，`DataB[]` 复制出 `DataA[]` 的内容 |
+| `8-2 DMA+AD多通道` | `ADC1->DR -> DMA1_Channel1 -> AD_Value[]` | ADC 硬件请求 | ADC 连续扫描 `PA0~PA3`，数组持续刷新四路结果 |
 
-## 1. DMA 简介
+DMA 的所有配置都可以还原成六个问题：
 
-DMA 是 **Direct Memory Access**，即直接存储器访问（或直接存储器存取）。它是协助 CPU 搬运数据的外设，可以在不让 CPU 逐项参与的情况下完成：
+1. 从哪里读？
+2. 写到哪里？
+3. 一次搬运多少位？
+4. 搬运后地址是否移动？
+5. 一共搬运多少次？
+6. 由软件启动，还是等待外设请求？
 
-- 外设寄存器 $leftrightarrow$ SRAM；
-- Flash/SRAM $leftrightarrow$ SRAM（存储器到存储器）。
+后文每个配置项都围绕这六个问题展开。
 
-这里的“外设”通常指外设的数据寄存器（`DR`，Data Register），例如 `ADC1->DR`、串口数据寄存器；“存储器”通常指运行内存 SRAM 和程序存储器 Flash。搬运期间 CPU 可以处理别的任务。
+## 1. DMA 解决什么问题
 
-STM32F103C8T6 只有 `DMA1`，包含 7 个通道；带有 DMA2 的型号才会额外拥有 DMA2 的 5 个通道。通道可以看作独立的数据通路：不同通道可分别配置不同的源地址、目的地址和触发源。
+### 1.1 CPU 搬运与 DMA 搬运
 
-### 1.1 软件触发与硬件触发
+不用 DMA 时，CPU 通常需要反复执行“读取数据、判断状态、写入数据”的循环。例如 ADC 连续采样时，CPU 必须及时读取 `ADC1->DR`，再把结果写入数组。如果转换速度较快，CPU 会被大量重复的数据搬运工作占用。
 
-- **软件触发**：适合 Flash/SRAM 之间的整批复制。启动后 DMA 尽快连续搬运，直到传输计数器减到 0。
-- **硬件触发**：适合外设数据。外设在“一个数据准备好”的时刻发出 DMA 请求，DMA 响应一次、搬运一次。例如 ADC 转换完成、串口收到一个字节、定时器事件到来。
+使用 DMA 后，数据通路变为：
 
-硬件触发源是“特定”的：每个外设请求连接到固定 DMA 通道，不能随意换通道。以 F103 为例，`ADC1` 的 DMA 请求连接到 `DMA1_Channel1`。
-
-## 2. STM32 的存储器映射
-
-DMA 访问的是地址。理解地址区间，才能理解“数组在哪”“寄存器在哪”以及 DMA 从哪里读、向哪里写。
-
-![STM32 存储器映射](assets/ppt/slide-103.png)
-
-### 2.1 ROM 与 RAM
-
-STM32 的地址空间按用途可分为 ROM（掉电不丢失）和 RAM（掉电丢失）。主要区域如下：
-
-| 区域 | 起始地址 | 作用 |
-| --- | --- | --- |
-| 主 Flash | `0x08000000` | 存放编译后的程序代码和常量 |
-| 系统存储器 | `0x1FFFF000` 附近（具体边界以芯片手册为准） | 出厂 Bootloader，支持系统 Bootloader 下载 |
-| 选项字节 | `0x1FFFF800` 附近（具体边界以芯片手册为准） | 写保护、看门狗等配置 |
-| SRAM | `0x20000000` | 运行时变量、数组、结构体 |
-| 外设寄存器 | `0x40000000` | GPIO、ADC、DMA 等外设寄存器 |
-| 内核外设 | `0xE0000000` | NVIC、SysTick 等 Cortex-M3 内核外设 |
-
-F103 的地址是 32 位，理论寻址空间为 4 GB；其中大量区间是保留地址。地址 `0x00000000` 是别名区，实际映射到 Flash、系统存储器或 SRAM，映射关系由 `BOOT0/BOOT1` 决定。
-
-普通变量由编译器放入 SRAM，地址通常以 `0x2000...` 开头；`const` 修饰的只读数据通常放在 Flash，地址通常以 `0x0800...` 开头：
-
-```c
-uint8_t a = 0x66;          // 通常位于 SRAM，可读写
-const uint8_t table[] = {  // 通常位于 Flash，只读
-    0x01, 0x02, 0x03, 0x04
-};
+```text
+数据源 -> DMA -> 数据目的地
+             ^
+             |
+       软件启动或外设请求
 ```
 
-Flash 通过总线直接访问时只能读不能写，因此 DMA 的目的地址不能直接填写 Flash 区域。Flash 写入需要 Flash 接口控制器先擦除、再编程，这属于另一章内容。SRAM 可正常读写；外设寄存器是否可读写要以参考手册为准，数据寄存器通常是 DMA 的实际读写对象。
+DMA 不是处理算法，它只负责按规则复制数据。滤波、换算、协议解析仍由 CPU 或其他处理单元完成。
 
-### 2.2 寄存器也是一种存储器
+常见数据路径包括：
 
-外设寄存器本质上也是映射到地址空间的一组存储单元。软件读写寄存器，就等于通过地址控制硬件电路：寄存器的位可能连接到引脚、开关、数据选择器或计数器。
+- 外设寄存器 -> SRAM：ADC 采样、串口接收、SPI 接收；
+- SRAM -> 外设寄存器：串口发送、SPI 发送；
+- Flash/SRAM -> SRAM：数组复制、查找表搬运。
 
-标准库用“结构体 + 基地址”访问寄存器。例如 `ADC1` 是指向 ADC 外设结构体的指针，`ADC1->DR` 等价于“ADC1 基地址 + DR 偏移”。F103 中：
+### 1.2 软件触发与硬件触发
 
-```c
-// ADC1 基地址 0x40012400，DR 偏移 0x4C
-// ADC1->DR 的实际地址为 0x4001244C
-```
+- **软件触发**：适合一次性存储器复制。调用启动函数后，DMA 连续搬运，直到传输计数器归零。
+- **硬件触发**：适合外设数据。外设每准备好一个数据，就发出一次 DMA 请求，DMA 响应一次并搬运一个数据单元。
 
-也可以直接用物理地址访问（实际工程优先使用库定义）：
+硬件请求不是任意连接的。STM32F103C8T6 的 `ADC1` DMA 请求连接到 `DMA1_Channel1`，因此 ADC1 不能随意改用 DMA1 的其他通道。使用其他外设时，应先查参考手册中的 DMA 请求映射表。
 
-```c
-#define ADC1_DR_ADDR  ((uint32_t)0x4001244C)
-uint32_t value = *(__IO uint32_t *)ADC1_DR_ADDR;
-```
+## 2. STM32F103 的 DMA 结构
 
-## 3. DMA 框图与工作参数
+STM32F103C8T6 具有 `DMA1`，包含 7 个通道。部分容量或封装型号还具有 `DMA2`，但本章两个工程只使用 `DMA1_Channel1`。
 
 ![DMA 基本结构](assets/ppt/slide-103.png)
 
-DMA 与 CPU 都是总线矩阵的主动单元，可以访问右侧的 Flash、SRAM 和外设寄存器。DMA 自己的配置寄存器挂在 AHB 总线上，CPU 通过 AHB 写入这些寄存器；外设通过 DMA 请求线提供硬件触发。
+阅读图时抓住三条数据关系：
 
-DMA1 有 7 个通道，但 DMA 总线只有一条，多个通道需要分时复用。通道冲突由仲裁器按优先级处理；CPU 与 DMA 同时争用总线时，仲裁器会保证 CPU 仍能获得一定的总线带宽。
+1. 左侧“外设站点”和右侧“存储器站点”各自保存一个起始地址、数据宽度和地址自增设置；
+2. 传输计数器决定还要搬运多少个数据单元；
+3. `M2M` 和硬件触发共同决定传输由谁启动。
 
-### 3.1 两个站点的三个参数
+图中的“外设站点”是 DMA 结构体中的命名，不表示该地址一定属于外设。`8-1 DMA数据转运` 把 SRAM 中的 `DataA` 填入外设站点，只是为了配合 `DMA_DIR_PeripheralSRC` 表示“外设站点是源”；它仍然是一个 SRAM 地址。
 
-STM32 手册通常把 DMA 两端称为“外设站点”和“存储器站点”。它们各有三个参数：
+### 2.1 DMA 通道与仲裁
 
-1. **起始地址**：从哪里读、写到哪里；
-2. **数据宽度**：一次搬运 8 位（Byte）、16 位（HalfWord）还是 32 位（Word）；
-3. **地址是否自增**：一次搬运完成后，地址是否移动到下一个数据单元。
+每个 DMA 通道有独立的配置寄存器和传输计数器，可以连接规定的硬件请求。多个通道同时请求总线时，由 DMA 控制器按优先级仲裁：
 
-“外设站点”只是 DMA 结构中的名称，并不限制地址必须是寄存器。做 SRAM 到 SRAM 复制时，可以把源数组地址填到外设站点，把目标数组地址填到存储器站点；也可以反过来，同时反转方向参数。
-
-![DMA 数据宽度与地址自增](assets/ppt/slide-105.png)
-
-典型选择：
-
-- 数组逐项复制：两端宽度相同，两端地址都自增；
-- ADC 扫描：外设地址为 `ADC1->DR`，不自增；SRAM 数组地址自增；两端通常都用半字。
-
-### 3.2 传输计数器与自动重装
-
-传输计数器决定总共搬运多少个“数据单元”。每搬运一次，计数器减 1；减到 0 后，正常模式停止。
-
-- `DMA_Mode_Normal`：搬运一轮后停止，适合一次数组复制或 ADC 单次扫描；
-- `DMA_Mode_Circular`：计数器归零后自动恢复初值，适合 ADC 连续扫描。
-
-地址在一轮传输结束时也会回到起始位置，便于循环模式开始下一轮。
-
-### 3.3 触发、开关和启动条件
-
-`DMA_M2M` 决定触发方式：
-
-- `DMA_M2M_Enable`：存储器到存储器，使用软件触发；
-- `DMA_M2M_Disable`：使用外设硬件请求触发。
-
-启动一次传输必须同时满足三个条件：
-
-1. 通道已使能（`DMA_Cmd(channel, ENABLE)`）；
-2. 传输计数器大于 0；
-3. 触发源已经产生请求。
-
-正常模式传输完成后，若要再次启动，必须按手册要求执行：**先关闭 DMA，再写传输计数器，最后重新使能 DMA**。
-
-### 3.4 DMA 请求与通道映射
-
-![DMA 请求映射](assets/ppt/slide-107.png)
-
-每个 DMA 通道都可由软件触发，也连接到一个或多个特定硬件请求。以 DMA1 为例，`DMA1_Channel1` 可响应 `ADC1` 请求；其他定时器、串口请求分别连接到各自规定的通道。使用硬件触发时，先查芯片参考手册的 DMA 请求映射表，再选择通道。
-
-同一通道的硬件请求由对应外设的 DMA 输出使能函数打开，例如：
-
-```c
-ADC_DMACmd(ADC1, ENABLE);  // 打开 ADC1 -> DMA 的请求输出
+```text
+CPU / DMA 通道
+      |
+   总线仲裁
+      |
+Flash、SRAM、外设寄存器
 ```
 
-通道优先级有 `VeryHigh`、`High`、`Medium`、`Low` 四级；只有多个通道同时工作时，优先级才明显影响仲裁。
+优先级有 `VeryHigh`、`High`、`Medium` 和 `Low` 四级。只有多个通道同时活动时，优先级才会明显影响等待顺序；它不会改变单个通道的数据内容。
 
-### 3.5 数据宽度不一致时的对齐
+### 2.2 地址空间与可访问性
 
-两端宽度相同，数据按一个个数据单元正常搬运。宽度不一致时：
+DMA 读写的是地址。对本章实验最重要的区域是：
 
-- 小宽度搬到大宽度：高位补 0；
-- 大宽度搬到小宽度：高位被舍弃，只保留低位。
+| 区域 | 常见地址前缀 | 典型内容 | DMA 使用提示 |
+| --- | --- | --- | --- |
+| 主 Flash | `0x0800...` | 程序代码、只读常量 | 通常可读，不能像 SRAM 一样直接写入 |
+| SRAM | `0x2000...` | 普通变量、数组、堆栈 | 可读写，是 DMA 目标数组的主要位置 |
+| 外设寄存器 | `0x4000...` | GPIO、ADC、USART 等寄存器 | 读写属性必须以参考手册为准 |
 
-这与 C 语言中 `uint8_t`、`uint16_t`、`uint32_t` 之间赋值时的扩展和截断类似。若不希望出现隐式补零或截断，两个站点应选择相同的数据宽度。
+普通全局数组通常位于 SRAM；`const` 数组通常位于 Flash。课程工程中可以把数组地址显示到 OLED 上观察其地址前缀，但具体地址由链接脚本、编译器和工程配置决定，不能只凭前缀推断所有存储属性。
 
-## 4. 两个任务的参数推导
+外设寄存器也是映射到地址空间的存储单元。例如：
 
-### 4.1 SRAM 数组 `DataA -> DataB`
+```c
+ADC1->DR
+```
 
-任务：把 SRAM 中的 `DataA` 复制到 `DataB`。
+表示访问 ADC1 数据寄存器。课程芯片中 ADC1 基地址为 `0x40012400`，`DR` 偏移为 `0x4C`，因此：
 
-![数组转运](assets/ppt/slide-106.png)
+$$
+\text{ADC1->DR 地址}=0x40012400+0x4C=0x4001244C
+$$
 
-| 参数 | 配置 | 原因 |
+实际工程应优先使用 `&ADC1->DR` 和库定义，不要手写物理地址。
+
+## 3. DMA 的六个核心参数
+
+### 3.1 两个站点：地址、宽度和自增
+
+STM32 标准库用“外设站点”和“存储器站点”描述 DMA 两端。每一端都要配置：
+
+1. 起始地址；
+2. 数据宽度；
+3. 地址是否自增。
+
+![数据宽度与对齐](assets/ppt/slide-105.png)
+
+数据宽度决定一次传输的数据单元，可以是：
+
+- `Byte`：8 位；
+- `HalfWord`：16 位；
+- `Word`：32 位。
+
+地址自增决定下一次传输访问哪个地址：
+
+- **使能自增**：传输完成后移动到下一个数据单元，适合数组；
+- **关闭自增**：每次都访问同一个地址，适合 `ADC1->DR`、USART 数据寄存器等固定寄存器。
+
+典型选择如下：
+
+| 场景 | 源地址 | 目的地址 | 源自增 | 目的自增 | 宽度 |
+| --- | --- | --- | --- | --- | --- |
+| `uint8_t` 数组复制 | 移动 | 移动 | 开 | 开 | Byte |
+| ADC 扫描采集 | 固定 `ADC1->DR` | 移动数组 | 关 | 开 | HalfWord |
+| USART 连续发送 | 移动数组 | 固定 `USARTx->DR` | 开 | 关 | 通常 Byte |
+
+两端宽度最好保持一致。若宽度不一致，DMA 会按硬件规则扩展或截断数据，初学阶段容易得到难以解释的结果。
+
+### 3.2 方向与传输次数
+
+`DMA_DIR_PeripheralSRC` 表示“外设站点是源”，数据从外设站点流向存储器站点。这里的“外设站点”可以实际填 SRAM 地址。
+
+传输计数器记录的是**数据单元的个数**，不是总字节数：
+
+- Byte 宽度、数组长度为 4：传输次数为 4，总计 4 字节；
+- HalfWord 宽度、四路 ADC：传输次数为 4，总计 8 字节。
+
+当计数器减到 0 时：
+
+- `DMA_Mode_Normal`：本轮停止；
+- `DMA_Mode_Circular`：自动恢复初始计数，进入下一轮。
+
+循环模式只重装计数器和地址，不会为数组生成额外的“新副本”。DMA 继续写入同一块缓冲区，因此 CPU 读取数组时必须考虑数据可能正在更新。
+
+### 3.3 `M2M`、通道使能与外设请求
+
+`DMA_M2M` 的含义是存储器到存储器：
+
+- `DMA_M2M_Enable`：使用软件触发，适合 `DataA -> DataB`；
+- `DMA_M2M_Disable`：等待外设硬件请求，适合 `ADC1->DR -> AD_Value[]`。
+
+启动一次 DMA 传输还必须满足：
+
+1. DMA 时钟已开启；
+2. 通道配置有效；
+3. 传输计数器大于 0；
+4. 通道已使能；
+5. 使用硬件触发时，外设的 DMA 请求输出已开启。
+
+以 ADC 为例，`DMA_Cmd(DMA1_Channel1, ENABLE)` 只打开 DMA 通道，`ADC_DMACmd(ADC1, ENABLE)` 才打开 ADC1 发往 DMA 的请求输出；两者缺一不可。
+
+## 4. 从任务反推配置
+
+### 4.1 SRAM 数组复制
+
+任务：把 `DataA[0]` 到 `DataA[3]` 复制到 `DataB[0]` 到 `DataB[3]`。
+
+![数据转运 + DMA](assets/ppt/slide-106.png)
+
+先写出数据关系：
+
+```text
+DataA[0] -> DataB[0]
+DataA[1] -> DataB[1]
+DataA[2] -> DataB[2]
+DataA[3] -> DataB[3]
+```
+
+因此参数为：
+
+| 参数 | 配置 | 推导理由 |
 | --- | --- | --- |
-| 外设站点地址 | `DataA` 首地址 | 把 DataA 当作源 |
-| 存储器站点地址 | `DataB` 首地址 | 把 DataB 当作目的地 |
-| 两端宽度 | Byte | 数组元素是 `uint8_t` |
-| 两端地址 | 都自增 | `A[0]->B[0]`、`A[1]->B[1]`… |
+| 外设站点地址 | `DataA` | 把源数组放在外设站点 |
+| 存储器站点地址 | `DataB` | 目的数组位于 SRAM |
+| 外设站点宽度 | Byte | 元素类型是 `uint8_t` |
+| 存储器站点宽度 | Byte | 两端宽度一致 |
+| 两端地址自增 | Enable | 每次移动到下一个数组元素 |
 | 方向 | `DMA_DIR_PeripheralSRC` | 外设站点是源 |
-| 传输次数 | 数组长度 | 每个字节搬一次 |
+| 传输次数 | `4` | 四个 Byte 数据单元 |
 | 模式 | `DMA_Mode_Normal` | 只复制一轮 |
-| 触发 | `DMA_M2M_Enable` | 不需要等待外设时机 |
+| 触发 | `DMA_M2M_Enable` | 软件启动 |
 
-### 4.2 ADC 扫描结果搬到数组
+### 4.2 ADC 扫描结果保存
 
-任务：ADC 扫描多个通道，每完成一个通道就把 `ADC1->DR` 搬到 `AD_Value[]`。
+任务：ADC 依次转换四个规则组通道，把每次转换结果保存到 `AD_Value[0]` 到 `AD_Value[3]`。
 
-| 参数 | 配置 | 原因 |
+![ADC 扫描模式 + DMA](assets/ppt/slide-107.png)
+
+ADC 规则组只有一个 `ADC1->DR`。第一个通道转换完成后，结果进入 `DR`；下一个通道转换完成时，`DR` 会被新结果覆盖。DMA 必须在每次转换完成请求到来时及时读取 `DR`，并把结果写入数组的下一个位置。
+
+参数为：
+
+| 参数 | 配置 | 推导理由 |
 | --- | --- | --- |
-| 外设地址 | `&ADC1->DR` | 转换结果都从同一个寄存器读 |
-| 存储器地址 | `AD_Value` 首地址 | 结果写入 SRAM 数组 |
-| 外设地址 | 不自增 | 始终读取 DR |
-| 存储器地址 | 自增 | 依次写入数组元素 |
-| 两端宽度 | HalfWord | ADC 结果为 16 位 |
-| 传输次数 | 通道数 | 每个通道搬运一次 |
-| 触发 | 硬件触发 | 等 ADC 转换完成请求 |
-| 模式 | 单次扫描用 Normal，连续扫描用 Circular | 与 ADC 工作模式配套 |
+| 外设站点地址 | `&ADC1->DR` | 所有转换结果都从同一个寄存器读 |
+| 存储器站点地址 | `AD_Value` | 结果写入 SRAM 数组 |
+| 外设地址自增 | Disable | 始终读取 `DR` |
+| 存储器地址自增 | Enable | 依次写入数组元素 |
+| 两端宽度 | HalfWord | ADC 数据寄存器按 16 位配置 |
+| 传输次数 | `4` | 每轮有四个转换结果 |
+| 方向 | `DMA_DIR_PeripheralSRC` | ADC 寄存器是源 |
+| 模式 | Normal 或 Circular | 由单次还是连续采样决定 |
+| 触发 | 硬件请求 | 等待 ADC 转换完成 |
 
-ADC 扫描模式中，转换结果反复写入同一个 `DR`，如果 CPU 不及时读出，前一个结果会被覆盖；DMA 正好在每次转换完成时把结果取走，因此 ADC + DMA 是最常见的组合。
-
-## 5. 标准库配置链与手册定位
-
-本节对应参考手册的两部分：
-
-- 第 2 章“存储器和总线架构”：存储器映射、总线矩阵和外设地址；
-- 第 10 章“DMA 控制器”：DMA 通道、请求映射、配置寄存器和标志位。
-
-查某个寄存器地址时，先查外设基地址，再查寄存器偏移：
-
-$$
-\text{寄存器地址}=\text{外设基地址}+\text{寄存器偏移}
-$$
-
-例如 ADC1 基地址为 `0x40012400`，`DR` 偏移为 `0x4C`，所以 `ADC1->DR` 地址为 `0x4001244C`。
-
-## 6. 实验一：`8-1 DMA数据转运`
-
-### 6.1 建工程和验证地址
-
-工程只需要 OLED 用于显示，DMA 搬运发生在芯片内部，不需要额外传感器。先复制 OLED 工程并命名为 `8-1 DMA数据转运`。
-
-课堂先用一个小实验验证存储器映射：
+四个数组元素的含义由 ADC 的规则组序列决定，而不是由 DMA 决定。例如：
 
 ```c
-uint8_t a = 0x66;
-OLED_ShowHexNum(1, 1, a, 2);
-OLED_ShowHexNum(2, 1, (uint32_t)&a, 8);
+ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
+ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_55Cycles5);
+ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 3, ADC_SampleTime_55Cycles5);
+ADC_RegularChannelConfig(ADC1, ADC_Channel_3, 4, ADC_SampleTime_55Cycles5);
 ```
 
-下载后，`a` 的地址通常以 `0x2000...` 开头，说明变量位于 SRAM。加上 `const` 后：
+那么正常情况下：
 
-```c
-const uint8_t a = 0x66;
+```text
+AD_Value[0] <-> 通道 0（PA0）
+AD_Value[1] <-> 通道 1（PA1）
+AD_Value[2] <-> 通道 2（PA2）
+AD_Value[3] <-> 通道 3（PA3）
 ```
 
-地址通常变为 `0x0800...`，说明常量被放在 Flash。字库、查找表等大量且不会改变的数据适合放在 Flash，以节省 SRAM。
+若调整了规则组顺序，数组含义也会随之改变。
 
-外设寄存器地址固定。例如：
+## 5. 实验一：`8-1 DMA数据转运`
 
-```c
-OLED_ShowHexNum(3, 1, (uint32_t)&ADC1->DR, 8);
-```
+### 5.1 实验目标与准备
 
-显示结果应为 `0x4001244C`。标准库通过结构体成员顺序映射寄存器；也可用物理地址指针直接访问，但实际代码优先使用库定义。
+目标是观察：DMA 启动前 `DataB[]` 不变，DMA 完成后 `DataB[]` 与 `DataA[]` 对应位置相同。
 
-### 6.2 定义源数组和目的数组
+准备：
 
-```c
-uint8_t DataA[] = {0x01, 0x02, 0x03, 0x04};
-uint8_t DataB[4];
-```
+- STM32F103C8T6 开发板；
+- OLED；
+- ST-Link；
+- 课程资料中的工程 `STM32Project-有注释版\8-1 DMA数据转运`。
 
-`DataA` 是源，`DataB` 是目的。数组名在表达式中会退化为首元素地址，因此调用初始化函数时可直接传入 `DataA` 和 `DataB`，再转换为 DMA 所需的 `uint32_t` 地址。
+这个实验没有额外传感器。DMA 在芯片内部工作，OLED 只用来显示源数组、目的数组和地址。
 
-### 6.3 DMA 模块的初始化思路
+### 5.2 初始化模块
 
-在工程中添加 `MyDMA.c/.h` 模块，避免与库函数 `DMA_...` 重名。初始化步骤按课堂 PPT 的框图进行：
-
-1. 开启 DMA1 时钟；
-2. 配置外设站点和存储器站点的地址、宽度、自增；
-3. 配置传输方向、传输次数、传输模式、触发方式和优先级；
-4. 把结构体参数写入指定通道；
-5. 使能 DMA 通道。
-
-若使用硬件触发，还要在对应外设中打开 DMA 请求输出；若使用 DMA 中断，则还需 `DMA_ITConfig`、NVIC 和中断函数。本节先用轮询完成标志，不展开中断。
-
-### 6.4 第一次搬运：初始化后立即执行
+课程工程的 `System\MyDMA.c` 将初始化和启动分成两个函数：
 
 ```c
 #include "stm32f10x.h"
 
+uint16_t MyDMA_Size;
+
 void MyDMA_Init(uint32_t AddrA, uint32_t AddrB, uint16_t Size)
 {
-    DMA_InitTypeDef DMA_InitStructure;
+    MyDMA_Size = Size;
 
     RCC_AHBPeriphClockCmd(RCC_AHBPeriph_DMA1, ENABLE);
 
+    DMA_InitTypeDef DMA_InitStructure;
     DMA_InitStructure.DMA_PeripheralBaseAddr = AddrA;
     DMA_InitStructure.DMA_PeripheralDataSize = DMA_PeripheralDataSize_Byte;
     DMA_InitStructure.DMA_PeripheralInc = DMA_PeripheralInc_Enable;
@@ -277,32 +301,6 @@ void MyDMA_Init(uint32_t AddrA, uint32_t AddrB, uint16_t Size)
     DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
 
     DMA_Init(DMA1_Channel1, &DMA_InitStructure);
-    DMA_Cmd(DMA1_Channel1, ENABLE);
-}
-```
-
-这里把 `DataA` 放在“外设站点”只是沿用库结构体的命名；实际它是 SRAM 地址。`DMA_M2M_Enable` 选择软件触发，`DMA_Mode_Normal` 让计数器归零后停止。
-
-主函数中调用：
-
-```c
-MyDMA_Init((uint32_t)DataA, (uint32_t)DataB, 4);
-```
-
-使能通道后，DMA 立即把 4 个字节从 `DataA` 复制到 `DataB`，源数组内容不变。
-
-### 6.5 为什么第二次不能直接启动
-
-正常模式完成后，传输计数器已经为 0，通道虽然仍配置着，但不会再搬运。重新启动必须先关闭通道，再写入计数器，最后重新打开：
-
-```c
-static uint16_t MyDMA_Size;
-
-void MyDMA_Init(uint32_t AddrA, uint32_t AddrB, uint16_t Size)
-{
-    /* 前面的时钟和 DMA_InitStructure 配置不变 */
-    MyDMA_Size = Size;
-    DMA_Init(DMA1_Channel1, &DMA_InitStructure);
     DMA_Cmd(DMA1_Channel1, DISABLE);
 }
 
@@ -310,70 +308,94 @@ void MyDMA_Transfer(void)
 {
     DMA_Cmd(DMA1_Channel1, DISABLE);
     DMA_SetCurrDataCounter(DMA1_Channel1, MyDMA_Size);
-    DMA_ClearFlag(DMA1_FLAG_TC1);
     DMA_Cmd(DMA1_Channel1, ENABLE);
 
-    while (DMA_GetFlagStatus(DMA1_FLAG_TC1) == RESET) {
+    while (DMA_GetFlagStatus(DMA1_FLAG_TC1) == RESET)
+    {
     }
+
     DMA_ClearFlag(DMA1_FLAG_TC1);
 }
 ```
 
-初始化时先 `DISABLE`，由 `MyDMA_Transfer()` 决定何时开始，便于在主循环中观察搬运前后的数据。`DMA_SetCurrDataCounter()` 只能在通道关闭后调用，这是第二次传输不启动时首先检查的地方。
+初始化阶段先关闭通道，是为了避免配置尚未完成时就开始工作。正常模式传输完成后，通道也会停止；下一次启动必须遵循：
 
-### 6.6 主循环与实验现象
+```text
+关闭通道 -> 重装传输计数器 -> 重新使能通道 -> 等待完成
+```
+
+`DMA_SetCurrDataCounter()` 只能在通道关闭时调用。若工程还使用了 DMA 中断，应按相同边界清理和处理传输完成标志。
+
+### 5.3 主函数和数据流
+
+课程工程中的核心定义和调用如下：
 
 ```c
-while (1)
+uint8_t DataA[] = {0x01, 0x02, 0x03, 0x04};
+uint8_t DataB[] = {0, 0, 0, 0};
+
+int main(void)
 {
-    DataA[0]++;
-    DataA[1]++;
-    DataA[2]++;
-    DataA[3]++;
+    OLED_Init();
+    MyDMA_Init((uint32_t)DataA, (uint32_t)DataB, 4);
 
-    OLED_ShowHexNum(1, 1, DataA[0], 2);
-    OLED_ShowHexNum(1, 4, DataA[1], 2);
-    OLED_ShowHexNum(1, 7, DataA[2], 2);
-    OLED_ShowHexNum(1, 10, DataA[3], 2);
-    OLED_ShowHexNum(2, 1, DataB[0], 2);
-    OLED_ShowHexNum(2, 4, DataB[1], 2);
-    OLED_ShowHexNum(2, 7, DataB[2], 2);
-    OLED_ShowHexNum(2, 10, DataB[3], 2);
-    Delay_ms(1000);
+    while (1)
+    {
+        DataA[0]++;
+        DataA[1]++;
+        DataA[2]++;
+        DataA[3]++;
 
-    MyDMA_Transfer();
+        /* 此时先显示 DataA 和 DataB，观察转运前的差异 */
+        Delay_ms(1000);
 
-    OLED_ShowHexNum(3, 1, DataA[0], 2);
-    OLED_ShowHexNum(3, 4, DataA[1], 2);
-    OLED_ShowHexNum(3, 7, DataA[2], 2);
-    OLED_ShowHexNum(3, 10, DataA[3], 2);
-    OLED_ShowHexNum(4, 1, DataB[0], 2);
-    OLED_ShowHexNum(4, 4, DataB[1], 2);
-    OLED_ShowHexNum(4, 7, DataB[2], 2);
-    OLED_ShowHexNum(4, 10, DataB[3], 2);
-    Delay_ms(1000);
+        MyDMA_Transfer();
+
+        /* 再次显示 DataA 和 DataB，观察转运后的对应关系 */
+        Delay_ms(1000);
+    }
 }
 ```
 
-课堂调试时还显示两个数组的地址：普通 SRAM 数组通常在 `0x2000...`。若把源数组定义为 `const`，它会位于 Flash（`0x0800...`），可以验证 Flash 到 SRAM 的 DMA 复制；此时不能再对 `DataA` 做 `++`。
+执行链为：
 
-## 7. 实验二：ADC 扫描 + DMA
-
-### 7.1 从 ADC 多通道工程改造
-
-复制上一节 ADC 多通道工程，命名为 `8-2 DMA+AD多通道`。保留 `PA0`～`PA3` 的接线和 OLED 显示，增加 DMA 初始化及结果数组。
-
-先定义数组并在头文件声明：
-
-```c
-uint16_t AD_Value[4];
-// MyDMA.h 或 ADC.h
-extern uint16_t AD_Value[4];
+```text
+DataA[]（SRAM）
+ -> DMA1_Channel1 软件触发
+ -> 每次搬运 1 Byte，源和目的地址都自增
+ -> DataB[]（SRAM）
+ -> OLED 显示结果
 ```
 
-### 7.2 配置 ADC 扫描四个通道
+### 5.4 验收与变体
 
-四个通道分别放入规则组序列 1～4；序列号与通道号的对应关系决定数组中结果的顺序：
+验收标准：
+
+1. 下载并运行 `8-1 DMA数据转运`；
+2. DMA 启动前，`DataB[]` 保持初始值；
+3. DMA 完成后，`DataB[0]~DataB[3]` 与启动瞬间的 `DataA[0]~DataA[3]` 一致；
+4. 下一轮 `DataA[]` 改变后，再次调用 `MyDMA_Transfer()`，`DataB[]` 能更新为新值。
+
+可以把 `DataA` 改成 `const` 数组，观察其地址通常落在 `0x0800...` 的 Flash 区域，从而测试 Flash 到 SRAM 的读取复制。但此时不能再执行 `DataA[i]++`，因为 Flash 中的常量不能像 SRAM 变量一样修改。
+
+## 6. 实验二：ADC 扫描 + DMA
+
+### 6.1 实验目标与接线
+
+目标是让 ADC1 连续扫描四个模拟输入，并让 OLED 持续显示四个结果。
+
+准备：
+
+- STM32F103C8T6 开发板；
+- OLED；
+- `PA0`、`PA1`、`PA2`、`PA3` 四路模拟输入。课程工程可接电位器或稳定的 `0~3.3V` 模拟电压；
+- 课程资料中的工程 `STM32Project-有注释版\8-2 DMA+AD多通道`。
+
+模拟输入不得超过芯片允许的模拟电源和参考范围。若使用电位器，应确认两端接 `3.3V` 和 `GND`，滑动端接 ADC 引脚，并与开发板共地。
+
+### 6.2 ADC 规则组配置
+
+工程 `Hardware\AD.c` 先配置规则组序列，再配置 ADC：
 
 ```c
 ADC_RegularChannelConfig(ADC1, ADC_Channel_0, 1, ADC_SampleTime_55Cycles5);
@@ -381,15 +403,25 @@ ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 2, ADC_SampleTime_55Cycles5);
 ADC_RegularChannelConfig(ADC1, ADC_Channel_2, 3, ADC_SampleTime_55Cycles5);
 ADC_RegularChannelConfig(ADC1, ADC_Channel_3, 4, ADC_SampleTime_55Cycles5);
 
+ADC_InitStructure.ADC_Mode = ADC_Mode_Independent;
+ADC_InitStructure.ADC_DataAlign = ADC_DataAlign_Right;
+ADC_InitStructure.ADC_ExternalTrigConv = ADC_ExternalTrigConv_None;
+ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
 ADC_InitStructure.ADC_ScanConvMode = ENABLE;
 ADC_InitStructure.ADC_NbrOfChannel = 4;
+ADC_Init(ADC1, &ADC_InitStructure);
 ```
 
-单次扫描时，启动一次 ADC 就转换四个通道后停止；连续扫描时，四个通道会不断重复转换。
+这里有两个容易混淆的开关：
 
-### 7.3 配置 `DMA1_Channel1`
+- `ADC_ScanConvMode = ENABLE`：一次规则组中依次转换多个序列位置；
+- `ADC_ContinuousConvMode = ENABLE`：一轮规则组完成后自动开始下一轮。
 
-ADC1 的 DMA 请求固定连接到 `DMA1_Channel1`，不能改用其他通道。关键配置如下：
+扫描模式决定“一轮里面转换谁”；连续模式决定“一轮结束后是否继续”。
+
+### 6.3 DMA 配置
+
+ADC1 的 DMA 请求固定连接到 `DMA1_Channel1`。课程工程中的关键配置如下：
 
 ```c
 DMA_InitTypeDef DMA_InitStructure;
@@ -404,79 +436,169 @@ DMA_InitStructure.DMA_MemoryDataSize = DMA_MemoryDataSize_HalfWord;
 DMA_InitStructure.DMA_MemoryInc = DMA_MemoryInc_Enable;
 DMA_InitStructure.DMA_DIR = DMA_DIR_PeripheralSRC;
 DMA_InitStructure.DMA_BufferSize = 4;
-DMA_InitStructure.DMA_Mode = DMA_Mode_Normal;     // 单次扫描
-DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;      // 硬件触发
+DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
+DMA_InitStructure.DMA_M2M = DMA_M2M_Disable;
 DMA_InitStructure.DMA_Priority = DMA_Priority_Medium;
 
 DMA_Init(DMA1_Channel1, &DMA_InitStructure);
 DMA_Cmd(DMA1_Channel1, ENABLE);
-ADC_DMACmd(ADC1, ENABLE);                         // 打开 ADC DMA 请求
+ADC_DMACmd(ADC1, ENABLE);
 ```
 
-外设端固定读取 `ADC1->DR`，所以不自增；SRAM 端每写入一个半字就自增，避免四个结果互相覆盖。ADC 结果是 16 位，因此两端都选 `HalfWord`。
+配置与任务的对应关系是：
 
-### 7.4 单次扫描 + 单次 DMA
+```text
+ADC1->DR（固定地址、HalfWord）
+ -> ADC 转换完成请求
+ -> DMA1_Channel1
+ -> AD_Value[0]、[1]、[2]、[3]（HalfWord，地址自增）
+ -> 计数器归零后循环重装
+```
 
-单次模式下，每次启动 ADC 前都要重新装载 DMA 传输计数器：
+DMA 必须在 ADC 开始产生请求前准备好。课程工程的完整顺序是：
+
+1. 开启 ADC1、GPIOA 和 DMA1 时钟；
+2. 设置 ADC 时钟为 `PCLK2 / 6 = 12MHz`；
+3. 把 `PA0~PA3` 配成模拟输入；
+4. 配置 ADC 规则组和连续扫描；
+5. 配置并使能 DMA 通道；
+6. 打开 `ADC_DMACmd(ADC1, ENABLE)`；
+7. 使能 ADC；
+8. 执行 ADC 校准；
+9. 调用 `ADC_SoftwareStartConvCmd(ADC1, ENABLE)` 启动第一轮转换。
+
+### 6.4 主循环与验收
+
+结果数组由 `AD.c` 定义，在 `AD.h` 中声明：
 
 ```c
-void AD_GetValue(void)
-{
-    DMA_Cmd(DMA1_Channel1, DISABLE);
-    DMA_SetCurrDataCounter(DMA1_Channel1, 4);
-    DMA_ClearFlag(DMA1_FLAG_TC1);
-    DMA_Cmd(DMA1_Channel1, ENABLE);
+/* AD.c */
+uint16_t AD_Value[4];
 
-    ADC_SoftwareStartConvCmd(ADC1, ENABLE);
-    while (DMA_GetFlagStatus(DMA1_FLAG_TC1) == RESET) {
-    }
-    DMA_ClearFlag(DMA1_FLAG_TC1);
+/* AD.h */
+extern uint16_t AD_Value[4];
+```
+
+主循环只需读取数组并显示：
+
+```c
+OLED_ShowString(1, 1, "AD0:");
+OLED_ShowString(2, 1, "AD1:");
+OLED_ShowString(3, 1, "AD2:");
+OLED_ShowString(4, 1, "AD3:");
+
+while (1)
+{
+    OLED_ShowNum(1, 5, AD_Value[0], 4);
+    OLED_ShowNum(2, 5, AD_Value[1], 4);
+    OLED_ShowNum(3, 5, AD_Value[2], 4);
+    OLED_ShowNum(4, 5, AD_Value[3], 4);
+    Delay_ms(100);
 }
 ```
 
-调用 `AD_GetValue()` 后，ADC 依次完成四个通道，DMA 将结果写入 `AD_Value[0]`～`AD_Value[3]`。主循环只需显示数组：
+验收标准：
 
-```c
-AD_GetValue();
-OLED_ShowNum(1, 1, AD_Value[0], 4);
-OLED_ShowNum(2, 1, AD_Value[1], 4);
-OLED_ShowNum(3, 1, AD_Value[2], 4);
-OLED_ShowNum(4, 1, AD_Value[3], 4);
+1. 给 `PA0~PA3` 输入不同电压；
+2. 下载运行 `8-2 DMA+AD多通道`；
+3. OLED 的 `AD0~AD3` 都能显示 `0~4095` 范围内的结果；
+4. 改变某一路输入时，对应数组位置随之变化；
+5. 四路结果不会全部长期显示同一个通道的数据。
+
+如果把 DMA 改成 `DMA_Mode_Normal`，它只会保存一轮四个结果。再次采样前需要停止通道、重装传输计数器并重新使能；连续采样则应保留 `Circular`，并考虑 CPU 读取数组时的数据一致性。
+
+## 7. 常见误区与排错顺序
+
+### 7.1 “外设站点”不等于“外设地址”
+
+在 `8-1` 中，`DataA` 是 SRAM 数组，却被填写到 `DMA_PeripheralBaseAddr`。这里的“外设”指 DMA 的第一个地址站点，不是地址所属的物理模块。真正决定方向的是地址站点和 `DMA_DIR` 的组合。
+
+### 7.2 地址自增配置反了
+
+如果 ADC 外设地址开启自增，DMA 读完 `ADC1->DR` 后会去读相邻地址，结果自然错误。ADC 采集应当是：
+
+```text
+外设地址固定，存储器地址自增
 ```
 
-### 7.5 连续扫描 + 循环 DMA
+相反，USART 发送数组时通常是：
 
-如果把 ADC 改为连续转换、DMA 改为循环模式，并在初始化末尾启动 ADC：
+```text
+存储器地址自增，外设地址固定
+```
+
+### 7.3 把“传输次数”当成字节数
+
+`DMA_BufferSize` 的单位由数据宽度决定。四路 ADC 使用 `HalfWord` 时，`DMA_BufferSize = 4` 表示四个半字，不是四个字节。
+
+### 7.4 只打开 DMA 通道，没有打开外设请求
+
+ADC 实验必须同时存在：
 
 ```c
-ADC_InitStructure.ADC_ContinuousConvMode = ENABLE;
-DMA_InitStructure.DMA_Mode = DMA_Mode_Circular;
-
-DMA_Init(DMA1_Channel1, &DMA_InitStructure);
 DMA_Cmd(DMA1_Channel1, ENABLE);
 ADC_DMACmd(ADC1, ENABLE);
-ADC_SoftwareStartConvCmd(ADC1, ENABLE);
 ```
 
-ADC 会连续扫描四个通道，DMA 在每轮结束后自动重装计数器，把最新结果持续刷新到 `AD_Value[]`。此时不需要 `AD_GetValue()`，主循环随时读取数组即可。
+前者使 DMA 通道能够工作，后者使 ADC 在转换完成时向 DMA 发请求。
 
-这里的硬件自动化体现了 STM32 的外设互联：定时器可以触发 ADC，ADC 转换完成可以触发 DMA，DMA 再把结果写入 SRAM，CPU 只在需要时读取结果。
+### 7.5 DMA 正在更新时读取循环数组
 
-## 8. 验收与排错
+循环 DMA 会不断覆盖同一数组。CPU 可能在读取 `AD_Value[0]` 到 `AD_Value[3]` 的过程中，DMA 恰好开始下一轮，导致一次显示中混有新旧数据。
 
-1. **完全没有搬运**：先查 DMA 时钟、通道映射、`DMA_Cmd` 是否使能，以及硬件触发外设的 DMA 请求是否打开。
-2. **只有第一个数组元素变化**：检查目的地址是否设置了 `DMA_MemoryInc_Enable`。
-3. **ADC 四个值错位**：检查 `ADC_RegularChannelConfig` 的序列号和数组索引是否一致。
-4. **数值像字节拼错**：检查两端数据宽度；ADC 通常应使用 `HalfWord`。
-5. **第二次正常模式不启动**：确认顺序是 `DISABLE -> DMA_SetCurrDataCounter -> ENABLE`，并清除了传输完成标志。
-6. **数组数据偶尔新旧混合**：CPU 读取数组时 DMA 可能仍在更新。低速入门实验可接受；需要一致快照时，应使用传输完成/半传输中断或在明确边界复制数据。
+入门实验中，`Delay_ms(100)` 通常足以观察稳定现象，但这不是严格的一致性保证。需要完整快照时，可使用：
+
+- DMA 传输完成或半传输中断；
+- 双缓冲或软件快照；
+- 在明确的采样边界读取数据。
+
+### 7.6 建议排错顺序
+
+| 现象 | 优先检查 |
+| --- | --- |
+| 完全没有搬运 | DMA 时钟、通道使能、`DMA_M2M`、硬件请求输出 |
+| 只有第一个数组元素正确 | 目的地址是否 `MemoryInc_Enable` |
+| ADC 数值长期不变 | GPIO 模拟输入、ADC 是否启动、`ADC_DMACmd` 是否开启 |
+| ADC 四路结果错位 | 规则组 Rank 顺序与数组索引 |
+| 数值像字节拼接错误 | ADC 两端是否都为 `HalfWord` |
+| 第二次 Normal 模式不工作 | 是否按“关闭 -> 重装计数 -> 使能”启动 |
+| 数组偶尔新旧混合 | DMA 更新期间读取，需增加同步边界 |
+
+排错时一次只改变一个配置项，先确认时钟和触发，再检查地址和宽度，最后检查数组索引和显示代码。
+
+## 8. 自测题
+
+1. `DataA[4] -> DataB[4]` 的 Byte 数组复制中，为什么两端地址都要自增？
+2. ADC 扫描四个通道时，为什么 DMA 的外设地址不能自增？
+3. `DMA_Mode_Normal` 和 `DMA_Mode_Circular` 的主要区别是什么？
+4. `DMA_Cmd(DMA1_Channel1, ENABLE)` 和 `ADC_DMACmd(ADC1, ENABLE)` 分别打开了什么？
+5. 如果 `AD_Value[0]` 正确而后三个元素不正确，应优先检查哪个参数？
+
+答案提示：
+
+1. 源和目的都要依次访问数组的下一个元素；
+2. 四次转换结果都从同一个 `ADC1->DR` 读取；
+3. Normal 一轮后停止，Circular 计数器和地址在一轮后自动重装；
+4. 前者打开 DMA 通道，后者打开 ADC 的 DMA 请求输出；
+5. 检查存储器地址自增和传输宽度。
 
 ## 本章小结
 
-DMA 不是会“思考”的算法，而是按照固定规则重复执行“读一个地址、写另一个地址”：
+DMA 的本质是按照固定规则完成：
 
-> 地址、数据宽度、地址自增、传输次数、触发时机、通道与优先级。
+```text
+读源地址 -> 按数据宽度取一个数据单元
+         -> 必要时移动源地址
+         -> 写目的地址
+         -> 必要时移动目的地址
+         -> 传输计数减一
+         -> 等待下一次触发或继续下一次传输
+```
 
-存储器到存储器复制通常使用软件触发和正常模式；ADC 扫描通常使用外设到存储器、外设地址不自增、存储器地址自增、半字宽度和硬件触发。掌握这组参数，DMA 的配置就可以从框图逐项推导出来。
+配置 DMA 时，先画出数据路径，再逐项确定：
 
-本节还没有展开“存储器到外设”的完整工程。串口发送一批数据就是典型应用，配置方法与本章的两个站点和触发逻辑相同，可在学习串口 DMA 时继续扩展。
+> 源地址、目的地址、数据宽度、地址自增、传输次数、触发方式、传输模式。
+
+存储器复制通常使用软件触发和 Normal 模式；ADC 扫描通常使用外设地址固定、存储器地址自增、HalfWord、硬件触发和 Circular 模式。掌握这条推导链后，串口、SPI 等外设的 DMA 配置也只是替换数据源、目的地和请求映射。
+
+本章未展开 DMA 中断、双缓冲和存储器到外设的完整工程。串口发送数组是下一步自然的练习：把源数组放到存储器站点，把 USART 数据寄存器放到外设站点，并根据 USART 的 DMA 请求映射选择正确通道。

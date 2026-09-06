@@ -2,6 +2,8 @@
 
 ## 本章闭环
 
+本章两个实验对应两个独立 Keil 工程：`5-1 对射式红外传感器计次` 和 `5-2 旋转编码器计次`。请一次只建立一个工程；不要把两个 `EXTI` 驱动文件同时加入同一工程，否则会出现全局变量或中断函数重复定义。
+
 本章先解决“CPU 如何及时处理突发事件”，再用两个实验完成闭环：
 
 1. 对射式红外传感器的 DO 接到 PB14，利用下降沿触发 EXTI14，每触发一次就让计数值加一。
@@ -289,6 +291,8 @@ PB14 使用 EXTI14，而 EXTI10~EXTI15 共用 `EXTI15_10_IRQn`，所以不能把
 
 OLED 接线沿用上一章。挡光片经过传感器凹槽时，DO 会产生电平跳变。课程程序选择下降沿触发，每次进入 EXTI14 中断就把计数变量加一，再由主循环把计数值显示到 OLED。
 
+参考工程目录为 `5-1 对射式红外传感器计次`。本实验需要把 `Hardware/CountSensor.c`、`Hardware/CountSensor.h` 加入工程，并沿用上一章的 `OLED.c`、`OLED.h`、`OLED_Font.h`。
+
 ### 5.2 `CountSensor.h`
 
 ```c
@@ -352,7 +356,11 @@ void EXTI15_10_IRQHandler(void)
 {
     if (EXTI_GetITStatus(EXTI_Line14) == SET)
     {
-        CountSensor_Count++;
+        /* 传感器空闲时为高电平，只在确认低电平时计数。 */
+        if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_14) == 0)
+        {
+            CountSensor_Count++;
+        }
         EXTI_ClearITPendingBit(EXTI_Line14);
     }
 }
@@ -415,6 +423,8 @@ int main(void)
 | B 相下降沿，即 EXTI1 | A 相为低电平 | 计数加一 |
 
 这样正反转都在一个完整步进接近结束时更新数字。若 A、B 接反，或希望改变正方向定义，交换 A/B 接线或交换加减号即可。
+
+参考工程目录为 `5-2 旋转编码器计次`。本实验需要加入 `Hardware/Encoder.c`、`Hardware/Encoder.h`，并沿用上一章 OLED 文件；编码器模块公共端 `C` 接 GND，按键端不参与本实验。
 
 ### 6.2 `Encoder.h`
 
@@ -486,7 +496,8 @@ void EXTI0_IRQHandler(void)
 {
     if (EXTI_GetITStatus(EXTI_Line0) == SET)
     {
-        if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1) == Bit_RESET)
+        if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0) == Bit_RESET &&
+            GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1) == Bit_RESET)
         {
             Encoder_Count--;
         }
@@ -498,7 +509,8 @@ void EXTI1_IRQHandler(void)
 {
     if (EXTI_GetITStatus(EXTI_Line1) == SET)
     {
-        if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0) == Bit_RESET)
+        if (GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_1) == Bit_RESET &&
+            GPIO_ReadInputDataBit(GPIOB, GPIO_Pin_0) == Bit_RESET)
         {
             Encoder_Count++;
         }

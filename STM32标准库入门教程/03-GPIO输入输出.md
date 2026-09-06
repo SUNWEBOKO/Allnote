@@ -187,16 +187,16 @@ GPIO_SetBits(GPIOA, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2);
 
 <code>GPIO_Pin_0</code>、<code>GPIO_Pin_1</code> 等本质是不同位为 1 的掩码，按位或后便得到“同时选中多位”的掩码。
 
-### 2.5 实验一：PA0 LED 闪烁
+### 2.5 实验一：PC13 板载 LED 闪烁
+
+参考资料中的 C8T6 核心板自带 LED 通常接在 `PC13`；下面的 PA0/PA1 等引脚是外接 LED 的教学接线。若直接使用板载 LED，请把示例中的端口和引脚替换为 `GPIOC`、`GPIO_Pin_13`，并按板载 LED 的有效电平调整 `SetBits/ResetBits`。
 
 课程接线：
 
-- LED 正极接 <code>3.3 V</code>；
-- LED 负极接 <code>PA0</code>；
-- 实际电路中串入限流电阻；
+- 直接使用 C8T6 核心板的板载 LED（通常连接 `PC13`）；
 - ST-Link、最小系统板和面包板必须共地。
 
-主循环按“点亮 -> 延时 -> 熄灭 -> 延时”执行。<code>Delay_ms()</code> 来自课程提供的 Delay 模块，底层使用 SysTick，本章可直接调用。
+主循环按“点亮 -> 延时 -> 熄灭 -> 延时”执行。延时直接使用课程资料提供的 <code>Delay_ms()</code>，需要将资料中的 <code>Delay.c</code>、<code>Delay.h</code> 加入工程。
 
 ~~~c
 #include "stm32f10x.h"
@@ -206,17 +206,17 @@ int main(void)
 {
     GPIO_InitTypeDef GPIO_InitStructure;
 
-    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
     GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_13;
     GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_Init(GPIOC, &GPIO_InitStructure);
 
     while (1)
     {
-        GPIO_ResetBits(GPIOA, GPIO_Pin_0);  // 低电平，亮
+        GPIO_ResetBits(GPIOC, GPIO_Pin_13);  // 低电平，亮
         Delay_ms(500);
-        GPIO_SetBits(GPIOA, GPIO_Pin_0);    // 高电平，灭
+        GPIO_SetBits(GPIOC, GPIO_Pin_13);    // 高电平，灭
         Delay_ms(500);
     }
 }
@@ -239,6 +239,9 @@ int main(void)
 <code>GPIO_Write(GPIOA, (uint16_t)~0x0001)</code> 先构造“第 0 位为 1、其余位为 0”的掩码，再按位取反。写入低 16 位后，<code>PA0 = 0</code>，其余引脚为 1；由于 LED 低电平有效，第一个 LED 点亮。
 
 ~~~c
+#include "stm32f10x.h"
+#include "Delay.h"
+
 static void LED_Run(void)
 {
     GPIO_Write(GPIOA, (uint16_t)~0x0001);  // PA0 低，LED1 亮
@@ -250,7 +253,33 @@ static void LED_Run(void)
     GPIO_Write(GPIOA, (uint16_t)~0x0008);  // PA3 低，LED4 亮
     Delay_ms(100);
 
-    /* 后续依次为 ~0x0010、~0x0020、~0x0040、~0x0080 */
+    GPIO_Write(GPIOA, (uint16_t)~0x0010);  // PA4 低，LED5 亮
+    Delay_ms(100);
+    GPIO_Write(GPIOA, (uint16_t)~0x0020);  // PA5 低，LED6 亮
+    Delay_ms(100);
+    GPIO_Write(GPIOA, (uint16_t)~0x0040);  // PA6 低，LED7 亮
+    Delay_ms(100);
+    GPIO_Write(GPIOA, (uint16_t)~0x0080);  // PA7 低，LED8 亮
+    Delay_ms(100);
+}
+
+int main(void)
+{
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 |
+                                  GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOA, &GPIO_InitStructure);
+    GPIO_SetBits(GPIOA, GPIO_Pin_0 | GPIO_Pin_1 | GPIO_Pin_2 | GPIO_Pin_3 |
+                       GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_7);
+
+    while (1)
+    {
+        LED_Run();
+    }
 }
 ~~~
 
@@ -268,27 +297,31 @@ static void LED_Run(void)
 配置方法与 LED 相同，只是端口改为 GPIOB、引脚改为 <code>GPIO_Pin_12</code>：
 
 ~~~c
-RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+#include "stm32f10x.h"
+#include "Delay.h"
 
-GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
-GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
-GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-GPIO_Init(GPIOB, &GPIO_InitStructure);
-~~~
-
-下面的节奏为“响 100 ms、停 100 ms、再响 100 ms、停 700 ms”。函数写的是 GPIO 电平，不是蜂鸣器状态。
-
-~~~c
-while (1)
+int main(void)
 {
-    GPIO_ResetBits(GPIOB, GPIO_Pin_12);  // 低电平，蜂鸣器响
-    Delay_ms(100);
-    GPIO_SetBits(GPIOB, GPIO_Pin_12);    // 高电平，蜂鸣器停
-    Delay_ms(100);
-    GPIO_ResetBits(GPIOB, GPIO_Pin_12);
-    Delay_ms(100);
-    GPIO_SetBits(GPIOB, GPIO_Pin_12);
-    Delay_ms(700);
+    GPIO_InitTypeDef GPIO_InitStructure;
+
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
+
+    GPIO_InitStructure.GPIO_Mode = GPIO_Mode_Out_PP;
+    GPIO_InitStructure.GPIO_Pin = GPIO_Pin_12;
+    GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_Init(GPIOB, &GPIO_InitStructure);
+
+    while (1)
+    {
+        GPIO_ResetBits(GPIOB, GPIO_Pin_12);  // 低电平，蜂鸣器响
+        Delay_ms(100);
+        GPIO_SetBits(GPIOB, GPIO_Pin_12);    // 高电平，蜂鸣器停
+        Delay_ms(100);
+        GPIO_ResetBits(GPIOB, GPIO_Pin_12);
+        Delay_ms(100);
+        GPIO_SetBits(GPIOB, GPIO_Pin_12);
+        Delay_ms(700);
+    }
 }
 ~~~
 
@@ -392,6 +425,8 @@ GPIO_Init(GPIOA, &GPIO_InitStructure);
 课程在输入实验中不再把所有 GPIO 操作堆在 <code>main.c</code>，而是把 LED、按键、蜂鸣器、光敏传感器分别封装：
 
 ~~~text
+System/
+  Delay.c      Delay.h
 Hardware/
   LED.c       LED.h
   Key.c       Key.h
@@ -464,6 +499,18 @@ void LED1_Turn(void)
         GPIO_SetBits(GPIOA, GPIO_Pin_1);
     }
 }
+
+void LED2_Turn(void)
+{
+    if (GPIO_ReadOutputDataBit(GPIOA, GPIO_Pin_2) == Bit_SET)
+    {
+        GPIO_ResetBits(GPIOA, GPIO_Pin_2);
+    }
+    else
+    {
+        GPIO_SetBits(GPIOA, GPIO_Pin_2);
+    }
+}
 ~~~
 
 <code>LED1_Turn()</code> 读取的是 <code>ODR</code>，即软件设定的输出状态，而不是外部实际引脚电压。对“切换自身输出状态”而言，这正是需要读取的寄存器；读按键和传感器则必须读 <code>IDR</code>。
@@ -475,7 +522,7 @@ void LED1_Turn(void)
 #ifndef __KEY_H
 #define __KEY_H
 
-#include <stdint.h>
+#include "stm32f10x.h"
 
 void Key_Init(void);
 uint8_t Key_GetNum(void);

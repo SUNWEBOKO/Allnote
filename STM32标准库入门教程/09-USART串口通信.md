@@ -1,101 +1,111 @@
 # 第 9 章 USART 串口通信
 
-## 本章闭环
 
-USART 把程序中的字节转换成串行电平，也把 RX 引脚上的数据帧还原成字节。本章从字节收发逐步扩展到完整消息，共完成四个工程：
+## 1. 学习目标与工程
 
-| 工程 | 目标 | 核心机制 |
-| --- | --- | --- |
-| `9-1 串口发送` | 发送字节、数组、字符串、数字和格式化文本 | 轮询 `TXE` |
-| `9-2 串口发送+接收` | 中断接收一个字节，主循环显示并回显 | `RXNE` 中断 + 标志交接 |
-| `9-3 串口收发HEX数据包` | 收发 `FF + 4 字节 + FE` 固定包 | 三状态接收机 |
-| `9-4 串口收发文本数据包` | 接收 `@命令\r\n` 并控制 LED | 文本状态机 + `strcmp` |
+默认平台：STM32F103C8T6、STM32F10x 标准外设库 V3.5.0、USART1。引脚为 PA9（TX）、PA10（RX）。配套应用工程统一使用 9600 baud、8 位数据、无校验、1 位停止（8N1）。
 
-完整链路是：
+| 工程             | 现象                   | 外设                  |
+| -------------- | -------------------- | ------------------- |
+| 9-1 串口发送       | 字节、数组、字符串、数字、printf  | USART1、OLED         |
+| 9-2 串口发送+接收    | 单字节接收、OLED 显示、回显     | USART1、OLED         |
+| 9-3 串口收发HEX数据包 | FF + 4 字节 + FE       | USART1、OLED、PB1 按键  |
+| 9-4 串口收发文本数据包  | @LED_ON\\r\\n 控制 LED | USART1、OLED、PA1 LED |
 
-```text
-应用数据 -> 数据包规则 -> USART_DR -> 发送移位寄存器 -> PA9/TX
-PA10/RX -> 接收移位寄存器 -> USART_DR -> RXNE 中断 -> 缓冲区/标志 -> 主循环
-```
+## 2. 串口通信基础
 
-## 1. 为什么需要通信接口
+USART 的全称是通用同步/异步收发器，UART 是只保留异步功能的叫法。本章使用异步串口。它没有独立时钟线，通信双方必须预先约定波特率、数据位、校验位和停止位。
 
-STM32 内部的定时器、ADC、PWM 等外设可以直接通过寄存器控制，但蓝牙、姿态传感器、外部 Flash 等功能通常由外挂芯片完成。通信接口负责在 STM32 和外挂设备之间交换数据，使主控能够：
+### 2.1 接线
 
-- 向外挂芯片写入配置；
-- 从外挂芯片读取状态或测量值；
-- 通过电脑调试和观察程序运行过程。
+![USB 转串口接线](assets/ppt/slide-110.png)
 
-通信协议就是双方共同遵守的规则，包括连接哪些线、什么时候发送、数据如何编码、如何判断一帧结束等。
+| USB 转串口 | STM32           |
+| ------- | --------------- |
+| GND     | GND             |
+| TXD     | PA10（USART1_RX） |
+| RXD     | PA9（USART1_TX）  |
+| VCC     | 3.3 V           |
 
-课程中涉及的常见通信接口如下：
+必须共地，TX 和 RX 交叉连接。TTL 串口不能直接接 RS-232，后者需要 MAX3232 等电平转换。9-1 只发送时可只接 PA9 到模块 RXD；9-2 至 9-4 必须连接两根通信线。
 
-| 接口 | 典型引脚 | 同步性 | 常见特点 |
-| --- | --- | --- | --- |
-| USART | TX、RX | 异步 | 接线少，适合设备间和电脑调试 |
-| I2C | SCL、SDA | 同步 | 两根线可挂多个设备 |
-| SPI | SCK、MOSI、MISO、CS | 同步 | 速度高，片选明确 |
+### 2.2 8N1 一帧
 
-## 2. USART 的接线、帧格式与硬件结构
+~~~text
+空闲高电平 -> 起始位 0 -> 8 位数据（低位先发） -> 无校验 -> 停止位 1
+~~~
 
-### 2.1 TX 与 RX 交叉连接
+8N1 每帧通常占 10 个比特时间，因此有效字节率约为 baud/10。波特率或帧格式不一致会产生乱码、丢字节或完全无数据。
 
-![串口接线](assets/ppt/slide-110.png)
+![串口参数与时序](assets/ppt/slide-112.png)
 
-串口连接需要满足：
+图中左侧是常见的 8 位数据帧：起始位固定为低电平，数据从 D0（最低位）开始发送，最后以高电平停止位结束；右侧是 9 位数据帧，多出的最高位可用于地址标记或特殊协议。阅读串口时序时，先从“空闲高电平”找起始位，再按约定的位数和方向采样。
 
-- STM32 的 `TX` 接对方的 `RX`；
-- STM32 的 `RX` 接对方的 `TX`；
-- 两边 `GND` 共地；
-- 使用 3.3 V TTL 电平。
+### 2.3 HEX 与文本
 
-USB 转串口模块上的 `VCC` 跳线应选择 3.3 V。TTL 串口不能直接接 RS-232 电平，后者的电压范围和逻辑极性不同。
+串口本身只传字节。字符 A 经过 ASCII 编码后是 0x41：HEX 模式显示 41，文本模式显示 A。中文是否正常取决于源码、编译器和串口助手的编码是否一致（UTF-8 或 GBK）。
 
-### 2.2 异步通信与数据帧
+## 3. USART 外设内部结构
 
-USART 没有单独的时钟线，发送方和接收方必须预先约定波特率。常见配置是 `9600` 或 `115200` baud、`8N1`：
+![USART 框图](assets/ppt/slide-116.png)
 
-- 8 位数据；
-- 无校验；
-- 1 位停止位。
+写 USART_DR 实际写入发送数据寄存器 TDR，读 USART_DR 实际读取接收数据寄存器 RDR。发送移位寄存器把字节逐位送到 TX；接收移位寄存器从 RX 采样并拼成字节，再转移到 RDR。
 
-![USART 基本结构](assets/ppt/slide-116.png)
+| 标志 | 含义 |
+| --- | --- |
+| TXE | 发送数据寄存器为空，可以写下一个字节 |
+| TC | 整帧（含停止位）发送完成 |
+| RXNE | 接收数据寄存器非空，有新字节可读 |
+| ORE | 接收溢出 |
+| PE、FE、NE | 奇偶、帧、噪声错误 |
 
-一帧通常由以下部分组成：
+课程阻塞发送等待 TXE，适合连续发送；需要确认最后一位已经离开引脚时应等待 TC。
 
-```text
-空闲高电平 -> 起始位 0 -> 数据位（低位先发） -> 可选校验位 -> 停止位 1
-```
+USART1 挂在 APB2，课程时钟下常见 PCLK2 为 72 MHz；USART2、USART3 挂在 APB1，常见 PCLK1 为 36 MHz。波特率发生器通过 USARTDIV 分频并生成采样时钟，修改系统时钟后必须重新确认波特率。
 
-接收方检测到起始位后，按照双方约定的波特率在相应时间点采样数据位。因此波特率、数据位、校验位和停止位任一项不一致，都可能造成乱码。
+![波特率发生器与 BRR](assets/ppt/slide-121.png)
 
-### 2.3 USART 发送与接收数据通路
+图中公式说明：波特率由外设时钟和 USARTDIV 共同决定，BRR 的高位保存整数分频部分，低位保存小数分频部分。配置 9600 baud 时不要只修改 `USART_BaudRate`；如果系统时钟树变了，必须同时确认 USART1 实际得到的 PCLK2 是否仍为课程中的 72 MHz。
 
-发送端包含发送数据寄存器和发送移位寄存器。程序把数据写入 `USART_DR` 后，硬件先把它转移到移位寄存器，再按帧格式从 TX 低位先行发送。`TXE=1` 表示发送数据寄存器已经空，可以写入下一个字节；`TC=1` 才表示数据寄存器和移位寄存器都已空，最后一个停止位已经发送完成。
+USART 还支持硬件流控 RTS/CTS、DMA、同步时钟输出、智能卡、IrDA、LIN 和多机唤醒。本章不使用这些模式，但应知道：RTS/CTS 用额外信号防止接收方处理不过来；DMA 可减轻 CPU；同步模式只提供时钟输出。
 
-接收端在 RX 上检测起始位并采样，拼成一个字节后送入接收数据寄存器，同时置位 `RXNE`。如果上一个字节未及时读取，下一个字节又到达，就可能出现溢出错误。因此连续接收不应在中断中刷新 OLED 或执行长时间阻塞操作。
+### 3.5 字长、校验和停止位
 
-USART1 挂在 APB2，总线时钟通常为 72 MHz；USART2、USART3 挂在 APB1，默认通常为 36 MHz。标准库会按当前外设时钟计算 `BRR`，修改系统时钟后必须重新核对波特率。
+标准库中的字长选项通常为 8 位或 9 位，这里的字长包含可能存在的奇偶校验位。8 位字长通常配无校验，对应完整的 8 位有效载荷；9 位字长可用于 8 位有效数据加 1 位校验，也可在特殊协议中作为 9 位有效数据。停止位支持 0.5、1、1.5 和 2 位，普通串口最常用 1 位。校验可选无校验、奇校验或偶校验。若选择 8 位字长又打开校验，有效数据位会减少，因此课程统一使用 8N1。
 
-## 3. USART1 的标准库配置链
+9 位帧仍然遵循“空闲、起始、数据、停止”的顺序，只是数据区多一个最高位。校验由硬件自动生成或检查，应用程序通常只读取剥离后的数据。
 
-课程使用 USART1 与电脑通信。STM32F103C8T6 的常用引脚是：
+### 3.6 引脚复用与重映射
 
-- `PA9`：USART1_TX，复用推挽输出；
-- `PA10`：USART1_RX，上拉输入；
-- USART1 挂在 APB2 总线。
+USART2 的常用引脚是 PA2/PA3，USART3 的常用引脚是 PB10/PB11，USART1 的常用引脚是 PA9/PA10。部分外设支持重映射到另一组 GPIO；设计电路时应先查数据手册和 AFIO 重映射表，避免与 OLED、按键、定时器等功能冲突。不能因为“同名 USART1”就随意更换引脚。
 
-标准库初始化的基本顺序如下：
+### 3.7 从寄存器角度看框图
 
-```c
-RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 |
-                       RCC_APB2Periph_GPIOA, ENABLE);
+状态寄存器 SR 保存 TXE、TC、RXNE 等硬件状态；数据寄存器 DR 负责收发数据；控制寄存器 CR 配置收发使能、中断、字长、校验和停止位；波特率寄存器 BRR 保存分频系数。标准库结构体把这些位封装起来，但排错时仍可回到参考手册核对寄存器位。
+
+## 4. 实验准备
+
+硬件：STM32F103C8T6 开发板、ST-Link、USB 转 3.3 V TTL 模块、OLED、杜邦线；9-3 另需 PB1 按键，9-4 另需 PA1 LED 和限流电阻。
+
+串口助手步骤：
+
+1. 插入模块，在设备管理器确认 COM 号。
+2. 关闭占用该端口的其他软件。
+3. 设置 9600、8 位、无校验、1 位停止、无硬件流控。
+4. 原始字节实验使用 HEX；字符串实验使用文本。
+5. 文本包必须发送实际的回车和换行，即 CR（\\r）和 LF（\\n）。
+
+## 5. USART1 初始化
+
+初始化顺序是：开启 GPIOA 和 USART1 时钟；PA9 复用推挽；收发时 PA10 上拉输入；配置串口参数；需要接收时开启 RXNE 中断和 NVIC；最后使能 USART。
+
+~~~c
+RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1 | RCC_APB2Periph_GPIOA, ENABLE);
 
 GPIO_InitTypeDef GPIO_InitStructure;
-GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
-
 GPIO_InitStructure.GPIO_Pin = GPIO_Pin_9;
 GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
 GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 GPIO_InitStructure.GPIO_Pin = GPIO_Pin_10;
@@ -104,40 +114,34 @@ GPIO_Init(GPIOA, &GPIO_InitStructure);
 
 USART_InitTypeDef USART_InitStructure;
 USART_InitStructure.USART_BaudRate = 9600;
-USART_InitStructure.USART_HardwareFlowControl =
-    USART_HardwareFlowControl_None;
+USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
 USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;
 USART_InitStructure.USART_Parity = USART_Parity_No;
 USART_InitStructure.USART_StopBits = USART_StopBits_1;
 USART_InitStructure.USART_WordLength = USART_WordLength_8b;
-
 USART_Init(USART1, &USART_InitStructure);
+
+USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+NVIC_InitTypeDef NVIC_InitStructure;
+NVIC_InitStructure.NVIC_IRQChannel = USART1_IRQn;
+NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;
+NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 1;
+NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;
+NVIC_Init(&NVIC_InitStructure);
+
 USART_Cmd(USART1, ENABLE);
-```
+~~~
 
-波特率最终由外设时钟和波特率寄存器 `BRR` 决定。修改系统时钟后，应重新确认时钟配置和 USART 初始化是否匹配。
+USART1_IRQHandler 的名字来自启动文件，不能拼错。读取 USART_ReceiveData 通常会清除 RXNE，课程代码同时调用 USART_ClearITPendingBit 也可以。
 
-配置顺序保持为：
+## 6. 实验一：发送
 
-```text
-开启 GPIOA/USART1 时钟
- -> PA9 复用推挽，PA10 上拉输入
- -> USART_Init() 配置 9600、8N1、收发模式
- -> 需要接收时开启 RXNE 中断并配置 NVIC
- -> USART_Cmd() 使能外设
-```
+工程：9-1 串口发送。
 
-## 4. 实验一：串口发送
+### 6.1 基本发送函数
 
-![串口发送实验接线](assets/ppt/slide-110.png)
-
-课程程序启动后依次发送 `0x41`、数组 `0x42 0x43 0x44 0x45`、字符串和数字。串口助手使用 `9600`、`8N1`；HEX 模式显示原始字节，文本模式按字符编码解释字节，所以 `0x41` 显示为 `A`。
-
-### 4.1 发送一个字节
-
-向数据寄存器写入一个字节后，USART 硬件会自动完成起始位、数据位和停止位的发送。发送函数需要等待发送数据寄存器为空：
-
-```c
+~~~c
 void Serial_SendByte(uint8_t Byte)
 {
     USART_SendData(USART1, Byte);
@@ -145,15 +149,7 @@ void Serial_SendByte(uint8_t Byte)
     {
     }
 }
-```
 
-`TXE` 表示发送数据寄存器为空，可以写入下一个字节。它不等价于最后一位已经离开引脚；如果必须等待整帧发送完成，应根据具体场景使用 `TC`。
-
-### 4.2 发送数组、字符串和数字
-
-在单字节函数之上，可以继续封装：
-
-```c
 void Serial_SendArray(uint8_t *Array, uint16_t Length)
 {
     uint16_t i;
@@ -165,71 +161,88 @@ void Serial_SendArray(uint8_t *Array, uint16_t Length)
 
 void Serial_SendString(char *String)
 {
-    while (*String != '\0')
+    uint16_t i;
+    for (i = 0; String[i] != '\0'; i++)
     {
-        Serial_SendByte((uint8_t)*String);
-        String++;
+        Serial_SendByte((uint8_t)String[i]);
     }
 }
-```
+~~~
 
-数字需要先转换成字符或通过格式化函数输出，不能把十进制数字的“显示形式”和底层字节混为一谈。
+Serial_SendByte(0x41) 是发送一个原始字节；不是发送字符 4 和 1。字符串依靠 \0 结束，数组则必须显式传入长度。
 
-### 4.3 把 `printf` 移植到串口
+### 6.2 数字和 printf
 
-课程介绍了把 `printf` 输出重定向到 USART 的思路。核心是实现字符输出函数，让 C 库的格式化结果逐字符调用 `Serial_SendByte()`。常见写法是重写 `fputc`：
+课程 Serial_SendNumber 按十进制高位到低位发送，固定宽度不足时补 0。例如发送 7、长度 3，结果为 007。它只处理无符号数。
 
-```c
+~~~c
 int fputc(int ch, FILE *f)
 {
     Serial_SendByte((uint8_t)ch);
     return ch;
 }
-```
 
-完成重定向后即可使用：
+void Serial_Printf(char *format, ...)
+{
+    char String[100];
+    va_list arg;
+    va_start(arg, format);
+    vsprintf(String, format, arg);
+    va_end(arg);
+    Serial_SendString(String);
+}
+~~~
 
-```c
-printf("Number1 = %d\r\n", 1);
-printf("Number2 = %d\r\n", 2);
-```
+使用重定向 printf 时，在 Keil Options for Target -> C/C++ 勾选 Use MicroLIB。也可先 sprintf 到数组再发送，或直接使用 Serial_Printf。课程缓冲区为 100 字节，vsprintf 不检查边界；长字符串应改为 vsnprintf。
 
-串口助手中看到的文本，本质上仍然是逐字节发送的 ASCII 字符。
+### 6.3 完整主函数
 
-课程还用 `vsprintf()` 实现 `Serial_Printf()`，先把格式化结果写入 `char String[100]`，再调用 `Serial_SendString()`。这适合演示，但 `vsprintf()` 不检查长度；工程中应改用 `vsnprintf()` 并把缓冲区大小传入，避免格式化结果越界。
+~~~c
+#include "stm32f10x.h"
+#include "OLED.h"
+#include "Serial.h"
 
-## 5. 实验二：串口中断接收与回显
+int main(void)
+{
+    uint8_t MyArray[] = {0x42, 0x43, 0x44, 0x45};
+    char String[100];
 
-### 5.1 查询接收标志
+    OLED_Init();
+    Serial_Init();
+    Serial_SendByte(0x41);
+    Serial_SendArray(MyArray, 4);
+    Serial_SendString("\r\nNum1=");
+    Serial_SendNumber(111, 3);
+    printf("\r\nNum2=%d", 222);
+    sprintf(String, "\r\nNum3=%d", 333);
+    Serial_SendString(String);
+    Serial_Printf("\r\nNum4=%d\r\n", 444);
 
-最直接的入门写法是在主循环中查询 `RXNE`：
+    while (1)
+    {
+    }
+}
+~~~
 
-```c
+验收：HEX 接收区看到 41 42 43 44 45；文本区看到 ABCDE、Num1=111、Num2=222、Num3=333、Num4=444。复位会再次发送。
+
+## 7. 实验二：接收、中断与回显
+
+工程：9-2 串口发送+接收。
+
+查询法是在主循环检查 RXNE：
+
+~~~c
 if (USART_GetFlagStatus(USART1, USART_FLAG_RXNE) == SET)
 {
-    uint8_t Byte = USART_ReceiveData(USART1);
-    OLED_ShowHexNum(1, 1, Byte, 2);
-    Serial_SendByte(Byte);
+    uint8_t RxData = USART_ReceiveData(USART1);
+    Serial_SendByte(RxData);
 }
-```
+~~~
 
-读取 `USART_ReceiveData()` 会取出接收数据，并完成对接收寄存器的处理。主循环查询适合低速、低负载实验；数据量较大或必须及时接收时，应使用接收中断。
+中断法把字节放入变量，再置标志位：
 
-### 5.2 使用接收中断
-
-接收中断的基本流程是：
-
-1. 开启 `USART_IT_RXNE`；
-2. 配置 NVIC 和 `USART1_IRQn`；
-3. 在中断函数中读取接收数据；
-4. 把字节放入缓冲区或更新状态机；
-5. 由主循环处理完整消息。
-
-中断函数中不应执行大量 OLED 刷新、格式化打印或长时间等待，否则可能造成后续字节丢失。
-
-课程使用一个字节缓冲和一个完成标志交接：
-
-```c
+~~~c
 uint8_t Serial_RxData;
 uint8_t Serial_RxFlag;
 
@@ -237,7 +250,7 @@ void USART1_IRQHandler(void)
 {
     if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
     {
-        Serial_RxData = USART_ReceiveData(USART1);
+        Serial_RxData = (uint8_t)USART_ReceiveData(USART1);
         Serial_RxFlag = 1;
         USART_ClearITPendingBit(USART1, USART_IT_RXNE);
     }
@@ -252,166 +265,318 @@ uint8_t Serial_GetRxFlag(void)
     }
     return 0;
 }
-```
 
-主循环检测到标志后读取数据、回发并更新 OLED。这个单字节邮箱只适合低速演示；如果主循环来不及处理，后到字节会覆盖先到字节。连续字节流应使用数据包缓冲区或环形缓冲区。
-
-## 6. 实验三、四：串口数据包
-
-### 6.1 为什么要设计数据包
-
-USART 只提供连续的字节流。若直接发送：
-
-```text
-12 34 56 78
-```
-
-接收方无法仅凭字节本身判断这是四字节命令、两条两字节命令，还是上一条消息的尾部和下一条消息的开头。
-
-因此应用层要增加包头、长度、载荷和包尾等规则：
-
-```text
-包头 + 数据长度/数据内容 + 包尾
-```
-
-### 6.2 HEX 数据包
-
-课程中的 HEX 数据包适合固定长度的二进制数据。例如约定：
-
-```text
-0xFF + 固定长度数据 + 0xFE
-```
-
-接收方按照固定状态接收：
-
-1. 等待 `0xFF`；
-2. 连续保存规定数量的数据字节；
-3. 等待 `0xFE`；
-4. 包完成，通知主循环处理；
-5. 状态复位，等待下一包。
-
-![HEX 数据包](assets/ppt/slide-123.png)
-
-固定长度数据包按位置判断字段，因此 4 字节载荷本身可以出现 `0xFF` 或 `0xFE`，不会被误当成头尾。它的薄弱点是缺少校验和重新同步规则：一旦丢失或插入一个字节，后续字段位置就会错位。可变长度协议才需要进一步使用长度字段、转义或其他定界方法；无论定长还是变长，都可加入校验提高错误检测能力。
-
-课程的接收状态机直接写在 `USART1_IRQHandler()` 中：
-
-```c
-static uint8_t RxState;
-static uint8_t pRxPacket;
-
-if (RxState == 0)
+uint8_t Serial_GetRxData(void)
 {
-    if (RxData == 0xFF)
+    return Serial_RxData;
+}
+~~~
+
+这是一字节邮箱：中断负责投递，主循环负责取走。主循环处理不及时会覆盖旧数据。
+
+~~~c
+int main(void)
+{
+    uint8_t RxData;
+    OLED_Init();
+    OLED_ShowString(1, 1, "RxData:");
+    Serial_Init();
+
+    while (1)
     {
-        RxState = 1;
-        pRxPacket = 0;
+        if (Serial_GetRxFlag() == 1)
+        {
+            RxData = Serial_GetRxData();
+            Serial_SendByte(RxData);
+            OLED_ShowHexNum(1, 8, RxData, 2);
+        }
     }
 }
-else if (RxState == 1)
+~~~
+
+验收：HEX 模式发送 41 或 AF，OLED 与串口回显相同字节；文本模式发送 A，HEX 接收区应显示 41。
+
+## 8. 数据包设计
+
+连续发送 X、Y、Z、X、Y、Z 时，接收方若从中间开始接收，就不知道当前字节对应哪个量。数据包用边界标记解决这个问题。
+
+常见方法：
+
+1. 把最高位作为标志位，优点是不增加字节，缺点是破坏数据范围。
+2. 固定长度包：包头、固定载荷、包尾，解析简单。
+3. 可变长度包：包头、任意长度载荷、包尾，适合文本指令。
+
+![HEX 数据包格式](assets/ppt/slide-123.png)
+
+图中上半部分是固定长度包：每个包都由 `0xFF` 包头、4 个载荷字节和 `0xFE` 包尾组成；下半部分是可变长度包，载荷字节数可以变化。固定长度便于状态机按计数器接收，可变长度则必须依靠包尾、长度字段或转义规则判断边界。
+
+若载荷可能与包头包尾重复，应限制载荷范围、使用固定长度、增加边界字节或加入转义。可靠产品还应加入长度、校验和或 CRC、超时和错误复位。16 位、32 位、float 或结构体都可通过 uint8_t 指针按字节发送，但要约定字节序、长度和格式。
+
+## 9. 实验三：固定长度 HEX 数据包
+
+工程：9-3 串口收发HEX数据包。PB1 接按键。
+
+协议：
+
+~~~text
+FF + 4 字节载荷 + FE
+~~~
+
+![HEX 状态机](assets/ppt/slide-125.png)
+
+发送函数：
+
+~~~c
+uint8_t Serial_TxPacket[4];
+
+void Serial_SendPacket(void)
 {
-    Serial_RxPacket[pRxPacket++] = RxData;
-    if (pRxPacket >= 4)
+    Serial_SendByte(0xFF);
+    Serial_SendArray(Serial_TxPacket, 4);
+    Serial_SendByte(0xFE);
+}
+~~~
+
+接收状态为 0 等待 FF，1 接收四个载荷，2 等待 FE：
+
+~~~c
+uint8_t Serial_RxPacket[4];
+uint8_t Serial_RxFlag;
+
+void USART1_IRQHandler(void)
+{
+    static uint8_t RxState = 0;
+    static uint8_t pRxPacket = 0;
+
+    if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
     {
-        RxState = 2;
+        uint8_t RxData = (uint8_t)USART_ReceiveData(USART1);
+
+        if (RxState == 0)
+        {
+            if (RxData == 0xFF)
+            {
+                RxState = 1;
+                pRxPacket = 0;
+            }
+        }
+        else if (RxState == 1)
+        {
+            Serial_RxPacket[pRxPacket++] = RxData;
+            if (pRxPacket >= 4)
+            {
+                RxState = 2;
+            }
+        }
+        else if (RxState == 2)
+        {
+            if (RxData == 0xFE)
+            {
+                RxState = 0;
+                Serial_RxFlag = 1;
+            }
+        }
+
+        USART_ClearITPendingBit(USART1, USART_IT_RXNE);
     }
 }
-else if (RxState == 2)
+~~~
+
+必须使用 else if 或 switch，避免一次中断执行多个状态。
+
+主函数核心：
+
+~~~c
+int main(void)
 {
-    if (RxData == 0xFE)
+    uint8_t KeyNum;
+    OLED_Init();
+    Key_Init();
+    Serial_Init();
+    OLED_ShowString(1, 1, "TxPacket");
+    OLED_ShowString(3, 1, "RxPacket");
+
+    Serial_TxPacket[0] = 0x01;
+    Serial_TxPacket[1] = 0x02;
+    Serial_TxPacket[2] = 0x03;
+    Serial_TxPacket[3] = 0x04;
+
+    while (1)
     {
-        RxState = 0;
-        Serial_RxFlag = 1;
+        KeyNum = Key_GetNum();
+        if (KeyNum == 1)
+        {
+            Serial_TxPacket[0]++;
+            Serial_TxPacket[1]++;
+            Serial_TxPacket[2]++;
+            Serial_TxPacket[3]++;
+            Serial_SendPacket();
+            OLED_ShowHexNum(2, 1, Serial_TxPacket[0], 2);
+            OLED_ShowHexNum(2, 4, Serial_TxPacket[1], 2);
+            OLED_ShowHexNum(2, 7, Serial_TxPacket[2], 2);
+            OLED_ShowHexNum(2, 10, Serial_TxPacket[3], 2);
+        }
+
+        if (Serial_GetRxFlag() == 1)
+        {
+            OLED_ShowHexNum(4, 1, Serial_RxPacket[0], 2);
+            OLED_ShowHexNum(4, 4, Serial_RxPacket[1], 2);
+            OLED_ShowHexNum(4, 7, Serial_RxPacket[2], 2);
+            OLED_ShowHexNum(4, 10, Serial_RxPacket[3], 2);
+        }
     }
 }
-```
+~~~
 
-该格式的载荷固定为 4 字节，所以数组边界由状态机保证。若包尾错误，课程代码会停留在状态 2，直到再次收到 `0xFE`；更可靠的协议应在错误时复位、增加长度和校验，必要时设置帧间超时。
+验收：按键后串口收到 FF 02 03 04 05 FE；发送 FF 11 22 33 44 FE，OLED 显示 11 22 33 44。
 
-### 6.3 文本数据包
+## 10. 实验四：文本数据包与 LED
 
-文本数据包直接使用字符传输，课程中以换行作为一条消息的结束：
+工程：9-4 串口收发文本数据包。PA1 接 LED。
 
-```text
-@command,value\r\n
-```
+协议：
 
-接收时不断把字符写入数组，直到检测到 `\r\n`，再在字符串末尾补上 `\0`，交给主循环作为 C 字符串处理。
+~~~text
+@ + 文本载荷 + \r\n
+~~~
 
-![文本包接收状态机](assets/ppt/slide-126.png)
+例如 @LED_ON\\r\\n、@LED_OFF\\r\\n。@ 标记开始，CRLF 标记结束；没有换行，状态机不会提交数据。
 
-文本协议可读性好，便于串口助手和人工调试；代价是每个数字通常需要多个 ASCII 字符，数据量和解析开销更大。
+![文本状态机](assets/ppt/slide-126.png)
 
-课程文本包实际约定为：
+~~~c
+char Serial_RxPacket[100];
+uint8_t Serial_RxFlag;
 
-```text
-@LED_ON\r\n
-@LED_OFF\r\n
-```
+void USART1_IRQHandler(void)
+{
+    static uint8_t RxState = 0;
+    static uint8_t pRxPacket = 0;
 
-中断在收到 `@` 后开始保存正文，检测到 `\r\n` 后补 `\0` 并置位完成标志。主循环用 `strcmp()` 比较 `LED_ON`、`LED_OFF`，执行 LED 控制并返回 `LED_ON_OK\r\n`、`LED_OFF_OK\r\n` 或 `ERROR_COMMAND\r\n`。
+    if (USART_GetITStatus(USART1, USART_IT_RXNE) == SET)
+    {
+        uint8_t RxData = (uint8_t)USART_ReceiveData(USART1);
 
-`Serial_RxFlag == 1` 时，状态 0 不接受新包头，相当于暂时冻结单缓冲区，直到主循环处理并清标志。但课程数组长度为 100，接收状态机没有检查 `pRxPacket` 上限；工程代码必须在写入前限制索引，超长帧应丢弃并复位状态。
+        if (RxState == 0)
+        {
+            if (RxData == '@' && Serial_RxFlag == 0)
+            {
+                RxState = 1;
+                pRxPacket = 0;
+            }
+        }
+        else if (RxState == 1)
+        {
+            if (RxData == '\r')
+            {
+                RxState = 2;
+            }
+            else if (pRxPacket < sizeof(Serial_RxPacket) - 1)
+            {
+                Serial_RxPacket[pRxPacket++] = (char)RxData;
+            }
+            else
+            {
+                RxState = 0;
+                pRxPacket = 0;
+            }
+        }
+        else if (RxState == 2)
+        {
+            if (RxData == '\n')
+            {
+                Serial_RxPacket[pRxPacket] = '\0';
+                Serial_RxFlag = 1;
+                RxState = 0;
+            }
+        }
 
-### 6.4 用状态机接收
+        USART_ClearITPendingBit(USART1, USART_IT_RXNE);
+    }
+}
+~~~
 
-课程把两种数据包都拆成有限个状态，而不是在一个循环里堆叠大量条件：
+主循环用 strcmp 解析命令：
 
-![HEX 包接收状态机](assets/ppt/slide-125.png)
+~~~c
+if (Serial_RxFlag == 1)
+{
+    OLED_ShowString(4, 1, "                ");
+    OLED_ShowString(4, 1, Serial_RxPacket);
 
-HEX 固定长度包可以抽象为：
+    if (strcmp(Serial_RxPacket, "LED_ON") == 0)
+    {
+        LED1_ON();
+        Serial_SendString("LED_ON_OK\r\n");
+        OLED_ShowString(2, 1, "LED_ON_OK       ");
+    }
+    else if (strcmp(Serial_RxPacket, "LED_OFF") == 0)
+    {
+        LED1_OFF();
+        Serial_SendString("LED_OFF_OK\r\n");
+        OLED_ShowString(2, 1, "LED_OFF_OK      ");
+    }
+    else
+    {
+        Serial_SendString("ERROR_COMMAND\r\n");
+        OLED_ShowString(2, 1, "ERROR_COMMAND   ");
+    }
 
-```text
-状态 0：等待包头
-状态 1：接收固定长度载荷
-状态 2：等待包尾
-完成：置位接收完成标志，回到状态 0
-```
+    Serial_RxFlag = 0;
+}
+~~~
 
-文本可变长度包可以抽象为：
+验收：文本模式并启用回车换行。发送 @LED_ON\\r\\n，LED 点亮并返回 LED_ON_OK；发送 @LED_OFF\\r\\n，LED 熄灭并返回 LED_OFF_OK；未知命令返回 ERROR_COMMAND。
 
-```text
-状态 0：等待文本包头
-状态 1：持续接收字符
-状态 2：等待换行结束
-完成：补 '\0'，置位完成标志，回到状态 0
-```
+## 11. FlyMcu 与 ST-Link Utility
 
-状态机的关键不是状态数量，而是每个状态只负责一种明确的输入判断。实现时还必须处理：
+### 11.1 FlyMcu
 
-- 缓冲区越界；
-- 新包头出现在异常数据中；
-- 包尾错误或超时；
-- 一包尚未处理时下一包已经到达；
-- 中断写缓冲区和主循环读缓冲区之间的并发关系。
+FlyMcu 通过 STM32F1 系统存储器中的 USART1 Bootloader 下载。Keil 的 Options for Target -> Output 勾选 Create HEX File 后生成 HEX。USB 转串口接 PA9、PA10、GND；课程演示 Bootloader 波特率为 115200，与应用工程 9600 不同是正常的。
 
-低速入门实验可以使用单缓冲区；更可靠的实现应在“接收完成”时冻结缓冲区，或使用双缓冲区、环形缓冲区。
+步骤：BOOT0 置 1、BOOT1 保持 0；按复位；FlyMcu 选择 COM 和 HEX 文件并下载；完成后 BOOT0 恢复 0，再复位运行用户程序。启动配置只在复位时锁存。BOOT0=0 时从主 Flash 的 0x08000000 启动，BOOT0=1、BOOT1=0 时从系统存储器的 Bootloader 启动，两个都为 1 时从 SRAM 启动，本章不使用 SRAM 启动。
 
-## 7. 验收与排错
+如果开发板没有 RTS、DTR 控制 BOOT0 和复位的“一键下载”电路，就必须手动拨跳线并复位。带一键下载电路的模块可把 RTS、DTR 当作普通控制输出，通过三极管分别控制 BOOT0 和 NRST；FlyMcu 的 RTS/DTR 高低电平选项必须与实际电路一致。没有该电路时这些下拉选项对硬件不起作用。
 
-课程还介绍了串口助手和 FlyMcu。FlyMcu 使用 USART1 系统 Bootloader 下载程序，属于烧录链路，不是本章应用层收发代码的一部分。串口实验按下面顺序验证：
+FlyMcu 还可以读取 Flash、整片擦除和读取器件信息。读出的文件通常是 BIN 原始数据，没有地址信息；HEX 文件带地址信息。课程演示版本主要用于下载 HEX，读出的 BIN 未必能在同一版本中直接重新下载。芯片标称容量应以数据手册为准，软件读出的容量异常时不要据此扩大程序范围。
 
-1. 先确认 USB 转串口模块使用 3.3 V TTL，并检查共地；
-2. 用固定字节 `0x55` 检查基本时序；
-3. 测试单字节发送，再测试数组和字符串；
-4. 测试 `0x41` 接收、OLED 显示和回显；
-5. 最后测试 HEX 数据包和文本数据包。
+选项字节包含读保护、硬件参数、用户数据和写保护。解除读保护通常会擦除主 Flash；写保护区域若被下载覆盖会导致失败。修改保护前先备份。
 
-排错优先级：
+![选项字节组织结构](assets/ppt/slide-203.png)
 
-- 完全乱码：查电平、共地、波特率、`8N1` 和系统时钟；
-- 只能发送：查 `RX`/`TX` 是否交叉、PA10 模式和接收逻辑；
-- 只能接收：查 PA9 复用推挽和串口助手端口；
-- 单字节正常但丢包：查中断处理时间、缓冲区边界和状态复位；
-- 文本乱码但 HEX 正常：查字符编码和 `\r\n` 结束规则。
+图中列出了信息块的地址和字段：RDP 控制读保护，USER 控制硬件看门狗及待机/停机复位行为，Data0/1 可供用户保存参数，WRP0～3 用于按页设置写保护。修改这些字段前，应先确认目标芯片型号和保护范围；解除 RDP 可能触发整片 Flash 擦除，不能把它当作普通程序下载选项。
 
-## 本章小结
+### 11.2 ST-Link Utility
 
-USART 的学习顺序应保持分层：
+ST-Link Utility 通过 SWDIO、SWCLK、GND 和目标板供电下载，不需要串口模块。连接后可读取、保存、擦除、编程 HEX/BIN，也可在 Target -> Option Bytes 单独修改保护和用户参数。它还提供 ST-Link 固件升级功能。
 
-1. USART 硬件负责把字节转换成串行电平；
-2. 帧格式和波特率决定双方如何解释这些电平；
-3. 发送、接收和中断函数提供字节级接口；
-4. HEX/文本数据包和状态机解决消息边界问题。
+## 12. 故障排查
 
-只有把物理连接、帧参数、字节收发、缓冲区和协议解析连成一条链，串口通信程序才真正闭环。
+| 现象 | 检查顺序 |
+| --- | --- |
+| 没有 COM | 驱动、USB 线、端口占用 |
+| 完全无数据 | 供电、共地、TX/RX、USART1 时钟 |
+| 发送正常、接收无效 | 模块 TXD 是否接 PA10，中断和 NVIC 是否开启 |
+| 接收正常、发送无效 | PA9 是否复用推挽，模块 RXD 是否接对 |
+| 全是乱码 | 波特率、8N1、电平、系统时钟 |
+| 英文正常中文乱码 | UTF-8/GBK 编码不一致 |
+| 单字节正常但丢包 | 邮箱或单缓冲区覆盖，中断处理过重 |
+| 文本无响应 | 是否发送 @、CRLF，是否补 \\0 |
+| HEX 错位 | FF、FE、固定长度 4 和错误复位 |
+| FlyMcu 无法握手 | BOOT0、复位时序、USART1 接线、HEX、COM |
+| 下载后仍进 Bootloader | BOOT0 未恢复为 0 |
+
+始终按“供电和共地 -> 发送 0x41 -> 单字节回显 -> 数据包 -> OLED/按键/LED”的顺序排查，一次只改一个变量。
+
+## 13. 验收清单与练习
+
+- [ ] 会完成 TX-RX 交叉接线和共地。
+- [ ] 会解释 8N1、TXE、TC、RXNE。
+- [ ] 完成 9-1 的字节、数组、字符串、数字和 printf。
+- [ ] 完成 9-2 的 OLED 显示和回显。
+- [ ] 完成 9-3 的 FF + 4 字节 + FE 数据包。
+- [ ] 完成 9-4 的 LED_ON、LED_OFF 和错误命令。
+- [ ] 能画出两个状态机并解释丢包边界。
+- [ ] 能区分 FlyMcu 的 USART1 Bootloader 与 ST-Link 的 SWD。
+
+练习：把 HEX 载荷扩展到 8 字节；加入长度和校验和；增加 LED_TOGGLE 文本指令；用环形缓冲区替换单字节邮箱；把 Serial_Printf 改成带长度限制的 vsnprintf。

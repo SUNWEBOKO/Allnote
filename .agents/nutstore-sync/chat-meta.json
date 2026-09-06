@@ -1,0 +1,19 @@
+{
+  "activeSessionId": "session_ring-metal-crow",
+  "orderedSessionIds": [
+    "session_ring-metal-crow",
+    "session_veen-doc-cede"
+  ],
+  "sessions": {
+    "session_ring-metal-crow": {
+      "title": "新对话",
+      "createdAt": 1786594613115,
+      "updatedAt": 1786594613115
+    },
+    "session_veen-doc-cede": {
+      "title": "新对话",
+      "createdAt": 1786602239360,
+      "updatedAt": 1786602239360
+    }
+  }
+}
