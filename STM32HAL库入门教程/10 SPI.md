@@ -28,6 +28,8 @@ SPI1 自动产生时钟和收发
         -> 完成 01 02 03 04 写入与回读
 ```
 
+完成本章的教学驱动后，可把配套驱动库 `E:\ProjectStm\驱动库\W25Q64` 中的 `w25q64.h/.c` 作为工程化对照：它基于 `W25Q64_Handle` 句柄封装了同样的指令事务，并提供跨页写入、扇区/块擦除和地址范围擦除等更完整的接口。
+
 ## 2. 实验现象与接线
 
 ### 2.1 预期现象
@@ -495,9 +497,14 @@ void W25Q64_Init(void)
     MySPI_Init();
 }
 
-void W25Q64_ReadID(uint8_t *manufacturer_id,
-                   uint16_t *device_id)
+uint8_t W25Q64_ReadID(uint8_t *manufacturer_id,
+                      uint16_t *device_id)
 {
+    if ((manufacturer_id == NULL) || (device_id == NULL))
+    {
+        return 1U;
+    }
+
     MySPI_Start();
 
     MySPI_SwapByte(W25Q64_JEDEC_ID);
@@ -509,8 +516,12 @@ void W25Q64_ReadID(uint8_t *manufacturer_id,
     *device_id |= MySPI_SwapByte(0xFF);
 
     MySPI_Stop();
+
+    return 0U;
 }
 ```
+
+返回值约定与第 15 节的硬件版 `W25Q64_ReadID()` 一致：`0` 表示读取流程完成，非 `0` 表示参数无效。两版函数签名相同，上层调用代码可以在软件版和硬件版工程之间直接互换。
 
 `0x9F` 返回三个字节：
 
@@ -750,9 +761,12 @@ MX_GPIO_Init();
 OLED_Init();
 
 W25Q64_Init();
-W25Q64_ReadID(&manufacturer_id, &device_id);
+flash_error = W25Q64_ReadID(&manufacturer_id, &device_id);
 
-flash_error = W25Q64_SectorErase(0x000000);
+if (flash_error == 0U)
+{
+    flash_error = W25Q64_SectorErase(0x000000);
+}
 
 if (flash_error == 0U)
 {
