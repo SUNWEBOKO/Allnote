@@ -1,0 +1,934 @@
+# 05 定时器：时基、PWM、输入捕获与电机控制
+上一篇：[[04 中断系统：EXTI 与 NVIC 优先级]] ｜ 下一篇：[[06 ADC：量化、采样时间与定时器触发]]
+
+## 本章闭环
+
+本章各实验是相互独立的工程：多个实验会用到同一个定时器甚至同一个引脚（例如 `TIM3_CH1/PA6` 既是呼吸灯的 PWM 输出，也出现在 TB6612 的示例配置中）。不要把多个实验的初始化代码叠加进同一个工程，否则会发生外设与引脚冲突。
+
+定时器的核心是一个由时钟驱动的计数器。围绕同一个 `CNT`，芯片又加入了预分频、自动重装、捕获比较和主从触发等电路，得到本章的全部功能：
+
+```text
+时钟源 -> PSC 预分频 -> CNT 计数 -> ARR 决定更新周期
+                                |-> 更新事件/更新中断：周期执行任务（实验一）
+                                |-> 与 CCR 比较：输出 PWM（呼吸灯/舵机/TB6612，实验三~五）
+                                |-> 边沿把 CNT 锁存到 CCR：输入捕获（超声波测距，实验六）
+                                |-> 两路正交信号控制加减：编码器接口（旋钮/闭环测速，实验七）
+外部脉冲 ETR -> 外部时钟模式：统计传感器脉冲（传送带测速，实验二）
+```
+
+默认目标芯片为 STM32F103C8T6，常见系统时钟为 `72 MHz`。不同封装的定时器和引脚数量可能不同，最终以芯片数据手册和 CubeMX 实际可选资源为准。
+
+## 使用方式与学习顺序
+
+本章是“边学边建工程”的实验路线，不要求现在已经存在七个完整工程。建议每次只建立一个独立 CubeMX 工程，完成“配置 -> 生成 -> 编译 -> 下载 -> 观察 -> 记录”的闭环，再进入下一节。不要把本章所有实验的初始化代码合并到同一个工程。
+
+本章默认你已经学习过 STM32 标准库，因此不重复展开 GPIO、NVIC 和 C 语言基础；遇到 HAL 特有的句柄、启动函数、回调和 CubeMX 配置时，会明确指出它们与标准库写法的对应关系。
+
+TB6612 实验使用配套目录 `E:\ProjectStm\驱动库\TB1622` 中的 `tb6612.h/.c`。教程中的函数名和结构体必须以该目录当前版本为准；如果你后续修改驱动库，应同步更新本章代码。
+
+每个实验都应先完成低风险验证：先不接负载或使用低占空比确认波形，再连接舵机和电机。凡是涉及方向、刹车、5 V 输入和机械运动的实验，都必须把“立即断电/待机”的处理方式准备好。
+
+## 1. 学习目标与准备
+
+完成本章后，应能够：
+
+- 用 `PSC`、`ARR`、`CNT` 计算定时周期，并实现秒级定时中断；
+- 解释预装载（影子寄存器）机制，并说明"上电先进一次更新中断"在新旧版本 HAL 下的差异；
+- 用 PWM 控制 LED、舵机和 TB6612 直流电机；
+- 区分测频法与测周法，并根据信号频率选择测量方法；
+- 用输入捕获测量脉宽，完成带超时保护的超声波测距；
+- 解释复位、门控、触发开始等从模式的行为；
+- 用外部时钟模式统计光电传感器脉冲，计算传送带距离与速度；
+- 用编码器模式读取 AB 相编码器，并按倍频换算位移和转速；
+- 使用 TB6612 驱动库的有符号速度、刹车与滑行接口。
+
+准备：STM32F103C8T6 开发板、ST-LINK、CubeMX、Keil MDK、示波器或逻辑分析仪（可选）、SG90 类舵机、增量式旋转编码器、HC-SR04 类超声波模块、对射式/光电传感器、TB6612FNG 模块和带编码器的直流电机。
+
+## 2. 定时中断与内外时钟源
+
+### 2.1 定时器解决什么问题
+
+定时器可以对输入时钟计数，并在计数达到设定值时产生事件或中断。只要输入时钟频率准确，"数脉冲"就等价于"量时间"，因此定时器可用于时钟计时、周期采样和周期性执行任务。
+
+定时器不是只能"等待一段时间"的闹钟，而是一组由时钟驱动的计数逻辑：
+
+```text
+定时器时钟 -> 预分频器 PSC -> CNT 计数器 -> 比较/自动重装载 -> 事件或输出
+```
+
+计数器每收到一个有效计数脉冲，就按计数方向加一或减一。计数到 `ARR` 后产生更新事件，向上计数时通常重新从 `0` 开始。
+
+### 2.2 定时器类型与 C8T6 资源
+
+STM32F1 家族的定时器按功能复杂度分为三类：
+
+| 类型 | 代表 | 总线 | 主要能力 |
+| --- | --- | --- | --- |
+| 高级定时器 | `TIM1` | APB2 | 通用定时器全部功能，另有互补输出、死区、刹车等电机功率驱动能力 |
+| 通用定时器 | `TIM2~TIM4` | APB1 | 定时中断、PWM、输入捕获、外部时钟、编码器和从模式 |
+| 基本定时器 | 某些更高资源型号的 `TIM6/TIM7` | APB1 | 时基、更新中断、触发 DAC |
+
+STM32F103C8T6 具有 `TIM1`、`TIM2`、`TIM3`、`TIM4`，即 1 个高级定时器和 3 个通用定时器，没有基本定时器。即使没有基本定时器，也可把通用定时器当作普通定时器使用。高级定时器的互补输出、死区和刹车主要用于功率驱动，本章不展开，只把 `TIM1` 当作普通定时器使用其编码器接口。
+
+### 2.3 时基单元：PSC、CNT、ARR
+
+时基单元由三个核心寄存器构成：
+
+- `PSC`（Prescaler）：预分频器。写入值为 `PSC` 时，实际分频系数是 `PSC+1`，例如 `PSC=7199` 表示 7200 分频；
+- `CNT`（Counter）：计数器，每来一个计数时钟就加一或减一；
+- `ARR`（Auto-Reload Register）：自动重装载寄存器，决定计数边界。
+
+在最常用的向上计数模式中，`CNT` 从 `0` 数到 `ARR`，下一个计数时钟到来时回到 `0` 并产生更新事件；若允许更新中断，还会向 NVIC 提交中断请求。因此：
+
+$$f_{CNT}=\frac{f_{TIM}}{PSC+1}$$
+
+$$f_{update}=\frac{f_{TIM}}{(PSC+1)(ARR+1)},\qquad T_{update}=\frac{(PSC+1)(ARR+1)}{f_{TIM}}$$
+
+公式中的两个 `+1` 来自实际计数范围：预分频器从 `0` 数到 `PSC`，主计数器从 `0` 数到 `ARR`。基本定时器只支持向上计数；通用和高级定时器还支持向下计数与中央对齐计数，本章实验均采用向上计数。
+
+### 2.4 时间计算与 1 s 定时参数
+
+假设 `f_TIM=72 MHz`，希望每秒触发一次更新事件：
+
+1. 先选 `PSC=7199`，得到 `f_CNT = 72 MHz / 7200 = 10 kHz`；
+2. 需要计数 `10000` 次，因此 `ARR=9999`；
+3. 周期为 `10000 / 10000 = 1 s`。
+
+```c
+htim4.Instance = TIM4;
+htim4.Init.Prescaler = 7199U;
+htim4.Init.CounterMode = TIM_COUNTERMODE_UP;
+htim4.Init.Period = 9999U;
+/* 72 MHz / 7200 / 10000 = 1 Hz 更新事件。 */
+```
+
+对于 `PSC` 和 `ARR` 均为 16 位的定时器，二者取最大值时，单次向上计数的最长周期约为：
+
+$$T_{max}=\frac{65536\times65536}{72\times10^6}\approx59.65\,\text{s}$$
+
+需要更长周期时，入门工程通常让定时器产生一个较短的基准周期，再在更新中断里做软件累计。注意不同型号、不同定时器的 `ARR` 位宽可能不同，最终以参考手册和 CubeMX 生成结果为准；不要把“16 位最长周期”套用到所有定时器。
+
+### 2.5 定时器时钟来源
+
+定时器时钟来自 APB1 或 APB2 总线，但不能直接用 `PCLK` 代入公式。通用规则是：APB 预分频为 1 时，定时器时钟等于对应 `PCLK`；APB 预分频不为 1 时，定时器时钟自动乘二。
+
+常用 `72 MHz` 配置下，APB1 分频为 `2`，`PCLK1=36 MHz`，但 `TIM2~TIM4` 的时钟为 `2 x 36 = 72 MHz`。计算前必须先确认定时器挂在哪条总线以及 APB 分频系数，不能把 `PCLK1=36 MHz` 直接代入 TIM2~TIM4 的公式。
+
+### 2.6 影子寄存器与上电首次中断
+
+软件写入的 `PSC` 和 `ARR` 并不会立刻生效：数值先进入预装载寄存器，更新事件到来后才转移到真正工作的影子寄存器。这样可以避免一个计数周期的前后两段使用不同的分频或边界。
+
+HAL 库的 `HAL_TIM_Base_Init()` 在配置末尾会主动产生一次更新事件，让 `PSC/ARR` 立即装入影子寄存器。这一步会置位更新标志 `UIF`。
+
+新版 HAL 已经替你把该标志清掉了：F1 驱动里 `TIM_Base_SetConfig()` 写完 `EGR = TIM_EGR_UG` 之后，会检查并清除 `UIF`。因此 `MX_TIMx_Init()` 返回时更新标志是干净的，随后调用 `HAL_TIM_Base_Start_IT()` 不会立刻多进一次中断。**核对方法**：打开 `Drivers/STM32F1xx_HAL_Driver/Src/stm32f1xx_hal_tim.c`，搜索 `TIM_EGR_UG`，看它后面是否跟着一段"若 `UIF` 置位则清除"的处理；有，说明你手上的驱动已经处理过；没有，说明该版本较旧。
+
+所以"启动前清一次更新标志"属于历史习惯：在使用旧版 HAL（不清 `UIF` 的版本）的工程里它是必需的，在新版 HAL 里无害且更稳妥：
+
+```c
+__HAL_TIM_CLEAR_FLAG(&htim4, TIM_FLAG_UPDATE);
+HAL_TIM_Base_Start_IT(&htim4);
+```
+
+还要注意 `ARR` 与 `PSC` 的缓冲条件并不相同：`ARR`"先写预装载、更新事件后才生效"的行为依赖 `AutoReloadPreload` 选项（CubeMX 中默认 `Enable`，对应 `TIMx_CR1` 的 `ARPE` 位）；`PSC` 才是无条件带缓冲的，写入后总是在下一个更新事件生效。若把 `AutoReloadPreload` 设为 `Disable`，运行中改写 `ARR` 会立即生效，可能产生一个异常短或异常长的周期。配置时请在 CubeMX 的定时器 `Parameter Settings` 里确认该选项为 `Enable`。
+
+### 2.7 CubeMX 配置流程与 HAL 接口
+
+定时中断的配置顺序：
+
+1. CubeMX 中选择目标定时器，`Clock Source` 选择 `Internal Clock`；
+2. 配置 `Prescaler`、`Counter Period`（即 ARR）和计数模式，并在 `Parameter Settings` 中确认 `auto-reload preload`（ARR 预装载）为 `Enable`（CubeMX 默认值，对应 `ARPE` 位）；
+3. 在 NVIC 中勾选该定时器的更新中断；
+4. 生成代码；
+5. 启动前清除更新标志，再调用 `HAL_TIM_Base_Start_IT()`；
+6. 在 `HAL_TIM_PeriodElapsedCallback()` 中判断定时器实例并执行任务。
+
+常用 HAL 接口：
+
+| 任务 | 接口 |
+| --- | --- |
+| 启动/停止更新中断 | `HAL_TIM_Base_Start_IT()` / `HAL_TIM_Base_Stop_IT()` |
+| 更新中断回调 | `HAL_TIM_PeriodElapsedCallback()` |
+| 读/写计数值 | `__HAL_TIM_GET_COUNTER()` / `__HAL_TIM_SET_COUNTER()` |
+| 运行中改写 ARR | `__HAL_TIM_SET_AUTORELOAD()` / `__HAL_TIM_GET_AUTORELOAD()` |
+
+### 2.8 实验一：1 s 定时中断
+
+**目标**：让 `TIM4` 每隔 1 s 产生一次更新中断，主循环把中断累计的秒数显示出来。参数取 `PSC=7199`、`ARR=9999`（推导见 2.4）。
+
+```c
+volatile uint32_t seconds = 0U;
+
+int main(void)
+{
+    HAL_Init();
+    SystemClock_Config();
+    MX_GPIO_Init();
+    MX_TIM4_Init();
+    OLED_Init();
+
+    __HAL_TIM_CLEAR_FLAG(&htim4, TIM_FLAG_UPDATE);
+    HAL_TIM_Base_Start_IT(&htim4);
+
+    OLED_ShowString(1, 1, "Seconds:");
+    while (1)
+    {
+        OLED_ShowNum(1, 9, seconds, 5);
+    }
+}
+
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM4)
+    {
+        seconds++;
+    }
+}
+```
+
+**现象**：OLED 数值每秒加一，上电从 0 开始且没有多余的第一次跳变。
+
+**注意**：
+
+- `seconds` 同时被中断和主程序访问，必须声明为 `volatile`；
+- 中断函数应保持简短，OLED 刷屏等耗时操作放在主循环，中断里只更新状态；
+- 空 `for` 循环不能替代定时器定时，因为编译优化、流水线和主频变化都会改变其时间；`HAL_Delay()` 也只是阻塞等待，无法与主循环任务并行。
+
+### 2.9 外部时钟模式：用引脚脉冲计数
+
+内部时钟之外，定时器还能用引脚上的外部脉冲作为计数时钟。
+
+**外部时钟模式 2**：`ETR` 引脚经过极性选择、数字滤波和外部触发预分频后，直接作为定时器计数时钟。CubeMX 在 `Clock Source` 中选择 `ETR2`，生成的代码对应 `htim.Init.ClockSource = TIM_CLOCKSOURCE_ETRMODE2`。每来一个有效边沿，`CNT` 加一。具体可用引脚由芯片映射决定，例如 `TIM2_ETR` 在 `PA0`。
+
+**外部时钟模式 1**：触发输入（`TIx`、`ITRx` 或 `ETR`）经过从模式控制器参与计数控制，属于从模式的一部分，见 4.3 节。
+
+与 CPU 在 GPIO 中断里手动累加相比，定时器硬件计数不会为每个脉冲进入软件中断。电机、编码器等高频信号若每个边沿都进中断，只为执行一次自增，会浪费大量 CPU 时间；硬件计数把这项工作完全交给外设。
+
+滤波参数越强，抗毛刺能力越好，但延迟越大、可接受的最高输入频率越低。慢速机械传感器可以用较强滤波，高速干净信号应重新选择参数。传感器输出电平还必须满足 STM32 输入要求：5 V 传感器要接在数据手册标注 5V 容忍（FT）的引脚，或做分压处理。
+
+### 2.10 实验二：传送带脉冲计数与测速
+
+**目标**：传送带每经过一条黑白边界，对射式传感器输出一个脉冲。用外部时钟模式 2 让 `TIM2` 硬件计数，再周期性读取计数值计算距离和速度。
+
+**接线与配置**：传感器 DO 接 `PA0`（`TIM2_ETR`），输出为开漏时需上拉。CubeMX 中 `TIM2` 的 `Clock Source` 选择 `ETR2`，`PSC=0`、`ARR=65535`，让 16 位计数范围全部可用。
+
+距离等于脉冲数乘以条纹间距 `s`：
+
+$$d=N\times s$$
+
+必须先明确"每个脉冲代表一条边界、半个周期还是完整周期"，否则距离会差一倍。
+
+固定采样窗口 $\Delta t$ 内读取计数增量 $\Delta N$，得到速度：
+
+$$v=\frac{\Delta N\times s}{\Delta t}$$
+
+```c
+uint16_t last = 0U;
+uint32_t distance_mm = 0U;
+const uint32_t pitch_mm = 5U;   /* 每个脉冲对应的传送带位移 */
+
+/* 必须放在 MX_TIM2_Init() 之后、进入 while (1) 之前：
+   ETR 只是把外部脉冲接成计数时钟，CEN 位仍要由软件置位。
+   忘记启动是 CNT 恒为 0 的第一号原因。查询方式读数，不用 _IT 版本。 */
+HAL_TIM_Base_Start(&htim2);
+
+while (1)
+{
+    uint16_t now;
+    uint16_t delta;
+    uint32_t speed_mm_s;
+
+    HAL_Delay(100U);                            /* 采样窗口 100 ms */
+    now = __HAL_TIM_GET_COUNTER(&htim2);
+    delta = (uint16_t)(now - last);             /* 16 位无符号模差 */
+    last = now;
+
+    distance_mm += (uint32_t)delta * pitch_mm;
+    speed_mm_s = ((uint32_t)delta * pitch_mm * 1000U) / 100U;
+}
+```
+
+这里利用 16 位无符号模差处理一个采样窗口内的计数器回绕；前提是采样间隔足够短，使窗口内真实增量不超过 65536。传送带静止时增量应为 0，若不为 0，优先检查传感器抖动和滤波设置。
+
+## 3. 输出比较与 PWM
+
+### 3.1 PWM 解决什么问题
+
+PWM（Pulse Width Modulation，脉冲宽度调制）通过快速切换高低电平并调节高电平持续时间，控制具有惯性的系统：LED 的余晖与人眼视觉暂留、电机的机械惯性，都会把快速开关效果表现为连续的亮度或速度。
+
+PWM 有三个核心参数：
+
+- **频率**：每秒重复多少个周期，$f=1/T$；
+- **占空比**：高电平时间占周期的比例，$D=T_{ON}/T$；
+- **分辨率**：占空比能够变化的最小步距，$\Delta D=\frac{1}{ARR+1}$。例如 `ARR=99` 时一个周期有 100 个计数，分辨率 1%。
+
+PWM 不一定用于"等效模拟量"：舵机把高电平脉宽解释为角度命令，此时 PWM 更像一种单线控制协议。
+
+### 3.2 PWM 模式 1、占空比与边界
+
+在边沿对齐、向上计数、有效电平为高的 PWM 模式 1 中：
+
+```text
+CNT < CCR  -> 输出有效电平（高）
+CNT >= CCR -> 输出无效电平（低）
+```
+
+占空比为：
+
+$$D=\frac{CCR}{ARR+1}$$
+
+边界情况要单独注意：
+
+- `CCR = 0`：始终不满足 `CNT < CCR`，占空比为 0%；
+- `CCR = ARR`：占空比是 $ARR/(ARR+1)$，还不是严格 100%；
+- `CCR = ARR + 1`：整个周期都满足 `CNT < CCR`，可得到严格 100%；但当 `ARR=65535` 时，16 位 `CCR` 无法写入 65536，此时只能得到接近满占空比。
+
+设计参数时通常先按分辨率确定 `ARR`，再由目标频率确定 `PSC`，最后用 `CCR` 调占空比。
+
+**示例：20 kHz 电机 PWM**。若 `TIM3CLK=72 MHz`，取 `PSC=0`、`ARR=3599`：
+
+$$f_{PWM}=\frac{72\,\text{MHz}}{(0+1)(3599+1)}=20\,\text{kHz}$$
+
+分辨率为 $1/3600$，`CCR=1800` 约对应 50% 占空比。选 20 kHz 是为了把开关噪声移出大多数人耳可听的范围；低于约 16~20 kHz 时电机和驱动板会发出可闻的啸叫。注意电机转速不等于占空比，负载和供电变化会让相同占空比对应不同转速。
+
+### 3.3 多通道共享时基
+
+每个通用或高级定时器通常有四个捕获比较通道。四路拥有各自的 `CCR`，但共享同一个 `PSC`、`CNT` 和 `ARR`，因此同一定时器的多路 PWM 频率相同、周期起点同步，只有占空比可以各自独立设置。TB6612 需要两路调速 PWM 时，用同一定时器的 `CH1/CH2` 即可。
+
+输入捕获和输出比较共用通道引脚及 `CCR`，同一个通道不能同时承担两种功能。
+
+### 3.4 CubeMX PWM 配置流程
+
+1. 打开目标定时器，例如 `TIM3`，`Clock Source` 选择 `Internal Clock`；
+2. 目标通道选择 `PWM Generation CHx`；
+3. 选择 `PWM mode 1`、向上计数、有效电平为高（Polarity 为 High）；
+4. 按 3.2 的顺序计算 `PSC/ARR`，让频率和分辨率满足负载要求；
+5. 生成代码后调用 `HAL_TIM_PWM_Start()`。
+
+```c
+HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+/* CCR 决定有效电平持续时间，ARR 决定 PWM 周期。 */
+__HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, 1800U);
+```
+
+### 3.5 实验三：PWM 控制 LED 呼吸灯
+
+**目标**：让 LED 的占空比缓慢增加和减少，观察平均亮度变化。沿用 3.2 的 20 kHz 配置（`PSC=0`、`ARR=3599`），`TIM3_CH1` 接 LED。
+
+**接线**：不能拿板载 `PC13` 上的 LED 做这个实验——`PC13` 不是任何定时器的通道，输出不了 PWM。需要外接一只 LED：`PA6`（`TIM3_CH1`）→ 约 `1 kΩ` 限流电阻 → LED 阳极，LED 阴极 → `GND`。也就是**高电平点亮**，与 `PWM mode 1`、`Polarity = High` 对应：`CCR` 越大，一个周期里高电平时间越长，LED 越亮。
+
+```c
+HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+int32_t ccr;   /* 循环变量声明在块首：Keil AC5 默认按 C90 编译，不能在 for 里声明 */
+
+while (1)
+{
+    for (ccr = 0; ccr <= 3599; ccr += 10)
+    {
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, (uint32_t)ccr);
+        HAL_Delay(5U);
+    }
+    for (ccr = 3599; ccr >= 0; ccr -= 10)
+    {
+        __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, (uint32_t)ccr);
+        HAL_Delay(5U);
+    }
+}
+```
+
+**现象**：LED 约以 `360 x 5 ms x 2 = 3.6 s` 为周期平滑变亮变暗。
+
+**边界**：占空比提高时，LED 平均电流增大、亮度提高；但人眼感知近似对数关系，亮度并不随 `CCR` 线性增加，这个实验只用于理解 PWM。LED 必须串限流电阻，不能让 MCU 引脚直接承担过大电流。
+
+### 3.6 实验四：PWM 控制舵机
+
+**信号规格**：常见 180° 舵机使用约 `50 Hz`、周期 `20 ms` 的控制脉冲。许多 SG90 类舵机可用约 `500~2500 µs` 的高电平宽度对应 `0~180°`，但具体范围必须以手中舵机的规格书为准，避免撞到机械限位。
+
+**参数选择**：若取 `PSC=719`、`ARR=1999`，则
+
+$$f_{PWM}=\frac{72\,\text{MHz}}{(719+1)(1999+1)}=50\,\text{Hz}$$
+
+此时计数频率为 `72 MHz / 720 = 100 kHz`，一个计数 `10 µs`。`ARR=1999` 的 2000 个计数正好是 `20 ms`，周期没有问题，但脉宽步距 `10 µs` 只相当于约 `0.9°`，分辨率偏粗。更适合的配置是让计数频率为 `1 MHz`：`PSC=71`、`ARR=19999`，一个计数恰好对应 `1 µs`，周期仍为 `20 ms`，`CCR` 直接就是微秒数。
+
+**输出引脚与接线**：`TIM4_CH3` 的默认引脚是 `PB8`。在 CubeMX 中把 `TIM4` 的 `CH3` 设为 `PWM Generation CH3` 后，回到引脚图确认该通道确实落在 `PB8` 上（封装不同或做了重映射时可能不同，以引脚图为准）。舵机三根线的接法：
+
+- 信号线（通常橙/黄）：接 `PB8`；
+- 电源线（通常红）：接**独立 5 V 电源**（细节见本节末尾"电源"一段），不要用 ST-LINK 的 5 V 直接带舵机；
+- 地线（通常棕/黑）：与单片机 `GND` **共地**，这一根不能省。
+
+（`PB8` 在后文 I2C 章节被用作软件 I2C 的 `OLED_SCL`，与本章开头"各实验是相互独立的工程"的约定一致，两者不要放进同一个工程。）
+
+**角度映射**：若规格书给出 `500~2500 µs` 对应 `0~180°`，可用线性映射（角度 $\theta$ 以度为单位）：
+
+$$t_{pulse}(\theta)=500+\frac{2000\,\theta}{180}\ \mu s$$
+
+```c
+static uint16_t Servo_AngleToPulse(uint16_t angle)
+{
+    if (angle > 180U) angle = 180U;
+    return (uint16_t)(500U + (2000U * angle) / 180U);
+}
+
+HAL_TIM_PWM_Start(&htim4, TIM_CHANNEL_3);
+
+int16_t a;   /* 循环变量声明在块首，兼容 Keil AC5 默认的 C90 */
+
+while (1)
+{
+    for (a = 0; a <= 180; a += 5)
+    {
+        __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, Servo_AngleToPulse((uint16_t)a));
+        HAL_Delay(50U);
+    }
+    for (a = 180; a >= 0; a -= 5)
+    {
+        __HAL_TIM_SET_COMPARE(&htim4, TIM_CHANNEL_3, Servo_AngleToPulse((uint16_t)a));
+        HAL_Delay(50U);
+    }
+}
+```
+
+**现象**：舵机在 0° 和 180° 之间往复摆动，单程 `37 x 50 ms ≈ 1.85 s`。
+
+**电源**：舵机启动和堵转电流较大，不应从 MCU 的 3.3 V 稳压输出取电，应使用独立 5 V 电源；舵机电源、STM32 和 PWM 信号必须共地。供电压降会造成复位、抖动或角度异常。
+
+### 3.7 TB6612 与直流电机
+
+#### 为什么需要电机驱动
+
+直流电机启动电流和堵转电流远高于 MCU GPIO 的承受能力，线圈电感和反电动势还会产生电压尖峰。STM32 只输出逻辑控制信号，电机电流由 TB6612 的 H 桥和独立电机电源承担。接线要点：
+
+- `VM` 接电机电源（如电池），`VCC` 接 3.3 V 逻辑电源；
+- 在模块的 `VM` 与 `GND` 之间并联一只 **≥ `10 µF`** 的电解电容（尽量靠近模块电源引脚），用来抑制电机启停和堵转时的电压尖峰；
+- `GND` 与 STM32 共地；
+- `STBY` 拉高使能芯片；
+- `AIN1/AIN2`（`BIN1/BIN2`）控制方向；
+- `PWMA`（`PWMB`）输入 PWM 控制速度。
+
+#### TB6612 的状态
+
+| IN1 | IN2 | PWM | 结果 |
+| ---: | ---: | ---: | --- |
+| 1 | 0 | 高/有效 | 正转 |
+| 0 | 1 | 高/有效 | 反转 |
+| 0 | 0 | 高/有效 | 本库 `TB6612_Coast(&motor, TB6612_MOTOR_A)` 使用的状态；硬件效果须对照数据手册确认 |
+| 1 | 1 | 低 | 本库 `TB6612_Brake(&motor, TB6612_MOTOR_A)` 使用的状态；硬件效果须对照数据手册确认 |
+| 任意 | 任意 | `STBY=0` | 待机、高阻 |
+
+开环 PWM 调速不能保证恒速；要实现恒速，应把电机编码器接入另一个定时器的编码器接口，并在固定周期内根据速度误差调节 PWM，见 5.6 节。
+
+#### TB6612 驱动库
+
+本章使用 `E:\ProjectStm\驱动库\TB1622` 中的 `tb6612.h/.c`。该库的公开接口是（原型以 `tb6612.h` 为准）：
+
+- `TB6612_Status TB6612_Init(TB6612_Handle *handle, const TB6612_Config *config, TB6612_Motor motor);`：初始化 `motor` 指定的通道（`TB6612_MOTOR_A`、`TB6612_MOTOR_B` 或 `TB6612_MOTOR_BOTH`）并启动对应 PWM；
+- `TB6612_Status TB6612_Forward(TB6612_Handle *handle, TB6612_Motor motor, uint8_t duty);`：按 `0~100` 占空比正转；
+- `TB6612_Status TB6612_Backward(TB6612_Handle *handle, TB6612_Motor motor, uint8_t duty);`：按 `0~100` 占空比反转；
+- `TB6612_Status TB6612_SetSpeed(TB6612_Handle *handle, TB6612_Motor motor, int16_t speed);`：用 `-100~100` 的有符号值统一控制方向和占空比，`0` 按库约定转为滑行；
+- `TB6612_Status TB6612_Brake(TB6612_Handle *handle, TB6612_Motor motor);`：进入库定义的刹车状态；
+- `TB6612_Status TB6612_Coast(TB6612_Handle *handle, TB6612_Motor motor);`：进入库定义的滑行状态；
+- `TB6612_Status TB6612_Standby(TB6612_Handle *handle, uint8_t enable);`：控制可选的 `STBY` 引脚，`enable` 为 `1` 时使能芯片（退出待机，`STBY` 拉高），为 `0` 时进入待机；若配置里 `has_stby` 为 `0`，该函数只做参数检查、不动 GPIO。
+
+参数顺序上，除 `TB6612_Standby()` 的第二个参数是 `uint8_t enable` 之外，其余函数的第二个参数都是 `TB6612_Motor motor`。所有函数都返回 `TB6612_Status`：`TB6612_OK`（0）、`TB6612_ERR_NULL`（-1）、`TB6612_ERR_RANGE`（-2）。
+
+**首次接电机前先验证状态**：不同模块的丝印、芯片版本和库实现可能让“停止、滑行、短刹车”的观察结果不同。先用低占空比运行，再依次执行 `TB6612_Coast(&motor, TB6612_MOTOR_A)`、`TB6612_Brake(&motor, TB6612_MOTOR_A)` 和 `TB6612_Standby(&motor, 0U)`，记录电机惯性和 PWM/方向引脚状态；若实测与数据手册不符，先修正驱动库，再继续闭环控制实验。
+
+### 3.8 实验五：TB6612 驱动直流电机
+
+**目标**：用 PWM + 方向引脚控制直流电机正反转、刹车与滑行。PWM 用 `TIM3` 的 20 kHz 配置（3.2 节），`TIM3_CH1/CH2` 分别接 `PWMA/PWMB`（示例只用到 A 路）。
+
+#### 库接口示例
+
+```c
+#include "tb6612.h"
+
+static const TB6612_Config motor_cfg = {
+    .a = {
+        .in1_port = AIN1_GPIO_Port,
+        .in1_pin  = AIN1_Pin,
+        .in2_port = AIN2_GPIO_Port,
+        .in2_pin  = AIN2_Pin,
+        .timer    = &htim3,
+        .channel  = TIM_CHANNEL_1
+    },
+    .b = { 0 },
+    .stby_port = STBY_GPIO_Port,
+    .stby_pin  = STBY_Pin,
+    .has_stby  = 1U
+};
+static TB6612_Handle motor;
+
+if (TB6612_Init(&motor, &motor_cfg, TB6612_MOTOR_A) != TB6612_OK)
+{
+    Error_Handler();
+}
+
+while (1)
+{
+    TB6612_Forward(&motor, TB6612_MOTOR_A, 40U);   /* 正转 40% */
+    HAL_Delay(1000U);
+
+    TB6612_Brake(&motor, TB6612_MOTOR_A);          /* 库定义的刹车状态 */
+    HAL_Delay(200U);
+
+    TB6612_Backward(&motor, TB6612_MOTOR_A, 40U);  /* 反转 40% */
+    HAL_Delay(1000U);
+
+    TB6612_Coast(&motor, TB6612_MOTOR_A);          /* 库定义的滑行状态 */
+    HAL_Delay(500U);
+}
+```
+
+**现象**：电机按"正转 1 s -> 刹车 0.2 s -> 反转 1 s -> 滑行 0.5 s"循环。刹车时电机会骤停，滑行时缓缓停止。
+
+#### 带符号速度接口
+
+```c
+static const TB6612_Config motor_cfg = {
+    .a = {AIN1_GPIO_Port, AIN1_Pin, AIN2_GPIO_Port, AIN2_Pin,
+          &htim3, TIM_CHANNEL_1},
+    .b = {BIN1_GPIO_Port, BIN1_Pin, BIN2_GPIO_Port, BIN2_Pin,
+          &htim3, TIM_CHANNEL_2},
+    .stby_port = STBY_GPIO_Port,
+    .stby_pin  = STBY_Pin,
+    .has_stby  = 1U
+};
+
+static TB6612_Handle motor;
+
+if (TB6612_Init(&motor, &motor_cfg, TB6612_MOTOR_BOTH) != TB6612_OK)
+{
+    Error_Handler();
+}
+
+while (1)
+{
+    TB6612_SetSpeed(&motor, TB6612_MOTOR_A, 35);
+    HAL_Delay(1000U);
+    TB6612_Brake(&motor, TB6612_MOTOR_A);
+    HAL_Delay(200U);
+    TB6612_SetSpeed(&motor, TB6612_MOTOR_A, -35);
+    HAL_Delay(1000U);
+    TB6612_Coast(&motor, TB6612_MOTOR_A);
+    HAL_Delay(500U);
+}
+```
+
+`+35` 表示正转 35%，`-35` 表示反转 35%，`0` 调用库定义的 `Coast`。若硬件连接了 `STBY`，按实际库结构体填写 `stby_port`、`stby_pin` 和 `has_stby=1U`。每个库函数都返回 `TB6612_Status`（不是 HAL 的 `HAL_StatusTypeDef`），初始化失败时应立即进入错误处理，不要继续驱动电机。
+
+**调试边界**：先低占空比、空载测试，再逐步增加负载；高速运行时不要立即反向，先刹车或降速。电机不转时，分别测量 PWM、IN1/IN2、STBY 和 VM 电源，而不是只看软件变量。
+
+## 4. 输入捕获与从模式
+
+### 4.1 输入捕获解决什么问题
+
+输入捕获（Input Capture，IC）在通道引脚出现指定边沿时，把当前 `CNT` 自动锁存到对应 `CCR`。输出比较是"比较后输出电平"，输入捕获则是"边沿到来时保存计数值"。
+
+两次捕获值之差就是输入信号经历的计数时间。设两次捕获值为 $N_1$、$N_2$，计数周期为 $T_{cnt}$，则：
+
+$$t=(N_2-N_1)\times T_{cnt}$$
+
+若计数频率为 `1 MHz`（`PSC=71`），则每个计数为 `1 µs`。若计数器发生回绕，应先按定时器实际位宽做模差。不要把两个 `uint32_t` 捕获值直接相减后再指望强制转换“变回”16 位回绕：减法已经按 32 位完成。以 16 位定时器为例：
+
+```c
+uint16_t first = (uint16_t)capture1;
+uint16_t second = (uint16_t)capture2;
+uint16_t delta = (uint16_t)(second - first);
+```
+
+只要单次真实间隔小于计数器模数对应的时间，模差仍能得到正确结果。若使用 32 位定时器，应改用 32 位无符号模差；不要混用两种位宽的假设。
+
+输入捕获可测量数字信号的频率、周期、脉宽和占空比。若被测信号是正弦波或幅值超过 3.3 V，必须先通过比较、限幅、隔离等前端电路转换为符合 STM32 输入电平要求的数字信号。
+
+### 4.2 测频法与测周法
+
+**测频法（M 法）**：在固定闸门时间 $T_g$ 内统计待测信号边沿数 $N$：
+
+$$f_x=\frac{N}{T_g}$$
+
+它适合高频信号：闸门时间越长，平均效果越强，但结果更新越慢。
+
+**测周法（T 法）**：在待测信号相邻同类边沿之间，用已知标准频率 $f_c$ 计数得到 $N$：
+
+$$T_x=\frac{N}{f_c},\qquad f_x=\frac{f_c}{N}$$
+
+它适合低频信号，通常每个周期都能更新一次结果，但对单周期抖动更敏感。
+
+两种方法都存在约一个计数的量化误差，测周法的相对误差量级约为 $1/N$。要求误差不超过约 1% 时，应尽量让单次计数 $N\ge100$。令两种方法的计数规模相同，可得中界频率：
+
+$$f_m=\sqrt{\frac{f_c}{T_g}}$$
+
+待测频率低于 $f_m$ 时优先测周法，高于 $f_m$ 时优先测频法。本章的应用对应关系：传送带测速（2.10 节）和编码器测速（5.5 节）属于测频法，超声波测距（实验六）属于测周法。
+
+### 4.3 从模式控制器
+
+从模式控制器位于定时器内部，根据触发输入决定计数器的行为。它由三部分配合工作，CubeMX 中对应三个配置项：
+
+- **主模式（Master/TRGO）**：把本定时器内部信号（如更新事件）映射到 `TRGO`，用于触发其他外设或定时器；
+- **触发源选择（Trigger Source）**：决定哪个信号成为 `TRGI`，如 `TI1FP1`、`ITRx`；
+- **从模式（Slave Mode）**：决定 `TRGI` 到来后执行什么动作。
+
+| 从模式 | 行为 |
+| --- | --- |
+| 复位模式（Reset） | 触发边沿到来时把 CNT 清零并重新计数 |
+| 门模式（Gated） | 触发输入有效时允许计数，无效时暂停 |
+| 触发模式（Trigger） | 检测到触发边沿后开始计数 |
+| 外部时钟模式 1 | 使用选定触发输入作为计数时钟 |
+
+外部时钟模式 2 使用 `ETR` 引脚直接作计数时钟，不经过从模式控制器，见 2.9 节。
+
+**复位模式示例**：周期性输入脉冲到来时复位 `CNT`，可用来测量相邻事件之间的时间。复位边沿还会置位触发标志 `TIF`，若开启了触发中断，注意与更新中断区分。
+
+**门模式示例**：将光电开关接到触发输入，高电平时计数器运行，低电平时暂停。门控边沿可以触发标志，但门模式本身不会因为边沿自动清零 `CNT`。
+
+**捕获 + 复位自动测周**：把输入捕获和复位从模式组合，可以让硬件自动完成周期测量：
+
+1. 通道 1 选择 `TI1FP1` 上升沿捕获，把 `CNT` 锁存到 `CCR1`；
+2. 触发源选择同一个 `TI1FP1`；
+3. 从模式选择 `Reset`，有效边沿到来时自动复位 `CNT`。
+
+于是每个上升沿都完成两件事：先得到上一周期的计数值，再让下一周期从 0 开始。整个测量由硬件反复执行，CPU 只需在需要时读取 `CCR1`，这就是测周法的硬件实现。
+
+### 4.4 CubeMX 输入捕获配置流程
+
+1. 选择通道模式 `Input Capture direct mode`；
+2. 配置捕获极性（上升沿/下降沿）；
+3. 设置输入滤波和输入分频，抑制毛刺；滤波要求连续若干次采样一致才承认电平变化，参数越强延迟越大、可接受的最高输入频率越低；
+4. 需要自动测周时，配置 `Slave Mode = Reset`、`Trigger Source = TIxFPx`；
+5. 开启捕获中断，生成代码后调用 `HAL_TIM_IC_Start_IT()`；
+6. 在 `HAL_TIM_IC_CaptureCallback()` 中读取 `HAL_TIM_ReadCapturedValue()`。
+
+### 4.5 实验六：超声波测距
+
+**原理**：HC-SR04 类模块需要给 `TRIG` 一个约 `10 µs` 的高脉冲，模块发出 8 个 40 kHz 脉冲并拉高 `ECHO`，收到回波后拉低。`ECHO` 高电平宽度即声波往返时间。若声速取 `340 m/s`，距离为：
+
+$$d=\frac{v\,t}{2}$$
+
+当 $t$ 以微秒表示、$d$ 需要厘米时，可近似为：
+
+$$d_{cm}\approx\frac{t_{\mu s}}{58}$$
+
+声速与温度有关，340 m/s 约对应 20 °C，要求更高精度时按环境温度修正。
+
+**配置（捕获端）**：`TIM3_CH1`（`PA6`）输入捕获直连模式捕获 `ECHO`，`PSC=71` 使计数频率为 `1 MHz`（一个计数 1 µs），`ARR=65535`。F1 的一个通道不能同时捕两个边沿，因此在回调里切换捕获极性：先捕上升沿，再捕下降沿。
+
+**配置（触发端）**：`TRIG` 只是一个普通输出引脚，必须单独配置，否则后面代码里的 `TRIG_GPIO_Port` / `TRIG_Pin` 根本不会生成，编译直接报未定义。本实验使用 `PB0`：
+
+1. 在 CubeMX 引脚图中把 `PB0` 设为 `GPIO_Output`；
+2. `GPIO output level` 选 `Low`（空闲时保持低电平）；
+3. `GPIO mode` 选 `Output Push Pull`，`GPIO Pull-up/Pull-down` 选 `No pull-up and no pull-down`，`Maximum output speed` 选 `Low`；
+4. 关键一步：在该引脚的 `User Label` 里填 `TRIG`。CubeMX 会据此生成 `TRIG_GPIO_Port` 和 `TRIG_Pin`，代码里才能直接引用。
+
+接线：`TRIG` → `PB0`，`ECHO` → `PA6`，模块 `VCC` → `5 V`，`GND` 与单片机共地。`PB0` 在本实验里独占，不要和其他章节的 `PB0` 用法（例如 `EXTI0` 示例）合并进同一个工程。
+
+**`ECHO` 的电平必须处理，这一条不能省**：`PA6` 属于 `PA0~PA7`，在 STM32F103 的数据手册里**不是 5V 容忍（FT）引脚**（FT 引脚集中在 `PA8~PA15`、`PB2~PB15`、`PC13~PC15`）。HC-SR04 类模块在 5 V 供电时 `ECHO` 输出约 5 V，直接接 `PA6` 会经引脚保护结构灌入电流，轻则读数异常、重则损坏引脚。三种处理方式任选其一：
+
+1. **模块用 3.3 V 供电**（最省事）：此时 `ECHO` 也是约 3.3 V，可以直接接 `PA6`；代价是部分模块在 3.3 V 下测距稳定性下降，要自己实测确认；
+2. **加分压电阻**（模块必须 5 V 供电时用）：`ECHO` → `1 kΩ` → `PA6`，`PA6` → `2 kΩ` → `GND`，把约 5 V 分到约 3.3 V；`PA6` 上不要再接别的负载；
+3. **换成 FT 引脚**并同步修改捕获通道的引脚配置（例如把捕获改到 `PB` 口的定时器通道），接线和 CubeMX 引脚分配要一起改。
+
+先上电用万用表量一下 `ECHO` 静止时和触发后的高电平实际是多少伏，再决定用哪种方式，不要凭模块型号想当然。
+
+**没有 `TRIG` 的 10 µs 高脉冲，模块根本不会发波**，`ECHO` 一直是低电平，`echo_done` 永远为 0，程序只会反复走超时分支——现象看起来像"模块坏了"，但其实是漏配或漏驱动了 `TRIG`。这是本实验最容易误判的一步。
+
+**代码（微秒延时）**：`delay_us()` 不能靠空循环凑，用 Cortex-M3 的 DWT 周期计数器实现，必须在 `SystemClock_Config()` 之后、进入主循环之前调用一次 `DelayUs_Init()`。DWT 是 Cortex-M3/M4 的内核调试组件，M0/M0+ 没有这个计数器，不要在那些内核上照搬这段代码。
+
+```c
+static void DelayUs_Init(void)
+{
+    CoreDebug->DEMCR |= CoreDebug_DEMCR_TRCENA_Msk;   /* 使能跟踪与调试模块 */
+    DWT->CYCCNT = 0U;                                 /* 周期计数器清零 */
+    DWT->CTRL |= DWT_CTRL_CYCCNTENA_Msk;              /* 开始计数内核周期 */
+    /* 若你的 CMSIS 头文件未定义 DWT_CTRL_CYCCNTENA_Msk，可直接写 DWT->CTRL |= 1UL; */
+}
+
+/* 1 µs 需要 SystemCoreClock / 1000000 个内核周期（72 MHz 时为 72 个）。 */
+static void delay_us(uint32_t us)
+{
+    uint32_t start = DWT->CYCCNT;
+    uint32_t ticks = us * (SystemCoreClock / 1000000U);
+    while ((DWT->CYCCNT - start) < ticks) { }
+}
+```
+
+**代码（捕获回调）**：
+
+```c
+volatile uint8_t  echo_state = 0U;   /* 0: 等上升沿, 1: 等下降沿 */
+volatile uint16_t echo_rise  = 0U;
+volatile uint16_t echo_us    = 0U;
+volatile uint8_t  echo_done  = 0U;
+
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+    if (htim->Instance == TIM3 && htim->Channel == HAL_TIM_ACTIVE_CHANNEL_1)
+    {
+        uint16_t now = (uint16_t)HAL_TIM_ReadCapturedValue(htim, TIM_CHANNEL_1);
+        if (echo_state == 0U)
+        {
+            echo_rise = now;
+            __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1,
+                                          TIM_INPUTCHANNELPOLARITY_FALLING);
+            echo_state = 1U;
+        }
+        else
+        {
+            echo_us = (uint16_t)(now - echo_rise);   /* 16 位无符号模差, 1 个计数 = 1 us */
+            __HAL_TIM_SET_CAPTUREPOLARITY(htim, TIM_CHANNEL_1,
+                                          TIM_INPUTCHANNELPOLARITY_RISING);
+            echo_state = 0U;
+            echo_done  = 1U;
+        }
+    }
+}
+```
+
+主循环触发测量并处理超时：
+
+```c
+uint32_t distance_cm = 0U;
+
+DelayUs_Init();   /* 放在 main() 里 SystemClock_Config() 之后，只调用一次 */
+HAL_TIM_IC_Start_IT(&htim3, TIM_CHANNEL_1);
+
+while (1)
+{
+    echo_done = 0U;
+    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_SET);
+    delay_us(10U);   /* 这 10 µs 缺了模块就不发波，必须用 DWT 或定时器可靠产生 */
+    HAL_GPIO_WritePin(TRIG_GPIO_Port, TRIG_Pin, GPIO_PIN_RESET);
+
+    uint32_t t0 = HAL_GetTick();
+    while (!echo_done && (HAL_GetTick() - t0) < 60U) { }   /* 超时 60 ms */
+
+    if (echo_done)
+    {
+        distance_cm = echo_us / 58U;
+    }
+    else
+    {
+        /* 无回波: 距离按无效处理 */
+        if (echo_state == 1U)   /* 只捕到上升沿没等到下降沿, 恢复极性配对 */
+        {
+            __HAL_TIM_SET_CAPTUREPOLARITY(&htim3, TIM_CHANNEL_1,
+                                          TIM_INPUTCHANNELPOLARITY_RISING);
+            echo_state = 0U;
+        }
+    }
+    HAL_Delay(100U);
+}
+```
+
+**现象**：遮挡物在模块量程（典型 2~400 cm）内移动时，距离读数跟随变化；无遮挡或超出量程时走超时分支，程序不卡死。
+
+**边界**：
+
+- 没有回波时必须有超时退出，否则程序可能一直等待；
+- `ECHO` 高电平约 5 V，应接数据手册标注 5V 容忍（FT）的引脚或做分压，并与模块共地；
+- 捕获边沿要与状态机匹配：只捕一个边沿不能当作完整脉宽；超时后要恢复极性配对，否则下一次测量会错位；
+- 空 `for` 延时不能作为可靠的微秒级测量基准，`TRIG` 的 10 µs 必须用定时器或 DWT 产生。
+
+## 5. 编码器接口
+
+### 5.1 为什么用编码器接口
+
+外部中断也能对编码器脉冲加减计数，但电机高速旋转时每秒可能产生数千甚至更多边沿，CPU 每个边沿进一次中断只为执行一次加减，会浪费大量软件资源。
+
+定时器编码器接口直接接收两路正交信号，根据边沿及另一相电平自动控制 `CNT` 加减，相当于"带方向判断的外部时钟"，可用于测量位置、方向和速度。每个通用或高级定时器只有一个编码器接口，并占用该定时器的 `CH1` 和 `CH2`；配置为编码器模式后，计数时钟和方向由编码器接口托管，不再由内部时钟和普通计数模式决定。
+
+### 5.2 正交信号、方向与倍频
+
+增量编码器输出相差约 90° 的 A、B 两路方波。向一个方向旋转时 A 相超前 B 相，反向时 B 相超前 A 相；每个边沿到来时检查另一相电平，就能区分方向。使用 A、B 两相的上升沿和下降沿共同计数，一组完整正交周期可得 4 个计数，即常说的 4 倍频。
+
+正交关系还具有一定抗噪能力：若一相不变、另一相因毛刺连续跳变，计数会加减交替，理想情况下净计数接近 0；但这不能替代输入滤波、正确接线和良好信号完整性。
+
+两路信号分别从 `CH1`、`CH2` 进入，经输入滤波和极性处理后形成 `TI1FP1`、`TI2FP2`，送入编码器接口。三种计数模式：
+
+| 模式 | 实际计数边沿 | HAL 参数 |
+| --- | --- | --- |
+| 编码器模式 1 | 在 TI2FP2 的两个边沿计数，方向由 TI1FP1 决定 | `TIM_ENCODERMODE_TI1` |
+| 编码器模式 2 | 在 TI1FP1 的两个边沿计数，方向由 TI2FP2 决定 | `TIM_ENCODERMODE_TI2` |
+| 编码器模式 3 | TI1FP1、TI2FP2 的边沿都计数（四倍频） | `TIM_ENCODERMODE_TI12` |
+
+注意模式名与实际计数通道的对应：模式 1 在 TI2 的边沿计数。这是 RM0008 中 `SMS=001/010/011` 的硬件定义，不要被宏名误导。本章实验采用模式 3，获得最高计数分辨率。
+
+编码器模式下，极性 `Rising` 表示该路输入不反相，并不是"只在上升沿计数"；`Falling` 表示先反相该路信号。反相任意一路或交换 A/B 接线都会改变正负方向，同时反相两路通常不改变方向关系。
+
+**一圈计数的换算**：设编码器线数为每转 $P$ 个脉冲（单相），模式 3 四倍频下一圈计数为 $C=4P$；编码器装在减速电机轴上时，再乘以减速比。不要把编码器标称的"每转脉冲数"直接当作计数器每转增量，必须根据规格书、模式和边沿数确定换算系数。
+
+### 5.3 CubeMX 编码器配置流程
+
+1. 把定时器的 `Combined Channels` 选择 `Encoder Mode`；
+2. `Encoder Mode` 选择 `TI1 and TI2`（对应 `TIM_ENCODERMODE_TI12`）；
+3. 两路极性选择 `Rising`（不反相）；
+4. 根据机械噪声设置两路 `Input Filter`；
+5. `ARR` 保持默认最大值 65535，让 16 位回绕范围全部可用；
+6. 生成代码后调用 `HAL_TIM_Encoder_Start()`，周期性读取 `__HAL_TIM_GET_COUNTER()`。
+
+### 5.4 实验七：旋钮调节 LED 亮度
+
+**目标**：`TIM1` 编码器模式读取旋钮（A/B 相接 `PA8/PA9`，即 `TIM1_CH1/CH2`），`TIM3` PWM 输出驱动 LED。旋转方向改变 `CNT`，`CCR` 跟随变化。
+
+```c
+HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_1);
+
+while (1)
+{
+    int32_t count = (int32_t)(int16_t)__HAL_TIM_GET_COUNTER(&htim1);
+    if (count < 0) count = 0;
+    if (count > 100) count = 100;
+
+    uint32_t arr = __HAL_TIM_GET_AUTORELOAD(&htim3);
+    uint32_t ccr = ((arr + 1U) * (uint32_t)count) / 100U;
+    __HAL_TIM_SET_COMPARE(&htim3, TIM_CHANNEL_1, ccr);
+    HAL_Delay(10U);
+}
+```
+
+**现象**：旋钮正转 LED 变亮，反转变暗，转到边界后停住。
+
+**方法提示**：编码器计数范围、PWM 的 `ARR` 和用户界面的"百分比"是三个不同概念。先把硬件计数归一化到应用范围，再映射到 `CCR`，不要直接拿任意 `CNT` 值写入比较寄存器。旋钮这类低速人工输入可以在应用层做限幅；对高速电机编码器不要为了限幅而把新值强行写回 `CNT`，否则可能丢失边沿，正确做法见 5.5 节。
+
+### 5.5 读取位置与速度
+
+**位置**：直接读取 `CNT` 得到的是相对初始位置的累计计数。把 16 位无符号位模式解释为 `int16_t` 后，`65535` 对应 `-1`、`65534` 对应 `-2`，可自然表示零点附近的反向计数：
+
+```c
+int16_t position = (int16_t)__HAL_TIM_GET_COUNTER(&htim1);
+```
+
+**速度**：属于测频法。每隔固定闸门时间 $T_g$ 读取一次增量，用有符号模差处理回绕：
+
+```c
+uint16_t last_count = (uint16_t)__HAL_TIM_GET_COUNTER(&htim1);
+
+HAL_Delay(100U);
+uint16_t now = (uint16_t)__HAL_TIM_GET_COUNTER(&htim1);
+uint16_t raw_delta = (uint16_t)(now - last_count);
+int16_t delta = (int16_t)raw_delta;   /* 先做 16 位模差，再解释为有符号增量 */
+last_count = now;
+```
+
+此时 `delta` 的单位是"计数/闸门时间"，不是直接的 r/min。若每转一圈产生 $C$ 个计数（按 5.2 节换算），则：
+
+$$n_{r/min}=\frac{60\,\Delta CNT}{C\,T_g}$$
+
+16 位有符号模计数能正确恢复单次增量的前提是：
+
+$$|\Delta CNT|<32768$$
+
+高速电机应缩短闸门时间，既提高刷新率，也避免增量跨过半个 16 位计数范围。不要在主循环里简单读计数器后强行写回清零——"读取再清零"之间到达的边沿会丢失；更高要求时可用连续模差（如 2.10 节的做法）或输入捕获方案。
+
+### 5.6 编码器闭环调速框架
+
+把编码器测速和 TB6612 调速接到一起，就构成闭环调速的最小框架：
+
+```c
+HAL_TIM_Encoder_Start(&htim1, TIM_CHANNEL_ALL);
+if (TB6612_Init(&motor, &motor_cfg, TB6612_MOTOR_A) != TB6612_OK)
+{
+    Error_Handler();
+}
+
+uint16_t last_count = (uint16_t)__HAL_TIM_GET_COUNTER(&htim1);
+const int16_t target_delta = 30;   /* 目标: 每个采样周期 30 个计数 */
+const float kp = 2.0f;
+
+while (1)
+{
+    HAL_Delay(100U);
+    uint16_t now = (uint16_t)__HAL_TIM_GET_COUNTER(&htim1);
+    uint16_t raw_delta = (uint16_t)(now - last_count);
+    int16_t delta = (int16_t)raw_delta;
+    last_count = now;
+
+    /* 比例控制: 速度偏低则加大 PWM, 偏高则减小 */
+    int16_t command = (int16_t)(kp * (target_delta - delta));
+    if (command > 100)  command = 100;
+    if (command < -100) command = -100;
+    TB6612_SetSpeed(&motor, TB6612_MOTOR_A, command);
+}
+```
+
+比例控制只保证"误差越大修正越强"，恒速精度和稳定性还受编码器每转计数、减速比、采样周期、方向符号和最大单周期增量影响；工程上通常在此基础上加入积分和微分项构成 PID。先确认开环方向符号正确，再闭合环路，否则正反馈会让电机越转越快或直接饱和。
+
+## 6. 验收与排错
+
+| 实验 | 正常现象 | 优先检查 |
+| --- | --- | --- |
+| 实验一 定时中断 | 数值每秒加一，上电无多余跳变 | APB 定时器时钟乘二口径、`PSC/ARR`、NVIC 勾选、`HAL_TIM_Base_Start_IT()` 是否调用、回调中判断 Instance（更新标志在新版 HAL 中已由 `TIM_Base_SetConfig()` 清除，启动前清一次只是无害的加固） |
+| 实验二 传送带测速 | 遮挡一次计一个脉冲，速度随转速变化 | `PA0/ETR` 映射、Clock Source 为 `ETR2`、极性与滤波、传感器共地、模差方向 |
+| 实验二 计数恒为 0 / 距离速度恒为 0 | 每经过一条边界 `CNT` 应加一 | 定时器未启动（缺 `HAL_TIM_Base_Start()`）或 ETR 极性/滤波配置不对 |
+| 实验三 呼吸灯 | LED 以约 3.6 s 周期平滑渐亮渐暗 | GPIO 是否复用推挽（CubeMX 自动配置）、`HAL_TIM_PWM_Start()`、CCR 范围 0~ARR |
+| 实验四 舵机 | 角度命令与实测脉宽对应，无抖动 | 50 Hz 周期、1 MHz 计数、独立 5 V 供电、共地、脉宽范围以规格书为准 |
+| 实验五 TB6612 | 正负速度改变方向，刹车/滑行行为正确 | `STBY` 拉高、VM/VCC 供电、共地、PWM 通道与 IN1/IN2、先空载低占空比 |
+| 实验六 超声波 | 量程内距离读数正确，无回波时超时退出 | TRIG 10 µs 可靠延时、ECHO 引脚 5 V 容忍、极性切换配对与恢复、共地 |
+| 实验七 旋钮 | 正转加亮、反转减亮、到边界停住 | A/B 相是否接反、编码器模式与滤波、CNT 到 CCR 的映射 |
+
+通用排错顺序：
+
+1. **先查资源映射**：定时器编号、通道和 GPIO 是否对应，时钟源是内部时钟还是 ETR/TIx；
+2. **再查时钟**：APB 分频乘二口径是否正确，TIM 与 GPIO 时钟是否已开启；
+3. **再查数据通路**：GPIO 模式、极性、滤波、直连/交叉和主从触发是否连通，启动函数是否调用正确；
+4. **最后查公式和边界**：`PSC/ARR/CCR` 的 `+1`、除零、回绕、超时和有符号范围。
+
+有条件时先用示波器确认引脚波形（频率、极性、占空比、毛刺），再接入舵机或电机等负载。
+
+## 7. 综合自测
+
+### 题 1
+
+`TIM3CLK=72 MHz`、`PSC=71`、`ARR=999`，PWM 频率是多少？
+
+**答案**：`72 MHz / (72 × 1000) = 1 kHz`。
+
+### 题 2
+
+为什么 `PSC=7199` 表示 7200 分频而不是 7199 分频？
+
+**答案**：预分频器实际分频系数为 `PSC+1`，因为它和主计数器一样从 0 开始计数。
+
+### 题 3
+
+输入捕获两次读数为 `65000` 和 `1000`，如何计算回绕后的增量？
+
+**答案**：使用 16 位无符号模差，`(uint16_t)(1000 - 65000)` 得到正确的回绕增量，此处为 1536，前提是实际间隔小于一个计数器周期。
+
+### 题 4
+
+使用本章配套库时，如何确认 `TB6612_Brake()` 和 `TB6612_Coast()` 的实际硬件效果？
+
+**答案**：先断开负载或使用低占空比，分别调用两个函数并记录 `IN1/IN2/PWM/STBY` 的状态，再对照手中 TB6612FNG 芯片的数据手册和模块原理图确认。不能仅凭函数名或某个网络教程判断“滑行”和“短刹车”。如果库实现与器件真值表不一致，应先修正库，再进行闭环调速。
+
+### 题 5
+
+舵机控制信号频率正确但角度仍抖动，优先检查什么？
+
+**答案**：先检查脉宽范围是否符合舵机规格、电源是否有压降、信号地是否共地，再检查机械负载和 PWM 分辨率。
+
+### 题 6
+
+编码器 A 相每转输出 600 个脉冲，使用 `TIM_ENCODERMODE_TI12`（四倍频）计数，编码器直连输出轴。闸门时间 0.1 s 内计数增量为 120，转速是多少？
+
+**答案**：四倍频下一圈计数 `C = 600 × 4 = 2400`。转速 `n = 60 × 120 / (2400 × 0.1) = 30 r/min`。
+
+### 题 7
+
+传送带测速（固定窗口统计脉冲数）和超声波测距（测量回波高电平宽度）分别属于测频法还是测周法？
+
+**答案**：传送带测速是测频法——在固定闸门时间内统计脉冲个数，适合较高频率；超声波测距是测周法——用 1 MHz 标准计数测量回波高电平持续时间，适合低频或单次事件的时间测量。
+
+## 本章小结
+
+定时器各功能并不是互不相干的模块，而是围绕同一条计数主线展开：
+
+- `PSC + CNT + ARR` 构成时基，解决"多久一次"；
+- `CNT` 与 `CCR` 比较得到 PWM，解决"何时翻转输出"；
+- 输入边沿把 `CNT` 锁存到 `CCR`，解决"两个边沿相隔多久"；
+- 两路正交边沿控制 `CNT` 加减，解决"转了多少、朝哪个方向"；
+- 外部脉冲经 ETR 或从模式进入计数器，解决"事件发生了多少次"。
+
+掌握时钟来源、计数边界和 `CNT/CCR` 的数据流后，定时中断、PWM、输入捕获和编码器接口就能用同一套思路分析。
+
+电机系统则在此基础上增加了电气安全边界：STM32 输出控制信号，TB6612 承担功率驱动，编码器提供反馈，定时器负责计数和测速，上层控制器才负责把"目标速度"变成稳定的 PWM 命令。
