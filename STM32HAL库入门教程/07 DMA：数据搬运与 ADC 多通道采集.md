@@ -1,56 +1,22 @@
 # 07 DMA：数据搬运与 ADC 多通道采集
-上一篇：[[06 ADC：量化、采样时间与定时器触发]] ｜ 下一篇：[[08 串口通信：轮询、中断、DMA 与蓝牙协议]]
 
-## 学习目标与前置知识
+## 本章问题
 
-学完本章后，你应能：
+什么时候应该让 DMA 搬数据，怎样保证 CPU 读到的是一批完整而稳定的数据？
 
-- 用"源地址、目的地址、数据宽度、地址自增、传输数量、传输模式、优先级、中断"八个配置项推导 DMA 配置；
-- 区分 Normal 与 Circular 模式，并知道内存到内存模式不能使用 Circular；
-- 使用 HAL 完成一次内存到内存复制，并按"关闭 → 重装计数 → 使能"重复启动；
-- 使用 ADC 扫描模式与 DMA 采集多个通道，解释完成回调的调用链；
-- 根据"无数据、数据覆盖、结果错位、重复启动失败"等现象定位问题。
+第 6 章把单通道的"单次非扫描"走通了；要一次拿到多个通道，规则组就要按 Rank 扫描，而扫描的结果会连续涌进同一个 `DR`，必须有人及时搬走——这正是 DMA 的用武之地。本章先回答 DMA 与 CPU 如何分工、一张"搬运单"要填哪些字段，再用两个实验把这条链路真正跑起来，最后把定时器触发与扫描、DMA 组合成定时可控的多通道采集。
 
-默认芯片为常见的 STM32F103C8T6，开发环境为 STM32CubeMX、STM32CubeIDE 或 Keil 与 STM32 HAL 库。开始前应已掌握 C 数组与指针、GPIO 模拟输入和第 6 章的 ADC 规则组，尤其要理解：**ADC 规则组可以按 Rank 依次转换多个通道，但结果通常写入同一个数据寄存器 `ADC1->DR`。**
+## 学习目标
 
-## 本章闭环
+- 画出 DMA 的源地址、目的地址、宽度、自增和数量。
+- 根据请求映射选择 STM32F103 的 DMA 通道。
+- 用 HAL 完成一次内存到内存复制。
+- 配置 ADC 扫描与 DMA，区分 Normal 和 Circular。
+- 用定时器 TRGO 固定多通道采样的触发周期。
 
-DMA（Direct Memory Access，直接存储器访问）不是一个独立产生数据的外设，而是一套按既定规则搬运数据的硬件。CPU 先告诉 DMA"从哪里取、送到哪里、每次搬多宽、总共搬几次"，随后由外设请求或软件启动搬运；传输结束后，CPU 再读取结果或处理完成事件。
+## 1. DMA 与 CPU 的分工
 
-本章围绕三条逐步扩展的链路展开：
-
-```text
-内存数组 -> DMA -> 内存数组
-
-ADC 规则组 -> ADC1->DR -> DMA -> 多通道数组
-
-定时器 TRGO -> ADC 扫描 -> DMA 缓冲区 -> 温度/光照等物理量
-```
-
-| 实验 | 数据路径 | 触发方式 | 运行结果 |
-| --- | --- | --- | --- |
-| 实验一：内存到内存复制 | `source[] -> DMA1_Channel1 -> destination[]` | 软件启动 | `destination[]` 复制出 `source[]` 的内容 |
-| 实验二：ADC 扫描单帧采集 | `ADC1->DR -> DMA1_Channel1 -> adc_values[]` | ADC 每次转换完成请求 | Normal 模式填满一帧四通道数据后停止 |
-| 连续采集（扩展） | 同实验二，DMA 改 Circular | 同上 | 数组持续刷新，需处理一致性 |
-| 定时器触发（扩展） | `TIM TRGO -> ADC -> DMA` | 每 1 ms 硬件触发 | 固定采样周期 |
-
-## 1. 为什么需要 DMA
-
-### 1.1 CPU 搬运数据的代价
-
-以串口发送为例，若不用 DMA，CPU 需要反复完成：
-
-1. 等待发送数据寄存器空；
-2. 从内存读取一个字节；
-3. 把字节写入串口数据寄存器；
-4. 更新数组下标；
-5. 重复以上过程。
-
-ADC 多通道扫描也类似。每个 Rank 转换完成后，结果都进入同一个 ADC 数据寄存器。若 CPU 没有及时读取，下一通道的结果可能覆盖前一结果。
-
-CPU 当然可以通过轮询或中断完成这些工作，但当数据量大、请求频繁或采样周期严格时，CPU 会把大量时间花在机械搬运上。DMA 的价值正是把这类重复操作交给硬件。
-
-### 1.2 轮询、中断与 DMA 的分工
+DMA（Direct Memory Access，直接存储器访问）是一套按配置自动搬运数据的硬件。CPU 负责设置源地址、目的地址、数据宽度、数量等参数；软件启动或外设请求到来后，DMA 执行传输，并在完成时通过状态位或中断通知 CPU。
 
 | 方式 | CPU 做什么 | 适用场景 | 主要代价 |
 | --- | --- | --- | --- |
@@ -58,90 +24,73 @@ CPU 当然可以通过轮询或中断完成这些工作，但当数据量大、�
 | 中断 | 每次事件到来后进入 ISR，CPU 亲自读写数据 | 事件频率不高、每次处理量小 | 高频事件会产生大量中断开销 |
 | DMA | CPU 配置一次，DMA 按请求搬运一批数据 | 连续采样、串口收发、SPI 数据流 | 配置与缓冲区管理更复杂 |
 
-DMA 减少的是 CPU 参与每一次搬运的次数，并不会凭空增加总线带宽。DMA、CPU 和其他主设备仍可能竞争总线，因此"使用 DMA"不等于"传输没有成本"。
+ADC 多通道扫描时，每个 Rank 的结果都会进入同一个 `ADC1->DR`。若不用 DMA，CPU 必须在通道之间及时读取这个寄存器；使用 DMA 后，每次转换完成产生的请求可以把结果直接写入数组。
 
-### 1.3 什么时候不必使用 DMA
+DMA 只减少 CPU 参与每一次搬运的次数，不会凭空增加总线带宽。
 
-下面这些任务通常直接轮询或中断更简单：
+更准确地说，DMA 和 CPU 共用同一组总线：DMA 每搬一项，都要占一次总线去读源、写目的；CPU 此时若要取指令或访问内存，就得等总线空出来。总线仲裁会让双方轮流使用，所以 DMA 搬运期间 CPU 仍然能运行，只是内存访问可能略微变慢。DMA 的收益来自"一次配置管一批"，而不是"搬运不占任何资源"——数据量很小的时候，偶尔读一个 ADC 值、复制一个小数组，直接用轮询、`memcpy()` 或直接赋值反而更快、更省事。
 
-- 偶尔读取一个 ADC 值；
-- 只发送几个配置字节；
-- 数据规模很小，而 DMA 配置时间超过实际复制时间；
-- 业务逻辑必须逐字节立即判断，无法形成批量缓冲区。
+## 2. 一次 DMA 搬运如何发生
 
-判断标准不是"外设支不支持 DMA"，而是"DMA 是否真正减少 CPU 重复工作并改善时间确定性"。
+### 2.1 五个步骤
 
-## 2. DMA 如何完成一次搬运
+一次完整传输可以按下面的顺序理解：
 
-### 2.1 CPU 负责配置，DMA 负责执行
-
-一次完整传输可分成五步：
-
-1. CPU 配置源地址、目的地址、方向、宽度、自增、数量、模式和优先级；
+1. CPU 配置源地址、目的地址、方向、宽度、地址自增、数量、模式和优先级；
 2. CPU 使能 DMA 通道；
 3. 软件或外设产生 DMA 请求；
 4. DMA 完成一次数据读写，并更新地址与剩余计数；
 5. 计数归零后置位完成标志，按配置产生传输完成中断。
 
-可以把 DMA 配置理解为一张搬运单：
+可以把配置理解成一张搬运单：
 
-| 搬运单内容 | DMA 配置 |
+| 要回答的问题 | DMA 配置 |
 | --- | --- |
 | 从哪里取 | 外设地址或源内存地址 |
 | 送到哪里 | 外设地址或目的内存地址 |
-| 每箱多大 | Byte、Half Word、Word |
+| 每次搬多宽 | Byte、Half Word、Word |
 | 地址是否后移 | Peripheral/Memory Increment |
-| 总共搬几箱 | 传输数量 |
+| 总共搬几项 | 传输数量 |
 | 搬完是否重来 | Normal/Circular |
-| 多个请求谁先走 | 通道优先级 |
+| 冲突时谁先走 | 通道优先级 |
 
-### 2.2 "外设地址"不一定真是外部设备
+### 2.2 请求决定何时搬
 
-DMA 通道有"外设端"和"存储器端"两组地址寄存器，这是控制器接口的命名。常见数据流为：
-
-```text
-外设 -> 内存：ADC1->DR -> adc_values[]
-内存 -> 外设：tx_buffer[] -> USARTx->DR
-内存 -> 内存：source[] -> destination[]
-```
-
-在内存到内存模式中，两端实际都可以指向存储空间，只是仍分别填写到 DMA 的两侧地址寄存器中。
-
-### 2.3 DMA 请求决定"何时搬"
-
-DMA 不会无条件地高速覆盖外设寄存器。外设通常在"已经可以接收下一项"或"已经产生一个新数据"时发出请求：
+外设通常在"已经可以接收下一项"或"已经产生一个新数据"时发出请求：
 
 - USART 发送数据寄存器空：请求 DMA 写入下一个发送字节；
 - USART 收到一个字节：请求 DMA 把接收寄存器内容搬入数组；
 - ADC 完成一次转换：请求 DMA 把 `ADC1->DR` 搬入数组；
 - 定时器发生更新或捕获事件：请求 DMA 更新定时器寄存器或保存数据。
 
-因此，一个 DMA 项的基本节拍是：
+基本节拍是：
 
 ```text
 外设事件 -> DMA 请求 -> 搬运一项 -> 剩余计数减 1
 ```
 
-内存到内存没有外设请求，通常由软件使能通道后开始连续执行。
+内存到内存没有外设请求，通常由软件使能通道后开始执行。
 
-### 2.4 STM32F103 的通道映射
+### 2.3 STM32F103 的请求映射
 
-STM32F103C8T6 只有 DMA1，DMA1 包含 7 个通道。某个外设的 DMA 请求接到哪个通道，由芯片内部硬件映射决定，不能任意改接。例如 ADC1 的请求映射到 DMA1 Channel 1。
+以 STM32F103C8T6 为例，芯片只有 DMA1，DMA1 包含 7 个通道。某个外设的请求接到哪个通道由芯片内部硬件映射决定，不能任意改接；例如 ADC1 的请求映射到 `DMA1_Channel1`。
 
-CubeMX 会根据所选外设自动选择通道，但仍应检查：
+可以把 7 个通道想成 7 条接线固定的传送带：哪个外设的请求接哪条线，出厂时就焊死了。这既是限制也是便利——看到 `DMA1_Channel1`，对照映射表就能直接推断它在为谁服务。本章两个实验恰好都落在 `DMA1_Channel1` 上，无法同时运行，配套工程因此把它们拆成 `01_MemoryCopy` 和 `02_ADC_Scan` 两个独立工程，位于 `E:\ProjectStm\Courses\HAL07_DMA_ADC` 下。
+
+配置后仍要检查：
 
 - 两个外设是否占用了同一个 DMA 通道；
-- 传输方向是否正确；
-- NVIC 中断是否为所用通道开启；
-- 目标芯片是否真的具有 DMA2 或所需通道。
+- 方向、地址和宽度是否符合数据路径；
+- 使用回调时，是否打开了所用 DMA 通道的 NVIC 中断；
+- 目标芯片是否真的具有所需的 DMA 控制器或通道。
 
-同一控制器收到多个请求时，会根据软件优先级和通道号规则仲裁。优先级只能决定冲突时谁先服务，不能提高外设本身的数据产生速度。
+同一控制器收到多个请求时，会按软件优先级和通道号规则仲裁。优先级只影响冲突时的服务顺序，不能提高外设本身的数据产生速度。
 
 ## 3. 八个关键配置项
 
 ### 3.1 传输方向
 
-方向由数据流决定：
+先画箭头，再选择方向：
 
 | 应用 | 方向 |
 | --- | --- |
@@ -149,8 +98,6 @@ CubeMX 会根据所选外设自动选择通道，但仍应检查：
 | USART 接收 | Peripheral to Memory |
 | USART 发送 | Memory to Peripheral |
 | 数组复制 | Memory to Memory |
-
-先画出箭头，再选择方向，比死记 CubeMX 选项更可靠。
 
 ### 3.2 源地址与目的地址
 
@@ -161,7 +108,9 @@ CubeMX 会根据所选外设自动选择通道，但仍应检查：
 - 内存端：数组首地址；
 - 内存复制：源数组和目的数组首地址。
 
-HAL 外设驱动通常会替你填写外设寄存器地址。例如调用 `HAL_ADC_Start_DMA()` 时，只需提供接收数组和传输数量。
+DMA 的"外设端"和"存储器端"是控制器接口的两组地址寄存器。内存到内存模式中，两端实际都可以指向 SRAM，但仍分别填到 DMA 的两侧地址寄存器中。
+
+HAL 外设驱动通常会填写外设寄存器地址。例如调用 `HAL_ADC_Start_DMA()` 时，只需提供接收数组和传输数量。
 
 ### 3.3 数据宽度
 
@@ -173,39 +122,33 @@ STM32F1 DMA 常用三种宽度：
 | Half Word | 16 bit | `uint16_t` |
 | Word | 32 bit | `uint32_t` |
 
-ADC 为 12 位结果，使用 Half Word 即可；USART 一般逐字节收发，通常使用 Byte。初学阶段应让外设宽度、内存宽度和数组元素类型匹配。
+12 位 ADC 结果使用 Half Word 即可；USART 一般逐字节收发，通常使用 Byte。外设宽度、内存宽度和数组元素类型应匹配，否则可能发生截断、扩展或地址步长异常。
 
-宽度不匹配可能发生截断、扩展或地址步长与预期不一致。除非明确需要数据打包或拆包，否则不要依赖这些隐式行为。
+"匹配"包含两层含义。第一层是宽度一致：外设端读出的位数和写入内存的位数必须一样，12 位结果放进 16 位的 Half Word 才不会丢。第二层是数组类型一致：DMA 只知道"每次搬 N 字节、地址前移 N 字节"，它不认识 C 数组的类型，类型不匹配编译器也不报错，错误要到运行时才在数据里显现。例如宽度选了 Word、数组却是 `uint16_t[4]`，DMA 会按 4 字节步长往内存写 8 个半字的位置，越过数组末尾，把相邻变量一起改写——调试器里的表现就是"数组后面的变量莫名其妙被改了"。
 
 ### 3.4 地址自增
 
-每搬运一项后，DMA 可以让地址按数据宽度自动前移。
-
-以 ADC 扫描四个 Rank 为例：
+每搬运一项后，DMA 可以让地址按数据宽度前移。以 ADC 扫描四个 Rank 为例：
 
 ```text
 外设端：ADC1->DR -> ADC1->DR -> ADC1->DR -> ADC1->DR
 内存端：values[0] -> values[1] -> values[2] -> values[3]
 ```
 
-因此：
+因此 ADC 采集通常是：
 
 - 外设地址固定：Peripheral Increment Disable；
 - 内存地址递增：Memory Increment Enable。
 
-若忘记开启内存自增，所有 ADC 结果会反复覆盖 `values[0]`。
-
-内存到内存复制数组时，两端通常都需要自增。
+忘记开启内存自增时，所有结果都会反复覆盖 `values[0]`。内存到内存复制数组时，两端通常都要自增。
 
 ### 3.5 传输数量
 
-传输数量表示"搬运多少项"，不是字节总数。若宽度为 Half Word、数量为 4，实际搬运：
+传输数量表示"搬运多少项"，不是字节总数。Half Word、数量为 `4` 时：
 
 $$4\times 2\,\text{Byte}=8\,\text{Byte}$$
 
-ADC 扫描的 DMA 数量通常应等于接收数组元素数。数组有 4 个 `uint16_t` 元素时，传入 `4`，不能传入 `sizeof(adc_values)` 得到的 `8`。
-
-更稳妥的写法是：
+数组有 4 个 `uint16_t` 元素时，传入 `4`，不能传入 `sizeof(adc_values)` 得到的 `8`。可使用：
 
 ```c
 #define ARRAY_LEN(a) (sizeof(a) / sizeof((a)[0]))
@@ -236,14 +179,7 @@ HAL_ADC_Start_DMA(&hadc1,
 
 ### 3.7 优先级
 
-优先级有 Low、Medium、High、Very High 四档。它只在多个 DMA 请求竞争时参与仲裁。
-
-设置原则：
-
-- 不能丢样的高速 ADC、定时器波形更新可设较高；
-- 普通串口日志可设较低；
-- 不要把所有通道都设为 Very High，否则失去区分意义；
-- 优先级不能修复通道冲突、带宽不足或错误的数据宽度。
+优先级有 Low、Medium、High、Very High 四档，只在多个 DMA 请求竞争时参与仲裁。不能丢样的高速 ADC 或定时器波形更新可设较高，普通串口日志可设较低；不要把所有通道都设为 Very High。优先级不能修复通道冲突、带宽不足或错误的数据宽度。
 
 ### 3.8 中断
 
@@ -253,11 +189,21 @@ HAL_ADC_Start_DMA(&hadc1,
 - Transfer Complete：全部传输完成；
 - Transfer Error：传输错误。
 
-中断的作用是通知 CPU"某个阶段已经完成"，真正的数据搬运仍由 DMA 执行。回调中应只做置标志、切换缓冲区等短操作，OLED 刷屏、串口格式化和浮点运算应放到主循环或任务中。
+以数量为 8 的传输为例，三个事件的触发时刻是：
+
+```text
+搬完第 4 项（计数从 8 减到 4，缓冲区恰好写满一半）-> Half Transfer
+搬完第 8 项（计数归零，通道停止或回绕）          -> Transfer Complete
+搬运过程中总线出错                              -> Transfer Error
+```
+
+Half Transfer 这个名字由此而来：它精确对应"剩余计数从 $N$ 减到 $N/2$"的时刻，不是模糊的"搬了一半左右"。另外，工程内 `stm32f1xx_hal_dma.c` 的 `HAL_DMA_IRQHandler()` 在 Normal 模式下触发一次 Half Transfer 后会自动关闭这个中断，只有 Circular 模式才每轮都成对触发——这正是 8.3 节双半区方案依赖 Circular 的原因之一。
+
+中断只通知 CPU"某个阶段已经完成"，真正的数据搬运仍由 DMA 执行。回调中只做置标志、复制已稳定半区等短操作；OLED 刷屏、串口格式化和浮点运算放到主循环或任务中。
 
 ## 4. 从任务反推配置
 
-拿到采集任务后，先画出数据路径，再逐项回答第 2、3 章的问题，最后才打开 CubeMX 填配置。本节用本章两个实验的任务各做一次完整推导，实验章节直接使用结果。
+拿到任务后，先画数据路径，再回答"谁产生数据、谁消费数据、每次搬多宽、地址是否递增、一批有多少项、CPU 何时读取"，最后才打开 CubeMX 填配置。
 
 ### 4.1 任务一：把 `source[8]` 复制到 `destination[8]`
 
@@ -298,49 +244,59 @@ ADC1->DR（固定地址） -> DMA1_Channel1 -> adc_values[0..3]（递增）
 | 模式 | Normal（单帧）/ Circular（连续） | 由采集节奏决定 |
 | 触发 | 硬件请求 | 等待 ADC 每次转换完成 |
 
-两个任务的关键差异只有两处：数组复制是两端都自增、软件触发；ADC 采集是外设端固定、硬件请求。数组下标与通道的对应关系由第 6 章 9.2 节讲的 Rank 顺序决定。串口、SPI 等外设的 DMA 配置，也是这张推导表的替换练习。
+两个任务的关键差异是：数组复制是两端都自增、软件触发；ADC 采集是外设端固定、硬件请求。数组下标与通道的对应关系由 Rank 顺序决定，而不是由通道号大小决定。
 
-## 5. CubeMX 与 HAL 的对应关系
+## 5. HAL 初始化与回调链
 
-### 5.1 CubeMX 配置链
-
-配置 DMA 时建议按以下顺序检查：
+### 5.1 CubeMX 配置顺序
 
 1. 先启用产生或消费数据的外设；
 2. 在外设的 DMA Settings 中添加请求；
-3. 确认自动选择的 DMA 控制器与通道；
-4. 设置方向；
-5. 设置 Peripheral/Memory Increment；
-6. 设置两端数据宽度；
-7. 选择 Normal 或 Circular；
-8. 设置优先级；
-9. 若使用回调，打开对应 DMA 通道的 NVIC 中断；
-10. 生成代码后检查 DMA 初始化顺序和 IRQ Handler。
+3. 确认 DMA 控制器和通道映射；
+4. 设置方向、两端宽度和地址自增；
+5. 选择 Normal 或 Circular，并设置优先级；
+6. 使用回调时打开对应 DMA 通道的 NVIC 中断；
+7. 生成代码后检查 `MX_DMA_Init()`、MSP 中的 `__HAL_LINKDMA` 和 DMA IRQ Handler。
 
-CubeMX 生成的 `MX_DMA_Init()` 通常负责：
+应用初始化前要确认生成代码已经调用 `MX_GPIO_Init()`、`MX_DMA_Init()`、`MX_ADC1_Init()` 以及使用的 `MX_I2C2_Init()`。DMA 句柄关联或初始化顺序被手工改坏时，外设可能启动了，但没有可用的 DMA 通道。
 
-- 打开 DMA 控制器时钟；
-- 配置 NVIC 优先级；
-- 使能 DMA 通道中断。
+#### CubeMX 逐项怎么点
 
-外设的 MSP 初始化还会用 `__HAL_LINKDMA` 把外设句柄与 DMA 句柄关联。若手工移动或删除生成代码，可能出现 DMA 已初始化但外设找不到 DMA 句柄的情况。
+以本章实验二为例，把上面的顺序落到 CubeMX 界面上（版本 6.17，不同版本措辞略有差异）：
+
+1. 在 `Analog` 分类中勾选 `ADC1`，在右侧引脚图上把 `PA0`~`PA3` 依次点成 `ADC1_IN0`~`ADC1_IN3`；
+2. 打开 `ADC1` 配置页，勾选四个通道，`Number of Conversion` 填 `4`，再在 `Rank 1`~`Rank 4` 的下拉里逐个确认通道顺序；
+3. 添加 DMA：进入 `ADC1` 配置页的 `DMA Settings` 标签页，点 `Add`，在 `Select` 下拉中选 `ADC1`；因为 F1 的请求映射固定，选中后通道列会自动显示 `DMA1 Channel 1`，这一列不能改；
+4. 在刚出现的这一行里逐列核对：`Mode` 选 `Normal`（连续采集才选 `Circular`）；`Increment Address` 中 `Peripheral` 不勾、`Memory` 勾上；`Data Width` 两端都选 `Half Word`；
+5. 打开 `System Core → NVIC` 页，勾选 `DMA1 channel1 global interrupt`（对应 `.ioc` 中的 `DMA1_Channel1_IRQn`）；不用完成回调时可以不勾，实验一就是这样；
+6. 打开 `Clock Configuration` 页，确认 ADC 分频为 `/6`，$f_{ADC}=12\,\text{MHz}$（核对方法见 7.3 节）；
+7. 点 `GENERATE CODE`。
+
+每个字段填错的后果不会在编译期暴露，要到运行时才显现：
+
+| 填错项 | 典型后果 |
+| --- | --- |
+| `Memory` 自增没勾 | 所有结果反复写 `adc_values[0]`，其余元素保持 0 或旧值 |
+| `Data Width` 选成 `Word` | DMA 按 4 字节步长写数组，数值错位且越过数组末尾 |
+| `Mode` 该 `Normal` 选成 `Circular` | DMA 填满后不停止，数组被持续覆盖 |
+| 请求没加，或 `Select` 选错外设 | DMA 不会启动，数组始终为 0 |
+| NVIC 没勾 | 搬运照常进行，但完成回调不执行，`adc_frame_ready` 永远不置位 |
 
 ### 5.2 常用 HAL API
 
 | API | 作用 |
 | --- | --- |
-| `HAL_DMA_Start()` | 启动普通 DMA 传输，不使用中断通知 |
+| `HAL_DMA_Start()` | 启动普通 DMA 传输 |
 | `HAL_DMA_Start_IT()` | 启动 DMA 并允许中断通知 |
 | `HAL_DMA_PollForTransfer()` | 轮询等待半传输或全传输完成 |
-| `HAL_DMA_IRQHandler()` | 在 DMA IRQ Handler 中处理标志并调用回调 |
-| `HAL_ADC_Start_DMA()` | 启动 ADC，并把 ADC 结果交给 DMA |
+| `HAL_DMA_IRQHandler()` | 处理 DMA 中断标志并调用回调 |
+| `HAL_ADC_Start_DMA()` | 启动 ADC，并把结果交给 DMA |
 | `HAL_ADC_Stop_DMA()` | 停止 ADC DMA 采集 |
+| `HAL_TIM_Base_Start()` / `HAL_TIM_Base_Stop()` | 启停用于产生 TRGO 的定时器 |
 
-外设 DMA API 往往已经封装了通道配置、外设地址和回调链。优先使用 `HAL_ADC_Start_DMA()`、`HAL_UART_Transmit_DMA()` 等外设接口，不要在已有 HAL 封装时重复手工写寄存器。
+已有 HAL 外设接口时，优先使用 `HAL_ADC_Start_DMA()` 等接口，不要在外设驱动已经封装好后又重复手工配置寄存器。
 
-### 5.3 ADC 完成回调从哪里来
-
-ADC 使用 DMA 时，完成事件的调用链是：
+### 5.3 ADC 完成回调的调用链
 
 ```text
 DMA1 Channel 1 传输完成
@@ -350,22 +306,17 @@ DMA1 Channel 1 传输完成
 -> HAL_ADC_ConvCpltCallback()
 ```
 
-因此，`HAL_ADC_ConvCpltCallback()` 没有执行时，不仅要查 ADC，也要查 DMA1 Channel 1 的 NVIC 和 IRQ Handler。
+因此，`HAL_ADC_ConvCpltCallback()` 没有执行时，不仅要查 ADC，也要查 `DMA1_Channel1` 的 NVIC、IRQ Handler 和 DMA 句柄关联。
 
-## 6. 实验一：内存到内存单次复制
+## 6. 实验一：内存到内存复制
 
-### 6.1 实验目标
+### 6.1 目标与配置
 
-使用 DMA 把 `source[8]` 复制到 `destination[8]`，传输结束后逐项比较，确认 DMA 配置正确。
-
-这个实验只用于建立 DMA 心智模型。对于几十字节的小数组，CPU 的 `memcpy()` 往往更简单，甚至更快；DMA 更适合大块数据或 CPU 可以并行处理其他任务的场景。配置推导见 4.1 节。
-
-### 6.2 CubeMX 配置
-
-在 DMA 中添加 Memory-to-Memory 通道，示例设置如下：
+用 DMA 把 `source[8]` 复制到 `destination[8]`，完成后逐项比较。这个小数组用 `memcpy()` 也可能更合适；本实验用于看清 DMA 的地址、数量和重启关系。
 
 | 项目 | 设置 |
 | --- | --- |
+| 通道 | `DMA1_Channel1` |
 | Mode | Normal |
 | Direction | Memory to Memory |
 | Source Increment | Enable |
@@ -374,11 +325,13 @@ DMA1 Channel 1 传输完成
 | Destination Data Width | Word |
 | Priority | Low |
 
-不同 CubeMX 版本对两端的命名可能仍显示 Peripheral/Memory。只要核对生成的源地址、目的地址、自增和宽度即可。
+实验一在 CubeMX 中的添加位置与实验二不同：打开 `System Core → DMA` 页点 `Add`，`Select` 下拉选 `MEM2MEM`，同样会得到 `DMA1 Channel 1`。由于用 `HAL_DMA_PollForTransfer()` 轮询等待完成，本实验不需要勾选 `DMA1 channel1 global interrupt`——配套工程 `01_MemoryCopy` 的中断文件里因此没有 `DMA1_Channel1_IRQHandler()`。这是它与实验二在 NVIC 配置上的唯一差别，也正好演示了"轮询等待"和"中断回调"两种方式。
 
-### 6.3 HAL 代码
+CubeMX 不同版本可能仍显示 Peripheral/Memory 命名；只要核对源地址、目的地址、宽度和两端自增即可。
 
-CubeMX 生成的句柄名可能类似 `hdma_memtomem_dma1_channel1`，以实际工程为准。
+### 6.2 最小完整代码
+
+示例使用生成句柄 `hdma_memtomem_dma1_channel1`；若 CubeMX 生成的句柄名不同，以 `dma.c` 中的实际名称为准。
 
 ```c
 #include "main.h"
@@ -432,23 +385,12 @@ static void DMA_CopyOnce(void)
 }
 ```
 
-在所有 `MX_xxx_Init()` 完成后调用一次：
+在 `main()` 的所有 `MX_xxx_Init()` 完成后调用。Normal 模式重复启动的顺序是：确认上一轮已停止（关闭）→ `HAL_DMA_Start()` 重装计数并使能 → 再次搬运：
 
 ```c
+/* main() 中：所有 MX_xxx_Init() 之后 */
 DMA_CopyOnce();
-```
 
-调试器中应看到：
-
-- `destination[]` 与 `source[]` 完全相同；
-- `copy_ok == 1`；
-- DMA 通道剩余传输计数归零。
-
-### 6.4 重复复制的正确方式
-
-若源数组更新后需要再次复制，应等待前一轮完成，再调用一次 `HAL_DMA_Start()`。Normal 模式下每次启动完成一批数据：
-
-```c
 while (1)
 {
     source[0]++;
@@ -457,20 +399,37 @@ while (1)
 }
 ```
 
-不要把 Memory-to-Memory 改为 Circular。循环复制不仅不符合 STM32F1 DMA 的使用限制，也容易让 DMA 持续占用总线并反复覆盖目的数组。
+不要把 Memory-to-Memory 改为 Circular。STM32F1 的内存到内存模式不能使用 Circular，重复复制必须由软件重新启动。
+
+把实验一按"输入 → 处理 → 输出"拆开看：
+
+- 输入：`source[]` 中的 8 个已知初值；
+- 处理：`HAL_DMA_Start()` 装载搬运单并使能通道，DMA 自主完成 8 次 Word 搬运；
+- 输出：`destination[]` 的内容与 `copy_ok` 标志。
+
+配套工程 `01_MemoryCopy` 的实际写法与上面的教学版略有差异（代码事实）：`source` 声明为 `static const`（链接后位于 Flash，DMA 一样能读），`destination` 与 `copy_ok` 都是 `static` 变量；`main()` 只在初始化后调用一次 `DMA_CopyOnce()`，随后在 `while (1)` 里闪烁 PC13 作为"程序还活着"的心跳。验证方式不是 OLED，而是调试器：下载后在 Watch 窗口添加 `copy_ok` 和 `destination`，应看到 `copy_ok == 1`、`destination` 与源数据逐项相同。教学版每秒改一次 `source[0]` 再重拷，是为了让"重启一次 Normal 传输"的流程反复可见；工程版只复制一次，把重心放在静态观察上。
+
+### 6.3 预期现象
+
+- `destination[]` 与 `source[]` 完全相同；
+- `copy_ok == 1`；
+- DMA 通道剩余传输计数归零。
+
+现象与原因的对应关系：
+
+| 如果看到 | 说明 |
+| --- | --- |
+| `copy_ok == 1` | 搬运单五要素（地址、方向、宽度、自增、数量）全部生效 |
+| `destination` 全 0 且 `copy_ok == 0` | DMA 没有真正启动：确认 `MX_DMA_Init()` 在 `DMA_CopyOnce()` 之前执行，`HAL_DMA_Start()` 返回值是否 `HAL_OK` |
+| 程序停在 `Error_Handler()` | `HAL_DMA_Start()` 或 `HAL_DMA_PollForTransfer()` 返回了非 `HAL_OK`，常见于上一轮尚未结束就再次启动 |
+| 只有部分元素正确 | 两端自增或传输数量与数组长度不一致 |
+| 改成 Circular 后行为异常 | STM32F1 内存到内存模式不允许 Circular，属于预期禁止项 |
 
 ## 7. 实验二：ADC 扫描加 DMA 单帧采集
 
-### 7.1 为什么先学习单帧模式
+### 7.1 单帧数据链
 
-初学多通道 ADC 时，最容易混淆的是：
-
-- 数组下标与 Rank 对不上；
-- DMA 还在写，CPU 就开始读；
-- Continuous 与 Circular 只打开了一个；
-- 在中断中执行大量显示和换算。
-
-因此先采用一条边界清楚的链路：
+先用 Normal 模式验证通道顺序和数据边界：
 
 ```text
 启动一次 ADC DMA
@@ -482,7 +441,18 @@ while (1)
 -> 软件重新启动下一轮
 ```
 
-此时 DMA 停止后数组不会继续变化，最适合验证通道顺序和数据处理。配置推导见 4.2 节。
+把"DMA 填满数组"再拆细一点，缓冲区是一拍一拍落位的：
+
+```text
+软件启动：HAL_ADC_Start_DMA() 使能 ADC 与 DMA
+第 1 拍：Rank 1（PA0）转换完成 -> DMA 把 ADC1->DR 写入 adc_values[0]
+第 2 拍：Rank 2（PA1）转换完成 -> DMA 写入 adc_values[1]
+第 3 拍：Rank 3（PA2）转换完成 -> DMA 写入 adc_values[2]
+第 4 拍：Rank 4（PA3）转换完成 -> DMA 写入 adc_values[3]，计数归零
+        -> DMA 停止并触发完成中断 -> HAL_ADC_ConvCpltCallback() 置位
+```
+
+每一拍的触发者都是"该 Rank 转换完成"这个事件，所以写入下标顺序严格等于 Rank 顺序：`adc_values[0]` 一定是 Rank 1 的结果，与该通道是几号通道无关。整帧在内存端表现为"数组从前往后逐个更新"，全部写完才有一次回调——这正是 Normal 模式下"回调时数组已冻结"的原因。
 
 ### 7.2 接线与 Rank 规划
 
@@ -495,11 +465,11 @@ while (1)
 | 3 | IN2 / PA2 | NTC 分压 | `adc_values[2]` |
 | 4 | IN3 / PA3 | 红外接收分压 | `adc_values[3]` |
 
-也可以按开发板原理图配置为电位器、NTC、片内温度传感器和 VREFINT，但把后两个内部通道排进 Rank 有前提：它们**只在 `ADC1` 上有效**（`ADC2` 的 `CH16`/`CH17` 内部接 `VSS`，没有可用信号源），而且需要的采样时间远长于普通外部通道。本章 $f_{ADC}=12\,\text{MHz}$ 下，片内温度传感器约需 `17.1 μs`，只能选 `239.5` 档；VREFINT 约需 `5.1 μs`，至少要选 `71.5` 档。本章不展开内部通道的换算，要使用请按第 6 章 11 节的说明处理。
+外部模拟量必须与开发板共地、输入不超范围，GPIO 配置为 Analog；传感器接法以开发板原理图为准。
 
-无论选哪些通道，都必须先固定 Rank，再固定数组含义；数组顺序跟随 Rank，不跟随通道号大小（见第 6 章 9.2 节）。
+若使用片内温度传感器或 VREFINT，它们只在 `ADC1` 上有效；`ADC2` 的 `CH16`/`CH17` 没有可用内部信号源。内部通道的采样时间下限与 VREFINT 换算见 10.3 节。
 
-所有外部模拟量必须满足第 6 章 7.3 节的接线要求：与开发板共地、输入不超范围、GPIO 配置为 Analog、分压阻值与采样时间匹配；传感器接法以原理图为准。
+无论选择哪些通道，都先固定 Rank，再固定数组含义；数组顺序跟随 Rank，不跟随通道号大小。
 
 ### 7.3 ADC 与 DMA 配置
 
@@ -514,6 +484,20 @@ ADC1（CubeMX）：
 7. 为每个通道设置足够的采样时间；
 8. 检查 ADC 时钟不超过目标芯片限制。
 
+第 8 条如何核对？F103 的 ADC 时钟上限是 14 MHz（第 6 章 3.2 节），PCLK2 为 72 MHz，所以必须分频 `/6` 得到 $f_{ADC}=12\,\text{MHz}$。配套工程 `02_ADC_Scan` 的 `SystemClock_Config()` 末尾有这一块（代码事实）：
+
+```c
+/* 02_ADC_Scan/Core/Src/main.c：SystemClock_Config() 末尾 */
+PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
+PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV6;
+if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
+{
+    Error_Handler();
+}
+```
+
+对应的 `.ioc` 记录了 `RCC.ADCPRE=RCC_ADCPCLK2_DIV6` 与 `RCC.ADCFreq_Value=12000000`。第 6 章记录过一个真实教训：时钟树上的数字只是图纸，早期生成代码里并没有这段，ADC 实际按复位默认分频超规运行，后来补上分频才修复。复刻本章工程时，除了看时钟页显示 12 MHz，还要打开生成后的 `main.c` 确认 `SystemClock_Config()` 末尾真的有 `RCC_ADCPCLK2_DIV6` 这几行——图纸与代码两头都要核对，缺任何一边都可能在数据手册的限制之外运行。
+
 DMA：
 
 | 项目 | 设置 |
@@ -526,22 +510,38 @@ DMA：
 | Peripheral Data Width | Half Word |
 | Memory Data Width | Half Word |
 | Mode | Normal |
+| Priority | High |
 | NVIC | Enable |
+
+生成代码后核对三个落点（代码事实，来自配套工程 `02_ADC_Scan`）：`dma.c` 中的 DMA 句柄名为 `hdma_adc1_dma1_channel1`，方向、宽度、自增与上表一致；`adc.c` 的 `HAL_ADC_MspInit()` 末尾有 `__HAL_LINKDMA(hadc, DMA_Handle, hdma_adc1_dma1_channel1)`，它把 DMA 句柄挂到 ADC 句柄上；`stm32f1xx_it.c` 中有 `DMA1_Channel1_IRQHandler()`，内部调用 `HAL_DMA_IRQHandler(&hdma_adc1_dma1_channel1)`。三个落点缺了任何一个，实验二都会只搬数据、不进回调。
 
 ### 7.4 最小完整代码
 
+将下面内容放入 `main.c` 对应的 CubeMX 用户代码区：头文件放 `Includes`，数组和标志放 `PV`，函数原型放 `PFP`，函数与回调放 `USER CODE 4`，初始化放 `USER CODE 2`，主循环处理放 `while (1)` 内的用户代码区。
+
 ```c
+/* USER CODE BEGIN Includes */
 #include "main.h"
+#include "adc.h"
+#include "dma.h"
 #include <stdint.h>
 #include <stdio.h>
 #include "oled.h"
+/* USER CODE END Includes */
 
+/* USER CODE BEGIN PV */
 #define ADC_CHANNEL_COUNT 4U
 
 uint16_t adc_values[ADC_CHANNEL_COUNT] = {0};
 volatile uint8_t adc_frame_ready = 0U;
 volatile uint8_t adc_frame_error = 0U;
+/* USER CODE END PV */
 
+/* USER CODE BEGIN PFP */
+static void ADC_StartOneFrame(void);
+/* USER CODE END PFP */
+
+/* USER CODE BEGIN 4 */
 static void ADC_StartOneFrame(void)
 {
     if (HAL_ADC_Start_DMA(&hadc1,
@@ -568,17 +568,23 @@ void HAL_ADC_ErrorCallback(ADC_HandleTypeDef *hadc)
         adc_frame_error = 1U;
     }
 }
+/* USER CODE END 4 */
 ```
 
-初始化和主循环：
+初始化和主循环如下。`main()` 中应先完成 GPIO、DMA、ADC 和 I2C 初始化，再执行 OLED 初始化和第一次采集：
 
 ```c
+/* USER CODE BEGIN 2 */
+OLED_Init();
+
 if (HAL_ADCEx_Calibration_Start(&hadc1) != HAL_OK)
 {
     Error_Handler();
 }
 ADC_StartOneFrame();
+/* USER CODE END 2 */
 
+/* USER CODE BEGIN WHILE */
 while (1)
 {
     if (adc_frame_ready != 0U)
@@ -597,12 +603,6 @@ while (1)
         ntc           = adc_values[2];
         infrared      = adc_values[3];
 
-        /*
-         * 最直接的观测手段就是沿用第 6 章实验一的 OLED 显示代码：
-         * 把 adc_values[0..3] 按 Rank 顺序逐个显示出来，既能看见数组
-         * 内容，也能同时确认 Rank 与数组下标的对应关系是否正确。
-         * 四个值先写显存，最后只刷新一次（第 2 章 7.2 节的刷新策略）。
-         */
         OLED_NewFrame();
         snprintf(text, sizeof(text), "PA0:%4u",
                  (unsigned int)potentiometer);
@@ -630,37 +630,49 @@ while (1)
         ADC_StartOneFrame();
     }
 }
+/* USER CODE END WHILE */
 ```
 
-`OLED_NewFrame()`、`OLED_PrintASCIIString()` 和 `afont16x8` 都来自第 2 章的 OLED 工程，所以这四个数能像第 6 章实验一那样直接显示；`#include <stdio.h>` 供 `snprintf()` 使用，`#include "oled.h"` 供显示接口使用，两者放进 `USER CODE BEGIN Includes`。没有 OLED 或暂时不想接屏幕时，也可以把 `adc_values[0..3]` 放进 Keil 的 Watch 窗口逐项观察，或在回调置位后通过串口打印，但用 OLED 能一眼看出 Rank 顺序有没有错。
+配套工程 `02_ADC_Scan` 的实际代码与上面同构，另有几处小差异（代码事实）：`main()` 在 `OLED_Init()` 之前先用 `HAL_I2C_IsDeviceReady(&hi2c2, 0x78U, 3U, 100U)` 确认 OLED 在线，失败即进入 `Error_Handler()`；探测前多一句 `HAL_Delay(20U)` 给模块上电稳定时间；显示缓冲 `text` 的长度是 20；显示代码直接使用 `adc_values[0..3]`，不另拷贝到局部变量。缓冲区长度只影响 `snprintf` 的上限，不影响 DMA 数据链。
 
-这里不要改成四次 `OLED_ShowNum()`：行列式兼容接口每次调用都会自动整帧刷新，`100 kHz` 下一次约 `100 ms`，四次就把一帧拖到接近半秒，看起来像程序卡住。四个值合并成一次刷新后，一帧约 `100 ms`，加上代码里的 `HAL_Delay(100)`，实际约每 `200 ms` 更新一次，观察电位器、光敏和 NTC 这类慢变化量已经足够。
-
-这段代码的关键不是变量名，而是状态闭环：
+`OLED_NewFrame()`、`OLED_PrintASCIIString()` 和 `afont16x8` 沿用第 2 章的 OLED 接口。没有 OLED 时，也可以在调试器的 Watch 窗口观察 `adc_values[0..3]`。回调只置位，主循环在 Normal DMA 停止后读取数组：
 
 ```text
 Start -> DMA Busy -> Complete Callback -> Frame Ready
 -> Process Stable Frame -> Start Again
 ```
 
-### 7.5 验收现象
+### 7.5 预期现象
 
-- 转动电位器，对应数组元素应在 `0~4095` 范围内明显变化；
-- 遮挡光敏电阻时，对应值应按分压接法上升或下降；
-- 握住 NTC 后，数值应缓慢变化，而不是瞬间大幅跳变；
-- 靠近或遮挡红外接收器时，对应值应变化；
+- 转动电位器，`adc_values[0]` 在 `0~4095` 范围内变化；
+- 遮挡光敏电阻时，`adc_values[1]` 按分压接法上升或下降；
+- 握住 NTC 后，`adc_values[2]` 缓慢变化，而不是瞬间大幅跳变；
+- 靠近或遮挡红外接收器时，`adc_values[3]` 变化；
 - 只操作一个传感器时，其他数组下标不应交换。
 
-若四个数都变化但含义错位，优先检查 Rank，而不是先改数组下标掩盖配置错误。
+若四个数都变化但含义错位，优先检查 Rank 顺序，不要先改数组下标掩盖配置错误。
+
+把常见现象与原因对应起来：
+
+| 如果看到 | 最可能说明 |
+| --- | --- |
+| 四个下标都随各自传感器变化 | Rank 顺序、采样时间与 DMA 配置都正确 |
+| 转动电位器，`adc_values[0]` 不动，其余三个有值 | Rank 1 对应的通道或引脚接错，回看 7.2 节的表 |
+| 数值含义整体错位一格 | Rank 顺序与数组下标的假定不一致，或 `Number of Conversion` 不是 4 |
+| 全部为 0 且不刷新 | 采集链路没走通，按 12.1 节逐级检查 |
+| 数值抖动大、偶尔跳变 | 采样时间不够或模拟端噪声，参考第 6 章采样时间一节 |
+| 只刷新一次就停住 | Normal 模式一帧结束后没有重新启动，检查 `ADC_StartOneFrame()` 是否还在主循环里被调用 |
 
 ## 8. 连续采集：ADC Continuous 与 DMA Circular
 
-### 8.1 两个循环必须相互匹配
+### 8.1 两个循环要匹配
 
-若希望 ADC 不停扫描，应同时配置：
+若希望 ADC 自由连续扫描，可以配置：
 
 - ADC Continuous Conversion Mode：Enable；
 - DMA Mode：Circular。
+
+如果采样必须由定时器固定周期触发，ADC Continuous 可以关闭，使用"定时器触发 + Circular DMA"。Continuous 不是 Circular 的必要条件。
 
 启动一次后：
 
@@ -684,52 +696,54 @@ if (HAL_ADC_Start_DMA(&hadc1,
 
 while (1)
 {
-    /* adc_values[] 始终保存最近一帧的结果。 */
+    /* adc_values[] 持续保存最近收到的 4 个样本。 */
     HAL_Delay(100);
 }
 ```
 
-Continuous + Circular 适合观察电位器、光敏电阻、NTC 等慢变化量，但它并不自动保证 CPU 每次读取到的四个值来自同一轮扫描。
+Continuous + Circular 适合观察慢变化量，但不保证 CPU 每次读到的四个元素来自同一轮扫描。给异步更新的数组加 `volatile` 只能约束编译器访问，不能保证帧一致性。
 
-若主循环直接轮询这个由 DMA 异步更新的数组，应通过 `volatile` 或受控的读取接口让编译器感知外部修改。但 `volatile` 只约束编译器访问，不能保证四个元素属于同一轮扫描。
+### 8.2 半新半旧数据
 
-### 8.2 为什么可能读到"半新半旧"的数组
-
-假设 CPU 正在读取：
+例如 CPU 正在读取：
 
 ```text
 values[0]：第 20 轮
 values[1]：第 20 轮
 ```
 
-此时 DMA 已开始第 21 轮并改写后两个位置，就可能形成混合帧。对慢变化的显示数据，这种差异通常不明显；对控制、记录和算法输入，则必须处理一致性。
+此时 DMA 已开始第 21 轮并改写后两个位置，就可能得到：
 
-可选方法：
+```text
+values[0]：第 20 轮
+values[1]：第 21 轮
+```
 
-1. 使用本章实验二的 Normal 单帧模式，传输完成后再处理；
-2. 使用长度为两帧的缓冲区，在 Half/Complete 回调中复制已经完成的半区；
-3. 在更高性能系列上使用硬件双缓冲，并处理数据缓存一致性。
+对慢变化显示通常不明显；对控制、记录和算法输入则必须处理。关闭 CPU 中断不能阻止 DMA 改写内存，所以"关中断后复制数组"不等价于冻结 DMA。
 
-仅关闭 CPU 中断不能阻止 DMA 改写内存，所以"关中断后复制数组"并不等价于冻结 DMA。
+### 8.3 DMA 双半区与 CPU 快照
 
-### 8.3 两帧缓冲的思路
-
-四通道扫描时，可准备 8 个元素：
+四通道扫描时，Circular DMA 可以连续保存两组结果：
 
 ```c
 uint16_t adc_dma_buffer[8];
-uint16_t adc_snapshot[4];
 ```
 
-DMA 写完前 4 个元素触发 Half Transfer，写完后 4 个触发 Transfer Complete。对应的 HAL 回调是 `HAL_ADC_ConvHalfCpltCallback()`（半传输回调，在 DMA 完成前半区传输时调用，此时 `adc_dma_buffer[0..3]` 已稳定）和 `HAL_ADC_ConvCpltCallback()`（全传输回调，在整轮传输结束时调用，此时 `adc_dma_buffer[4..7]` 已稳定）。CPU 在对应回调中只做快速复制或置位，再在主循环处理 `adc_snapshot`，换算和刷屏不要放进回调。这种方法适合吞吐量较高的连续采集，但不作为本章首个实现。
+DMA 写完前 4 个元素触发 Half Transfer，写完后 4 个触发 Transfer Complete。刚写完的半区在下一次回绕前不会被覆盖，因此回调可快速复制该半区，再由主循环处理。
+
+双半区只解决 DMA 的写入边界，不保证慢速主循环永远来得及。若下一次回调到达前仍未取走，快照仍会被覆盖；连续显示或控制应使用带就绪标志的快照/队列，或改用 Normal 模式在每帧结束后停 DMA。
 
 ## 9. 定时器触发：让采样周期可控
 
-### 9.1 Continuous 模式的局限
+### 9.1 为什么要定时触发
 
-Continuous 模式会在上一轮结束后立刻开始下一轮，采样率由 ADC 时钟、各通道采样时间和转换时间共同决定。它适合"尽快获取最新值"，却不适合"严格每 1 ms 采一帧"。
+Continuous 模式会在上一轮结束后立即开始下一轮，采样率由 ADC 时钟、各通道采样时间和转换时间共同决定。若用主循环软件触发，间隔更不可控：循环体里刷屏快慢、`HAL_Delay` 前后做了多少事、中断来了多少次，都会让采样间隔抖动。采样间隔一抖：
 
-需要固定采样周期时，使用：
+- 记录波形时横轴没有意义，画出来的曲线会被拉伸压缩；
+- 做 FFT 时，只有等时间间隔的样本才能正确对应到频率；
+- 做控制（比如 PID）时，积分和微分都假设固定周期，周期抖动会让参数整定失效。
+
+解决思路是把"什么时候转"交给一个不受 CPU 干扰的硬件：定时器周期性产生更新事件，通过 `TRGO`（Trigger Output）信号在芯片内部直接连到 ADC 的触发输入：
 
 ```text
 TIMx Update/TRGO
@@ -739,54 +753,177 @@ TIMx Update/TRGO
 -> 缓冲区
 ```
 
-### 9.2 触发周期的计算与约束
+### 9.2 定时器的配置
 
-定时器产生 `1 ms` 更新事件的 `PSC`/`ARR` 计算、CubeMX 配置路径见第 6 章 12 节；ADC 侧只需把外部触发源从软件启动改为目标 `TIMx TRGO`，其余不变。
+以 TIM3 每 1 ms 产生一次触发为例。假设系统时钟为 `72 MHz`、APB1 预分频为 `/2`，则 `PCLK1 = 36 MHz`。STM32F1 在 APB 预分频不为 `1` 时，定时器时钟为 `2 × PCLK1`（第 03、05 章讲过的倍频规则）：
 
-一帧时间必须小于触发周期：四通道、每通道 `55.5` 周期采样、$f_{ADC}=12\,\text{MHz}$ 时，一帧约 `22.67 μs`（计算见第 6 章 12.4 节），每 `1 ms` 触发一次的预算是充足的。若压缩触发周期，应先重新计算帧时间并留出裕量。
+$$f_{TIM}=2\times36\,\text{MHz}=72\,\text{MHz}$$
 
-### 9.3 推荐配置与启动顺序
+更新事件频率为：
 
-| ADC 选项 | 设置 |
-| --- | --- |
-| Scan Conversion | Enable |
-| Continuous Conversion | Disable |
-| External Trigger | 目标 TIMx TRGO |
-| DMA | Circular 或按帧 Normal |
+$$f_{update}=\frac{f_{TIM}}{(PSC+1)(ARR+1)}$$
 
-| 定时器选项 | 设置 |
-| --- | --- |
-| Clock Source | Internal Clock |
-| TRGO | Update Event |
-| PSC/ARR | 根据目标帧率计算 |
-
-启动顺序通常为：
+选择 `PSC = 71`、`ARR = 999`：计数频率 1 MHz，每 1000 个计数更新一次，即 1 kHz、1 ms。CubeMX 中 TIM3 的 `Clock Source` 选 `Internal Clock`，`Parameter Settings` 填上面两个值，再把 `Trigger Event Selection`（TRGO）设为 `Update Event`。生成的初始化核心代码：
 
 ```c
-HAL_ADCEx_Calibration_Start(&hadc1);
-HAL_ADC_Start_DMA(&hadc1,
-                  (uint32_t *)adc_values,
-                  ADC_CHANNEL_COUNT);
-HAL_TIM_Base_Start(&htim3);
+TIM_HandleTypeDef htim3;
+
+void MX_TIM3_Init(void)
+{
+    TIM_MasterConfigTypeDef master = {0};
+
+    htim3.Instance = TIM3;
+    htim3.Init.Prescaler = 71U;
+    htim3.Init.CounterMode = TIM_COUNTERMODE_UP;
+    htim3.Init.Period = 999U;
+    if (HAL_TIM_Base_Init(&htim3) != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    master.MasterOutputTrigger = TIM_TRGO_UPDATE;
+    master.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+    if (HAL_TIMEx_MasterConfigSynchronization(&htim3, &master) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
 ```
 
-先让 ADC 与 DMA 就绪，再启动定时器，避免丢失第一个触发事件。具体触发源可用性必须以目标型号参考手册和 CubeMX 选项为准。
+`MasterOutputTrigger = TIM_TRGO_UPDATE` 是关键一行：它把"更新事件"路由到 TRGO（片内信号），每次计数到 ARR 并溢出归零时发出一个触发脉冲。`.ioc` 中对应的关键行：`TIM3.Prescaler=71`、`TIM3.Period=999`、`TIM3.MasterOutputTrigger=TIM_TRGO_UPDATE`。
 
-## 10. 应用：从数组到物理量
+### 9.3 ADC 侧与启动顺序
 
-DMA 搬进 `adc_values[]` 的只是 ADC 原码，要变成可显示、可控制的物理量还差最后一步换算。换算方法全部在第 6 章，这里只给出索引：
+把 7.3 节配置里的软件触发换成定时器触发：ADC1 的 `External Trigger Conversion Source` 选 `T3_TRGO`，生成代码对应 `hadc1.Init.ExternalTrigConv = ADC_EXTERNALTRIGCONV_T3_TRGO`（`.ioc` 中 `ADC1.ExternalTrigConv=ADC_EXTERNALTRIGCONV_T3_TRGO`）。
 
-- 原码转电压：第 6 章 2.1 节，$V_{in}\approx\frac{ADC}{4095}\times 3.3\,\text{V}$；
-- NTC 原码转阻值与温度：第 6 章 10 节（分压方向、Beta 模型与 C 参考函数）；
-- 用 VREFINT 修正实际 VDDA：第 6 章 11.1 节。
+单通道定时触发的可运行工程是第 6 章提到的 `HAL06_ADC\03_TimerTrigger`：TIM3 TRGO 触发 ADC1，主循环用 `HAL_ADC_PollForConversion()` 读值，PC13 每次转换完成翻转一次。把它与本章实验二的扫描 + DMA 组合，就得到定时触发的多通道采集。无论单通道还是多通道，启动顺序都是"校准 ADC -> 启动 ADC（DMA）-> 启动 TIM3"：
 
-换算放在主循环中处理，不要放进 DMA 完成回调。若使用 Circular 连续模式，先按 8.2 节的方法取得一帧一致数据，再做换算；Normal 单帧模式下回调置位后数组已冻结，可直接使用。
+```c
+if (HAL_ADCEx_Calibration_Start(&hadc1) != HAL_OK ||
+    HAL_ADC_Start_DMA(&hadc1,
+                      (uint32_t *)adc_values,
+                      ADC_CHANNEL_COUNT) != HAL_OK ||
+    HAL_TIM_Base_Start(&htim3) != HAL_OK)
+{
+    Error_Handler();
+}
+```
 
-## 11. 故障定位
+`HAL_ADC_Start()` / `HAL_ADC_Start_DMA()` 只在启动顺序里调用一次：它们让 ADC 进入"等待触发"状态，此后每次转换都由 TIM3 的 TRGO 发起。进入主循环后不要再手动触发，否则会在硬件节拍之外额外插入转换，打乱固定周期。`HAL_TIM_Base_Start()` 之前定时器不计数，所以它必须最后启动——先让 ADC 与 DMA 就绪、再打开触发源，也不会丢失第一个触发事件。
 
-### 11.1 数组始终为 0
+- 配合 **Circular**：数组填满后从头继续接收后续定时触发；
+- 配合 **Normal**：数组填满一帧后 DMA 停止，定时器继续运行也不会自动重启 DMA；Normal 单帧的完整顺序是：停止 TIM3，处理完整帧，重新启动 ADC DMA，再启动 TIM3。
 
-按以下链路检查：
+### 9.4 周期约束：一帧预算
+
+若一次 TRGO 触发多个 Rank，必须保证一帧转换时间小于触发周期：
+
+$$T_{frame}=\sum_{i=1}^{N}\left(T_{sample,i}+12.5\right)T_{ADC}$$
+
+直观理解：第 6 章 4.1 节算的是"一个通道要多久"，多通道扫描就是把每个通道的时间加起来；一帧还没转完，下一次触发又来了，两帧数据就会撞车。例如 4 个通道都使用 `55.5` 周期、$f_{ADC}=12\,\text{MHz}$：
+
+$$T_{frame}=4\times\frac{55.5+12.5}{12\,\text{MHz}}\approx22.67\,\mu\text{s}$$
+
+`22.67 μs < 1 ms`，每 1 ms 触发一帧有充足余量；压缩触发周期时要重新计算并留出裕量。定时器 TRGO 的具体可用映射以目标芯片参考手册和 CubeMX 选项为准。
+
+## 10. 从数组到物理量
+
+DMA 搬进 `adc_values[]` 的只是 ADC 原码。这一节把常用的三类换算集中讲完。换算放在主循环里做，不要放进 DMA 完成回调——Normal 模式回调置位后数组已冻结，可直接处理；Circular 模式应先按 8.3 节的思路取得一致的一帧，再换算。
+
+### 10.1 原码转电压
+
+外部通道的电压换算沿用第 6 章 2.1 节的公式：
+
+$$V_{in}\approx\frac{ADC\_Code}{4095}\times 3.3\,\text{V}$$
+
+整数毫伏版（先转 `uint32_t` 防溢出，`+2047U` 做四舍五入补偿）：
+
+```c
+voltage_mv = ((uint32_t)code * 3300U + 2047U) / 4095U;
+```
+
+### 10.2 NTC 原码转温度
+
+NTC（负温度系数热敏电阻）自己不输出电压，必须与固定电阻 $R_F$ 组成分压电路，ADC 测中点电压再反解。分压方向决定公式，先看接线：
+
+| 接线 | 由原码反解 NTC 阻值 |
+| --- | --- |
+| $R_F$ 接 $VDDA$，NTC 接地 | $R_T=R_F\frac{ADC}{4095-ADC}$ |
+| NTC 接 $VDDA$，$R_F$ 接地 | $R_T=R_F\frac{4095-ADC}{ADC}$ |
+
+NTC 在下臂时升温使电压减小——"电压与温度方向相反"由接线决定，不是 ADC 错误。NTC 模块要用模拟输出 `AO`；比较器输出 `DO` 已把连续电压压成高低两个状态，信息丢失，不能接 ADC。
+
+阻值到温度用 Beta 模型近似：
+
+$$\frac{1}{T}=\frac{1}{T_0}+\frac{1}{B}\ln\left(\frac{R_T}{R_0}\right),\qquad T_{^\circ\mathrm{C}}=T-273.15$$
+
+其中 $T$、$T_0$ 用开尔文，$R_0$ 是 $T_0$ 下的阻值，$B$ 是厂家参数——只知道"10 kΩ"确定不了温度曲线。以 $R_F=10\,\text{k}\Omega$ 接 VDDA、NTC 接地、原码 `1500`、$B=3950$ 为例：$R_T\approx10\,000\times\frac{1500}{4095-1500}\approx5.78\,\text{k}\Omega$，$T\approx37.9^\circ\text{C}$。
+
+"原码 -> 阻值 -> 温度"可封装成一个短函数（无效码返回 `NAN`，不给显示和控制送垃圾值）：
+
+```c
+#include <math.h>
+#include <stdint.h>
+
+static float NTC_CodeToCelsius(uint16_t code)
+{
+    const float rf_ohm = 10000.0f;    /* 上臂固定电阻 */
+    const float r0_ohm = 10000.0f;    /* T0 下的标称阻值 */
+    const float t0_kelvin = 298.15f;  /* 25 ℃ */
+    const float beta = 3950.0f;
+
+    if (code == 0U || code >= 4095U)
+    {
+        return NAN;   /* 0=对地短路，4095=开路/未接，都不是有效分压 */
+    }
+
+    float resistance = rf_ohm * (float)code / (4095.0f - (float)code);
+    float temperature_kelvin = 1.0f /
+        ((1.0f / t0_kelvin) + logf(resistance / r0_ohm) / beta);
+
+    return temperature_kelvin - 273.15f;
+}
+```
+
+换用其他 NTC 时，必须同时替换 `rf_ohm`、`r0_ohm`、`beta`、参考温度和分压方向。NTC 自热、电阻误差、VREF 误差和 Beta 近似都会影响结果，看趋势比追绝对值更实际。
+
+### 10.3 用 VREFINT 修正实际 VDDA 与内部通道采样时间
+
+换算式成立的前提是"尺子上的满量程刻度画得准"，而 3.3 V 轨的实际电压谁也说不准。STM32F103 在片内集成了一个约 `1.20 V` 的基准源（VREFINT，数据手册范围 `1.16~1.24 V`），接在 ADC1 的 Channel 17：把这条"标准线"也量一遍，就能反推 VDDA 实际多长——推导思路与 2.1 节相反，是"已知真实电压，反解 VREF"：
+
+$$V_{DDA}\approx V_{REFINT}\frac{2^N-1}{ADC_{VREFINT}},\qquad
+V_{in}\approx\frac{ADC_{in}}{2^N-1}V_{DDA}$$
+
+整数毫伏版（`+ vrefint_code / 2U` 仍是四舍五入补偿）：
+
+```c
+if (vrefint_code == 0U)
+{
+    vdd_mv = 0U;   /* 读取失败或无效码 */
+}
+else
+{
+    vdd_mv = (1200U * 4095U + vrefint_code / 2U) / vrefint_code;
+}
+```
+
+`Vref` 的读数通常落在 `3200~3400 mV` 之间的某个稳定值；即使 VDDA 真是 3.300 V，它一般也不会恰好停在 3300——这更多反映 VREFINT 自身的个体差异，而不是电源真的不准。F103 没有 F0/F4/L4 等系列那样的 `VREFINT_CAL` 出厂标定数据，把 `1.20 V` 当固定常数只能得到近似补偿；需要更高精度时，用外部基准源或逐板标定。
+
+内部通道的信号源是片内电路，内阻比外部引脚大，采样时间下限更高：VREFINT 约 `5.1 μs`，片内温度传感器约 `17.1 μs`——在 $f_{ADC}=12\,\text{MHz}$ 下分别对应至少 `71.5` 档（约 5.96 μs）和 `239.5` 档（约 19.96 μs）。扫描时让每个 Rank 使用自己的采样档位，不能把外部通道的 `55.5` 档直接套给内部通道。片内温度传感器只适合观察变化趋势，换算按数据手册给出的 25°C 典型电压和温度系数进行。
+
+## 11. 本章验收
+
+- [ ] 能说明每个 DMA 通道的源、目标和方向；
+- [ ] 内存复制实验的数据前后已对比；
+- [ ] ADC DMA 数组的 Rank 顺序已记录；
+- [ ] CPU 不会在 DMA 正在写入时误读半帧；
+- [ ] 能区分 DMA 配置、回调和数组所有权问题。
+
+## 12. 故障定位
+
+### 12.1 数组始终为 0
+
+沿数据链检查：
 
 ```text
 传感器输出
@@ -798,24 +935,17 @@ DMA 搬进 `adc_values[]` 的只是 ADC 原码，要变成可显示、可控制�
 -> 数组是否被程序重新清零
 ```
 
-同时确认 `MX_DMA_Init()` 已执行，并且初始化顺序没有被手工改坏。
+同时确认 `MX_DMA_Init()` 已执行，初始化顺序没有被手工改坏。
 
-### 11.2 只有第一个数组元素变化
+### 12.2 只有第一个数组元素变化
 
 最常见原因是 Memory Increment 没有开启。DMA 每次都写 `adc_values[0]`，后续元素保持旧值。
 
-### 11.3 四个值都有，但通道对应错误
+### 12.3 四个值都有，但通道对应错误
 
-检查：
+检查 Rank 顺序、Number of Conversion、CubeMX 重新生成后的 Rank 是否变化，以及数组注释是否仍与配置一致。真正决定顺序的是 Rank，不是 `ADC_CHANNEL_0` 这样的通道名称。
 
-- Rank 顺序；
-- Number of Conversion；
-- CubeMX 重新生成代码后 Rank 是否变化；
-- 数组注释是否仍与配置一致。
-
-不要假设 `ADC_CHANNEL_0` 必然放在数组第 0 项，真正决定顺序的是 Rank。
-
-### 11.4 数值错位、截断或数组越界
+### 12.4 数值截断、错位或数组越界
 
 检查：
 
@@ -825,115 +955,73 @@ DMA 搬进 `adc_values[]` 的只是 ADC 原码，要变成可显示、可控制�
 - 数组长度是否至少等于 DMA 数量；
 - HAL API 要求的指针强制转换是否只改变类型，没有改变真实内存布局。
 
-### 11.5 完成回调不执行
+### 12.5 完成回调不执行
 
-检查：
+依次检查：
 
-1. DMA1 Channel 1 NVIC 是否启用；
+1. DMA1 Channel 1 的 NVIC 是否启用；
 2. `DMA1_Channel1_IRQHandler()` 是否存在；
 3. IRQ Handler 是否调用 `HAL_DMA_IRQHandler()`；
 4. ADC 句柄是否通过 `__HAL_LINKDMA` 关联 DMA；
-5. 回调函数名和参数是否完全正确；
+5. 回调函数名和参数是否正确；
 6. DMA 是否真的完成了规定数量的传输。
 
-### 11.6 第二次启动返回 HAL_BUSY
+### 12.6 第二次启动返回 `HAL_BUSY`
 
-通常是上一轮仍在进行，或完成状态尚未正确收尾。不要在 ADC DMA 仍 Busy 时重复调用 Start。
-
-单帧模式应遵守：
+通常是上一轮仍在进行，或完成状态尚未收尾。工程内 `stm32f1xx_hal_dma.c` 的 `HAL_DMA_Start()` 在通道未回到就绪状态时直接返回 `HAL_BUSY`，不会等待。不要在 ADC DMA 仍 Busy 时重复调用 Start。Normal 单帧应遵守：
 
 ```text
 Start -> Complete -> Process -> Start
 ```
 
-### 11.7 连续模式数据不稳定
+### 12.7 连续模式数据不稳定
 
 可能原因包括：
 
+- Normal 模式加单帧采集，主循环没有重新启动——这是"只采一次就停"最常见的原因，对照 7.1 节的单帧数据链；
 - ADC Continuous 开启，但 DMA 仍为 Normal；
-- DMA Circular 开启，但 ADC 每次只转换一轮且没有新触发；
+- DMA Circular 开启，但 ADC 只转换一轮且没有新触发；
 - CPU 读取时 DMA 正在覆盖数组；
 - 采样时间过短，传感器源阻抗较高；
-- 串口/OLED 刷新造成观察节拍混乱，但实际采集正常；
+- 串口或 OLED 刷新改变了观察节拍；
 - 模拟电源、接地或布线噪声较大。
 
-先用 Normal 单帧模式验证每个 Rank，再切换连续模式，可显著缩小排错范围。
+先用 Normal 单帧模式验证每个 Rank，再切换连续模式，可以区分配置错误、缓冲区一致性和硬件噪声。
 
-### 11.8 DMA 通道冲突
+### 12.8 DMA 通道冲突
 
-若 ADC、USART、I2C 或定时器同时使用 DMA，需查参考手册的请求映射表。一个固定通道不能在同一时间服务两个互相冲突的外设请求。
+若 ADC、USART、I2C 或定时器同时使用 DMA，查芯片请求映射表。一个固定通道不能在同一时间服务两个互相冲突的外设请求；可让低流量外设改用中断、调整外设实例，或重新规划引脚和 DMA 资源。
 
-解决方法包括：
+### 12.9 内存复制实验失败
 
-- 某个低流量外设改用中断；
-- 调整所用外设实例；
-- 重新规划功能与引脚；
-- 选择具有更多 DMA 资源的芯片。
+实验一的排查入口与实验二不同：它没有外设参与，问题只可能出在 DMA 配置、启动和等待三个环节，按症状定位：
 
-## 12. 架构选择
+- `destination` 全 0：确认 `MX_DMA_Init()` 在 `DMA_CopyOnce()` 之前执行；`HAL_DMA_Start()` 的返回值是否为 `HAL_OK`；源、目的地址传的是数组首地址，而不是误写成了 `&source[1]` 之类的元素地址；
+- 卡死在 `HAL_DMA_PollForTransfer()`：通道没有真正跑起来，用调试器查看 `hdma_memtomem_dma1_channel1.State` 与剩余计数，再核对宽度、方向与模式；
+- 第二次复制返回 `HAL_BUSY`：见 12.6 节，Normal 模式每次启动前必须等上一轮完成；
+- `destination` 数据错位或截断：两端宽度与数组元素类型不一致，回到 3.3 节的匹配规则；
+- 编译报 `hdma_memtomem_dma1_channel1` 未定义：调用处没有 `#include "dma.h"`，或句柄名与 CubeMX 实际生成的不一致（以 `dma.c` 中的名称为准）。
 
-| 需求 | 推荐架构 | 缓冲区特性 |
-| --- | --- | --- |
-| 偶尔读一个传感器 | ADC 轮询 | 单值，最简单 |
-| 偶尔读取多个通道 | 扫描 + DMA Normal | 一帧完成后稳定 |
-| 持续显示慢变量 | Continuous + Circular | 始终更新，可能混合帧 |
-| 固定周期采集一帧 | TIM TRGO + 扫描 + DMA | 周期确定 |
-| 连续记录波形 | TIM TRGO + DMA Circular + 半/全回调 | 需要分块处理 |
-| 小数组偶尔复制 | `memcpy()` | 通常无需 DMA |
-| 大块复制且 CPU 有其他任务 | DMA Normal + 完成通知 | 需管理并发访问 |
+### 12.10 定时触发没有发生或节拍不对
 
-选择 DMA 架构时，依次回答：
+按 9.1 节的触发链从定时器侧向 ADC 侧核对：
 
-1. 数据由谁产生，谁消费？
-2. 每次搬运宽度是多少？
-3. 地址应固定还是递增？
-4. 一批数据有多少项？
-5. 数据是单批还是连续流？
-6. CPU 何时可以安全读取缓冲区？
-7. 是否需要固定采样周期？
-8. 多个 DMA 请求是否冲突？
+1. 定时器实际时钟：APB 预分频不为 1 时定时器时钟为 APB 的 2 倍（第 3 章）；
+2. 重算 `(PSC+1)×(ARR+1)`；
+3. TRGO 是否选择 Update Event（`TIM_TRGO_UPDATE`）；
+4. ADC 外部触发源是否对应 `ADC_EXTERNALTRIGCONV_T3_TRGO`；
+5. 启动顺序是否为"校准 -> ADC（DMA）-> TIM3"，主循环中没有再插入软件触发；
+6. 实际 $f_{ADC}$ 按 3.2 节核对（分频配置见第 6 章）。
 
-## 13. 自测题
+频率相差 2 倍或 6 倍，几乎都出在第 1、4 步。另一类症状是"触发频率正确但多通道帧不完整"：一帧转换时间超过触发周期，两帧数据撞车——按 9.4 节重算各 Rank 采样时间之和，确保 `T_frame < T_trigger`，必要时缩短采样档位或降低触发频率。
 
-1. DMA 相比中断，减少了 CPU 的哪一部分工作？
-2. ADC1 多通道扫描时，为什么外设地址不递增而内存地址递增？
-3. `uint16_t adc_values[4]` 使用 Half Word 传输时，DMA 数量应填 `4` 还是 `8`？
-4. 为什么 STM32F1 的内存到内存重复复制不能直接配置 Circular？
-5. ADC Continuous 开启而 DMA 使用 Normal，会发生什么？
-6. `HAL_ADC_ConvCpltCallback()` 不执行时，为什么要检查 DMA IRQ？
-7. 为什么关闭 CPU 中断不能保证 Circular DMA 数组不再变化？
-8. 四通道每通道耗时 $6\,\mu\text{s}$，要每 $20\,\mu\text{s}$ 触发一帧是否可行？
-9. NTC 温度升高后 ADC 原码一定下降吗？
-10. DMA 适合所有小数据复制吗？
+### 12.11 内部通道（VREFINT/温度传感器）读数明显不合理
 
-**答案要点**：
+内部通道只连接在 `ADC1` 上，按顺序核对：
 
-1. DMA 代替 CPU 完成每一项数据寄存器与内存之间的重复读写；
-2. ADC 结果始终来自同一个 DR，而各 Rank 结果要依次写入不同数组元素；
-3. 填 `4`，数量是元素项数，不是字节数；
-4. STM32F1 明确限制 Memory-to-Memory 与 Circular 组合，应在 Normal 完成后软件重启；
-5. DMA 填满一次后停止，而 ADC 仍继续转换，后续结果不再进入数组；
-6. ADC DMA 完成回调由 DMA Channel IRQ 经 HAL 调用链触发；
-7. DMA 是独立总线主设备，屏蔽 CPU 中断不会停止 DMA；
-8. 不可行，一帧需约 $24\,\mu\text{s}$，已经超过触发周期；
-9. 不一定，方向取决于 NTC 在分压器中的位置（第 6 章 10.1 节）；
-10. 不适合，小数据可能由 `memcpy()` 或直接赋值更简单。
+1. 使用的实例确为 ADC1（`ADC2` 的 Channel 16/17 没有内部信号源）；
+2. 采样时间是否分别至少 `71.5`、`239.5` 周期（10.3 节）；
+3. 是否误用了 F103 不存在的 `VREFINT_CAL`/`TS_CAL` 出厂标定值；
+4. 原码为 `0` 或 `4095` 时应判为无效（10.2 节的 `NAN` 分支），而不是继续换算。
 
-## 本章小结
-
-DMA 的核心不是记住某个 HAL 函数，而是先画清数据流：
-
-```text
-谁产生请求
--> 从哪个地址读
--> 向哪个地址写
--> 每次搬多宽
--> 地址是否递增
--> 总共搬几项
--> 搬完停止还是重装
--> CPU 何时接管结果
-```
-
-内存到内存实验建立了 DMA 的基本搬运模型；ADC 扫描实验进一步说明了外设请求、固定寄存器地址、数组递增和完成回调的配合；Continuous、Circular 与定时器触发则把"能采到数据"提升为"能按正确节拍、正确边界管理数据"。
-
-对初学工程，优先从 Normal 单帧闭环开始。只有在通道顺序、数据宽度、数组长度和回调链都验证正确后，再进入 Circular、半传输回调和连续流处理。本章未展开 DMA 中断、双缓冲和存储器到外设的完整工程；串口发送数组是下一步自然的练习：把源数组放到存储器端，把 USART 数据寄存器放到外设端，并按 USART 的 DMA 请求映射选择通道。
+上一篇：[[06 ADC：量化、采样时间与单次转换]] ｜ 下一篇：[[08 串口通信：轮询、中断、DMA 与蓝牙协议]]
