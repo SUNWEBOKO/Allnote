@@ -2,6 +2,7 @@
 
 ## 本章问题
 
+<<<<<<< Updated upstream
 怎样从时钟树推导 HSI/HSE/PLL 配置，并用实验比较 8 MHz 和 72 MHz？
 
 前两章的程序已经能够运行并驱动 OLED，但还留下一个基础问题：芯片究竟以多快的速度运行？第 0 章的 CubeMX 配置中写着 `HSE 8 MHz + PLL×9 = 72 MHz`，当时我们暂时照用。本章回到这行配置，说明时钟源、总线频率和 `HAL_Delay(500)` 的 1 ms 时基分别从哪里来。完成后，你将用两个工程对比 8 MHz 与 72 MHz 下的 LED 闪烁速度。
@@ -13,9 +14,21 @@
 - 按初始化顺序配置 HSE、PLL、SYSCLK、分频和 Flash 等待周期
 - 核对 HAL 频率读数与 MCO 输出波形
 - 比较 8 MHz 与 72 MHz 配置下的 LED 速度
+=======
+前两章的延时、I2C 速度都默认芯片跑在 72 MHz，这个数字从第 0 章就填在 CubeMX 里，却一直没解释。本章沿着时钟树看节拍从哪里来，把 8 MHz 算成 72 MHz，再配置到工程里，最后用 LED 闪烁速度验证。
 
-## 1. 时钟的作用与时钟树
+## 学习目标
 
+- 画出 HSI/HSE 到 SYSCLK、HCLK、PCLK1、PCLK2 的路径。
+- 用 `8 MHz × 9 = 72 MHz` 算主频，并核对 PLL 的输入输出范围。
+- 按分频关系算出三条总线频率，判断是否超限。
+- 按顺序配置 HSE、PLL、SYSCLK、分频和 Flash 等待周期。
+- 用 HAL 读数或 MCO 引脚核对实际时钟。
+>>>>>>> Stashed changes
+
+## 1. 时钟与时钟树
+
+<<<<<<< Updated upstream
 ### 1.0 先建立直觉：为什么芯片需要"心跳"
 
 把芯片想象成一条流水线：CPU、存储器、外设都是工位，数据是流水线上的零件。如果每个工位各干各的、想动就动，零件传到下一个工位时可能还没就位，就会出错。**时钟就是统一的口令**：每敲一下，所有寄存器同时向前走一步。
@@ -31,9 +44,13 @@
 ![STM32F1 时钟树总览](<image/Pasted image 20260727154625.png>)
 
 > 这张图只作时钟树示意。STM32F103C8T6 的实际可用外设和引脚以目标芯片资料、CubeMX 时钟树及生成的 `SystemClock_Config()` 为准。
+=======
+CPU、存储器和外设按同一个节拍工作，这个节拍就是时钟。节拍快，同一段代码跑得就快；串口波特率、定时器步长、ADC 采样率也都由它分出来，所以时钟错了，所有跟时间有关的数字都会跟着错。
+>>>>>>> Stashed changes
 
 把时钟树看成一套“分级齿轮”：最左边是动力源（可选振荡器），中间是倍频齿轮（PLL，把 8 MHz 转成 72 MHz）和选挡开关（系统时钟 MUX，决定哪个源驱动主轴），SYSCLK 之后再经过 AHB、APB 分频器，把合适的频率分配给各外设。
 
+<<<<<<< Updated upstream
 读图时先沿主干向上追踪 `HSI/HSE -> PLL/MUX -> SYSCLK -> AHB -> HCLK`，再沿 `APB1/APB2` 找到 `PCLK1/PCLK2` 和具体外设：
 
 ```text
@@ -45,14 +62,26 @@ HSI/HSE -> PLL 与系统时钟选择 -> SYSCLK
 低速分支 `LSI/LSE` 主要服务 RTC 和独立看门狗 IWDG，不经过高速 PLL 主干。
 
 时钟源有四种，名字由两个词根拼成：`HS/LS` 表示高速/低速，`I/E` 表示内部/外部。所以 HSI 就是"高速内部"，HSE 就是"高速外部"，依此类推：
+=======
+时钟树的主线是三行：
 
-| 时钟源 | F103 常见频率/特点 | 主要用途 |
+```text
+HSI/HSE → PLL → SYSCLK
+              → AHB 分频 → HCLK
+              → APB1/APB2 分频 → PCLK1/PCLK2 → GPIO、串口、定时器、ADC
+```
+
+四个时钟源的名字由“高速/低速”和“内部/外部”组合而成：
+>>>>>>> Stashed changes
+
+| 时钟源 | 频率与特点 | 用途 |
 | --- | --- | --- |
-| `HSI` | 片内 RC，`8 MHz`，启动快但精度较低 | 默认系统时钟、PLL 输入 |
-| `HSE` | 外部晶振，常见 `4~16 MHz`，精度较高 | 系统主频、PLL 输入 |
-| `LSI` | 片内低速 RC，典型约 `40 kHz`，精度较低 | IWDG、RTC 备选 |
-| `LSE` | 外部 `32.768 kHz` 晶振，精度较高 | RTC |
+| `HSI` | 片内 RC，8 MHz，启动快、精度低 | 默认系统时钟、PLL 输入 |
+| `HSE` | 外部晶振，常见 4~16 MHz，精度高 | 系统主频、PLL 输入 |
+| `LSI` | 片内低速 RC，约 40 kHz | 独立看门狗、RTC 备选 |
+| `LSE` | 外部 32.768 kHz 晶振 | RTC |
 
+<<<<<<< Updated upstream
 HSI 是片内的 RC 振荡器——用电阻电容的充放电节奏产生时钟，好处是芯片上电立刻可用、不依赖任何外部元件，代价是频率会随温度、电压和芯片个体漂移，出厂时校准到"大约 8 MHz"。HSE 是焊在板子上的石英晶振，机械振动频率非常稳定，所以要求精确频率的场合（串口波特率、USB、精确定时）都应切到 HSE 或 PLL。
 
 HSE 使用晶振时选择 **Crystal/Ceramic Resonator**；只有外部已经提供完整方波时才选择 **Bypass Clock Source**，两种模式不能混用。最常见的错误是板子上明明焊着晶振，却在 CubeMX 里选了 Bypass——HAL 会去等一个永远不会来的外部方波，实验 02 会直接卡在时钟启动这一步（详见 6.1 节）。
@@ -90,19 +119,31 @@ SysTick 挂在 Cortex-M3 内核一侧，跟随 HCLK 计数；MCO 是一根可以
 ### 1.3 总线时钟还要经过外设门控
 
 总线有频率不等于外设已经工作。GPIO、TIM、ADC 等外设还需要对应的 RCC 门控位：
+=======
+HSI 不依赖外部元件，上电即可用，但频率会随温度和电压漂移；HSE 是板上的石英晶振，频率稳定，需要精确时钟时都用它。CubeMX 里使用板载晶振，选 `Crystal/Ceramic Resonator`。
+
+时钟送到总线之后，每个外设还有自己的门控开关，用对应的 `__HAL_RCC_*_CLK_ENABLE()` 打开：
+>>>>>>> Stashed changes
 
 ```c
-__HAL_RCC_GPIOC_CLK_ENABLE();  /* GPIOC 位于 APB2 */
-__HAL_RCC_TIM2_CLK_ENABLE();   /* TIM2 位于 APB1  */
-__HAL_RCC_DMA1_CLK_ENABLE();   /* DMA1 位于 AHB   */
+__HAL_RCC_GPIOC_CLK_ENABLE();  /* GPIOC 在 APB2 */
+__HAL_RCC_TIM2_CLK_ENABLE();   /* TIM2 在 APB1 */
+__HAL_RCC_DMA1_CLK_ENABLE();   /* DMA1 在 AHB */
 ```
 
+<<<<<<< Updated upstream
 可以把门控位想象成每间外设"屋子"自己的电闸：总线是主配电箱，电闸不合上，屋子里的设备再好也不转。第 1 章你已经在 `MX_GPIO_Init()` 里见过 `__HAL_RCC_GPIOC_CLK_ENABLE()`——没有这一行，往 `GPIOC` 寄存器写什么都没反应，这是"引脚完全没动静"类故障的高频原因。
 
 门控只决定时钟是否送达外设，不会改变 `PCLK1/PCLK2` 的频率。
+=======
+门控没开，写外设寄存器不会有任何反应。它只决定时钟是否送到外设，不改变总线频率。
 
-## 2. PLL 与系统时钟计算
+## 2. PLL 与主频计算
+>>>>>>> Stashed changes
 
+### 2.1 从 8 MHz 到 72 MHz
+
+<<<<<<< Updated upstream
 ### 2.1 PLL 输入、输出和合法范围
 
 PLL（锁相环）名字听起来吓人，本质是一个"可控倍频齿轮"：它让内部一个高速振荡器与输入时钟保持严格的相位同步，同步关系就是"输出频率 = 输入频率 × 固定倍数"。输入只有 8 MHz，晶振很难直接焊出 72 MHz 的谐振频率，而 PLL 可以稳定地把 8 MHz 整整倍乘 9 倍——这就是它存在的原因。
@@ -149,16 +190,54 @@ STM32F103 的 AHB 合法分频为 `/1、/2、/4、/8、/16、/64、/128、/256�
 | `PCLK2` | `72 MHz` | GPIO、ADC、USART1、SPI1、TIM1 |
 
 `72 MHz` 主频的常用组合为：
+=======
+PLL 是一个可控倍频器，输出频率等于输入频率乘以倍频系数：
+
+$$
+f_{\mathrm{PLL}} = f_{\mathrm{PLL\ in}} \times M
+$$
+
+F103 的 PLL 输入可以选 `HSI/2`、`HSE` 或 `HSE/2`，倍频挡位为 `x2~x16`。输入必须在 1~25 MHz，输出必须在 16~72 MHz，越界会锁不住或超规运行。
+
+本章用 8 MHz 的 HSE，倍频系数取 9：
+
+$$
+f_{\mathrm{SYSCLK}} = 8 \times 9 = 72\,\mathrm{MHz}
+$$
+
+72 MHz 是 F103 的设计上限，再高不能保证正常工作。`8 × 9` 也没有取整余量，所以板载晶振必须确实是 8 MHz。
+
+### 2.2 AHB 与 APB 分频
+
+不是所有外设都能跑 72 MHz，所以 SYSCLK 先经 AHB 分频得到 HCLK，再经两个 APB 分频得到 PCLK1 和 PCLK2：
+
+$$
+f_{\mathrm{HCLK}} = \frac{f_{\mathrm{SYSCLK}}}{N_{\mathrm{AHB}}}, \qquad
+f_{\mathrm{PCLK1}} = \frac{f_{\mathrm{HCLK}}}{N_{\mathrm{APB1}}}, \qquad
+f_{\mathrm{PCLK2}} = \frac{f_{\mathrm{HCLK}}}{N_{\mathrm{APB2}}}
+$$
+
+三条总线的上限和挂载对象：
+
+| 节点 | 上限 | 典型对象 |
+| --- | --- | --- |
+| `HCLK` | 72 MHz | Cortex-M3、Flash、SRAM、DMA |
+| `PCLK1` | 36 MHz | USART2/3、I2C、TIM2~TIM4 |
+| `PCLK2` | 72 MHz | GPIO、ADC、USART1、SPI1、TIM1 |
+
+常用的 72 MHz 配置是：
+>>>>>>> Stashed changes
 
 ```text
 HSE = 8 MHz
-PLL = HSE x 9 = 72 MHz
+PLL = HSE × 9 = 72 MHz
 SYSCLK = 72 MHz
-AHB  = /1 -> HCLK  = 72 MHz
-APB1 = /2 -> PCLK1 = 36 MHz
-APB2 = /1 -> PCLK2 = 72 MHz
+AHB  = /1 → HCLK  = 72 MHz
+APB1 = /2 → PCLK1 = 36 MHz
+APB2 = /1 → PCLK2 = 72 MHz
 ```
 
+<<<<<<< Updated upstream
 APB1 不能在 F103 的 `72 MHz` 主频下直接取 `72 MHz`，因此必须至少 `/2`。核对方法很机械：把每个分频挡位代进上面的公式，逐个检查 `HCLK ≤ 72`、`PCLK1 ≤ 36`、`PCLK2 ≤ 72`，任何一项越界都要重选挡位。CubeMX 的 Clock Configuration 页面会在你选错时画出红色错误提示，配置合法后提示才会消失。
 
 ### 2.3 定时器与专用外设时钟
@@ -185,9 +264,40 @@ $$
 - **RTC**：可选 `LSE`、`LSI` 或 `HSE/128`；`32.768 kHz` LSE 经 `32768` 分频可得到 `1 Hz`——这就是手表晶振为什么是 2 的 15 次方：连续除以 2 十五次，正好得到秒脉冲。
 - **IWDG**：F103 的 IWDG 只能由 LSI 驱动，主系统时钟异常时仍可复位系统。
 - **Flash**：频率升高必须增加等待周期。Flash 的读出速度有限，CPU 却越跑越快，于是需要在取指时插入等待拍——就像翻书速度跟不上眼睛扫视速度时，只能每翻一页多等一拍。F103 常见边界为 `HCLK≤24 MHz` 用 `0 WS`，`24 MHz<HCLK≤48 MHz` 用 `1 WS`，`48 MHz<HCLK≤72 MHz` 用 `2 WS`。HAL 里对应的宏是 `FLASH_LATENCY_0/1/2`（定义在 `stm32f1xx_hal_flash.h`）。等待周期配少会导致取指不可靠、程序行为异常，配多了只是稍微变慢；所以 72 MHz 必须给 `FLASH_LATENCY_2`，8 MHz 给 `FLASH_LATENCY_0` 就够。
+=======
+CubeMX 的 `Clock Configuration` 页会在参数非法时标红。页面上的频率只是按输入算出的图纸值，它不知道板上的晶振实际有多快。
 
-## 3. CubeMX 与 HAL 配置顺序
+### 2.3 定时器与专用外设时钟
 
+APB 上的定时器不直接使用 PCLK，而是按下面的规则取时钟：
+
+$$
+f_{\mathrm{TIM}x} =
+\begin{cases}
+f_{\mathrm{PCLK}x}, & N_{\mathrm{APB}x} = 1 \\
+2 f_{\mathrm{PCLK}x}, & N_{\mathrm{APB}x} > 1
+\end{cases}
+$$
+
+所以本章 `PCLK1 = 36 MHz`，但 TIM2/3/4 的时钟是 72 MHz。第 5 章算 PWM 频率时若拿 36 MHz 去算，实测周期会正好差一倍。
+
+其余几路时钟：
+
+- SysTick 由 HCLK 驱动，`HAL_Init()` 按 `SystemCoreClock` 配出 1 ms 中断，`HAL_Delay()` 靠它计时；
+- ADC 时钟由 PCLK2 再分频，72 MHz 下 `/6` 得 12 MHz、`/8` 得 9 MHz，`/2`、`/4` 会超过常见的 14 MHz 上限；
+- USB 需要精确的 48 MHz，由 PLL 经 1.5 分频得到；
+- RTC 可选 LSE、LSI 或 HSE/128，32.768 kHz 经 32768 分频得到 1 Hz；
+- 独立看门狗只能由 LSI 驱动；
+- Flash 频率越高，读取越跟不上 CPU，必须插入等待周期，本章 72 MHz 用 `FLASH_LATENCY_2`。
+
+## 3. CubeMX 与 HAL 配置
+
+### 3.1 CubeMX 设置
+>>>>>>> Stashed changes
+
+以 HSE 8 MHz、PLL ×9、72 MHz 为例：
+
+<<<<<<< Updated upstream
 ### 3.1 CubeMX 必要设置
 
 以 HSE `8 MHz`、PLL `x9`、`72 MHz` 为例：
@@ -204,17 +314,44 @@ $$
 ### 3.2 初始化顺序与完整 HAL 配置
 
 CubeMX 生成的启动顺序通常是：
+=======
+1. `Pinout & Configuration → RCC`，`HSE` 选 `Crystal/Ceramic Resonator`。
+2. `Clock Configuration` 确认 `HSE = 8 MHz`。
+3. `PLL Source` 选 `HSE`，HSE 预分频 `/1`，`PLL Mul` 选 `x9`。
+4. `System Clock Mux` 选 `PLLCLK`。
+5. `AHB = /1`、`APB1 = /2`、`APB2 = /1`，确认没有红色错误提示。
+6. 生成代码。
+
+8 MHz 与 72 MHz 各存一份 `.ioc`，切换时在 CubeMX 的 `Clock Configuration` 页按下面几项核对，不要手改 `.ioc`：
+
+| 设置 | 8 MHz 对照组 | 72 MHz 实验组 |
+| --- | --- | --- |
+| `HSE` | 关闭 | `Crystal/Ceramic Resonator` |
+| `PLL` | 关闭 | 源 `HSE`，倍频 `x9` |
+| `System Clock Mux` | `HSI` | `PLLCLK` |
+| `AHB Prescaler` | `/1` | `/1` |
+| `APB1 Prescaler` | `/1` | `/2` |
+| `APB2 Prescaler` | `/1` | `/1` |
+
+`.ioc` 是 CubeMX 的私有文本格式，键名随版本变化。要在文件里核对 72 MHz 组，关键几项是 `PD0-OSC_IN.Mode=HSE-External-Oscillator`、`RCC.PLLSourceVirtual=RCC_PLLSOURCE_HSE`、`RCC.PLLMUL=RCC_PLL_MUL9`、`RCC.SYSCLKSource=RCC_SYSCLKSOURCE_PLLCLK`、`RCC.APB1CLKDivider=RCC_HCLK_DIV2`；8 MHz 对照组由另一份纯 HSI 的 `.ioc` 保存，不靠手改同一文件。
+
+### 3.2 初始化顺序
+>>>>>>> Stashed changes
 
 ```text
-Reset_Handler -> SystemInit() -> C 运行库 -> main()
-main() -> HAL_Init() -> SystemClock_Config() -> MX_xxx_Init() -> 主循环
+Reset_Handler → SystemInit() → C 运行库 → main()
+main() → HAL_Init() → SystemClock_Config() → MX_xxx_Init() → 主循环
 ```
 
+<<<<<<< Updated upstream
 逐级解释这条链：上电后启动文件 `startup_*.s` 先把堆栈和中断向量表摆好（第 0 章提过），然后调 `SystemInit()`——它只做最基础的系统初始化，此时芯片仍运行在复位默认的 HSI 8 MHz 上。进入 `main()` 后，`HAL_Init()` 设置默认 NVIC 分组、初始化 HAL Tick（把 SysTick 配成 1 ms 中断，供 `HAL_Delay()` 使用）并调用 `HAL_MspInit()`；`SystemClock_Config()` 再建立目标系统时钟并更新 SysTick，最后才初始化依赖这些时钟的外设。看到 `SystemInit()` 不能直接认定系统已经运行在 `72 MHz`，仍应检查 `SystemClock_Config()` 的实际内容。
 
 这个顺序也有讲究：时钟必须先于外设配好。如果先初始化串口再改主频，波特率就会按错误的时钟算出来——这也是"改时钟后串口乱码"的根源（见 6.5 节）。
 
 适用于 `STM32F103C8T6 + HSE 8 MHz + PLL x9` 的完整函数为：
+=======
+`SystemInit()` 只做最基础的系统初始化，此时芯片还跑在复位默认的 HSI 8 MHz 上。`HAL_Init()` 设置 NVIC 分组并把 SysTick 配成 1 ms。真正把主频推到 72 MHz 的是 `SystemClock_Config()`：
+>>>>>>> Stashed changes
 
 ```c
 void SystemClock_Config(void)
@@ -222,6 +359,7 @@ void SystemClock_Config(void)
     RCC_OscInitTypeDef RCC_OscInitStruct = {0};
     RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
+<<<<<<< Updated upstream
     RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
     RCC_OscInitStruct.HSEState = RCC_HSE_ON;
     RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
@@ -346,6 +484,35 @@ void Error_Handler(void)
 以常见 `PC13` 低电平点亮的开发板为例，实际有效电平仍以原理图为准。在 CubeMX 中把 `PC13` 配置为 GPIO Output，并将初始电平设为 LED 熄灭；保留 `Serial Wire` 调试口。两组实验使用同一段 `main()`，只改变 CubeMX 生成的 `SystemClock_Config()`——因此两个子工程（`01_HSI_8MHz`、`02_PLL_72MHz`）是两个独立工程。
 
 配套工程的实际代码如下（`i` 放在 `USER CODE BEGIN PV` 区域作全局变量，主循环写在 `USER CODE WHILE/3` 之间；`MX_GPIO_Init()` 把 PC13 配成开漏输出 `GPIO_MODE_OUTPUT_OD`、初始电平 `GPIO_PIN_SET` 即高电平熄灭，并把初始输出写在 `HAL_GPIO_Init()` 之前）：
+=======
+  /* 打开 HSE，PLL 以 HSE 为输入，倍频 ×9 */
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState       = RCC_HSE_ON;
+  RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+  RCC_OscInitStruct.PLL.PLLState   = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource  = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLMUL     = RCC_PLL_MUL9;
+  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+
+  /* SYSCLK 走 PLLCLK，AHB /1、APB1 /2、APB2 /1 */
+  RCC_ClkInitStruct.ClockType      = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
+                                   | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
+  RCC_ClkInitStruct.SYSCLKSource   = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.AHBCLKDivider  = RCC_SYSCLK_DIV1;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2);
+}
+```
+
+第一段 `HAL_RCC_OscConfig()` 打开晶振、把 PLL 挂到 HSE 上并设置倍频，等 PLL 锁定。第二段 `HAL_RCC_ClockConfig()` 切换系统时钟源、设置分频，同时按新的 HCLK 重配 SysTick 和 Flash 等待周期。CubeMX 生成的代码还会检查返回值，失败就进 `Error_Handler()`，所以配置错误的表现通常是停在启动阶段，而不是跑飞。
+
+时钟必须先于外设初始化。先初始化串口再改主频，波特率就会按错误的时钟算出来。
+
+## 4. 实验：比较 8 MHz 与 72 MHz
+
+接线只需要最小系统板和 ST-LINK，`PC13` 配成 GPIO 输出，保留 `Serial Wire`。对照组不启用 HSE 和 PLL，SYSCLK 停在 HSI 8 MHz；实验组用上一节的 72 MHz 配置。
+>>>>>>> Stashed changes
 
 ```c
 /* USER CODE BEGIN PV */
@@ -368,6 +535,7 @@ int main(void)
 }
 ```
 
+<<<<<<< Updated upstream
 实验链路如下：
 
 ```text
@@ -524,5 +692,18 @@ MCO 能提供实际波形证据，但 `36 MHz` 只证明 PLL 约为 `72 MHz`；�
   1. 全局搜索代码里有没有自己调用过 `__disable_irq()` 且没有对应的 `__enable_irq()`；
   2. Watch 观察 `uwTick`：不增长而程序没停在 `Error_Handler()`，检查 SysTick 的中断使能与优先级配置；
   3. 走正规流程：`HAL_Init()` 会先按 `SystemCoreClock` 复位初值 8000000 把 SysTick 配成 1 ms，`HAL_RCC_ClockConfig()` 成功后再按新 HCLK 重配——只要不绕过这两个函数，这笔账不会乱。
+=======
+`volatile` 防止编译器把空循环优化掉。循环时间还受优化等级和 Flash 等待周期影响，所以这个实验只做定性比较：同样一百万次计数，72 MHz 下 LED 闪烁应明显快于 8 MHz，理想比值约 9 倍，快一个量级就算对。
+
+LED 变快只能说明执行速度变了，不能证明 PLL 已锁定。要拿到硬证据，就把时钟输出到 `PA8` 的 MCO 引脚测量：
+
+```c
+HAL_RCC_MCOConfig(RCC_MCO1, RCC_MCO1SOURCE_PLLCLK, RCC_MCODIV_1);
+```
+
+F1 的 `RCC_MCO1SOURCE_PLLCLK` 输出的是 PLL/2，本章配置下预期约 36 MHz。测不到时，先确认 `PA8` 已配成 MCO、探头带宽足够，再切到 `RCC_MCO1SOURCE_HSE` 看 8 MHz 晶振是否起振。也可以用 `HAL_RCC_GetSysClockFreq()` 读配置推算值，但它不能替代实际测量。用完记得关闭 MCO，把 `PA8` 还给原来的功能。
+
+这套 72 MHz / 36 MHz / 12 MHz 的分配也是后面定时器、ADC 和串口计算的共同基准。倒立摆工程沿用同一棵时钟树（HSE 8 MHz ×9，APB1 二分频，ADC 六分频），其引脚与总线表见 [[STM32倒立摆/03 基础驱动：CubeMX与HAL库实现#1.4 本工程的引脚与外设总表]]。
+>>>>>>> Stashed changes
 
 上一篇：[[02 OLED 调试：I2C 显示数据流]] ｜ 下一篇：[[04 中断系统：EXTI 与 NVIC 优先级]]

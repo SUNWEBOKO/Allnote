@@ -1,4 +1,4 @@
-# 第 13 章 PWR 低功耗
+# 13-PWR低功耗
 
 
 
@@ -6,11 +6,11 @@
 
 理解供电域后，分别进入睡眠、停止和待机模式，并验证串口/EXTI/RTC 或 WKUP 唤醒后的程序行为。
 
-![STM32 电源框图](../assets/ppt/slide-179.png)
+![STM32 电源框图](assets/ppt/slide-179.png)
 
 ## 1. 三种模式的差异
 
-![低功耗模式对比](../assets/ppt/slide-182.png)
+![低功耗模式对比](assets/ppt/slide-182.png)
 
 | 模式 | CPU/时钟 | SRAM/寄存器 | 唤醒后位置 | 典型用途 |
 | --- | --- | --- | --- | --- |
@@ -18,7 +18,7 @@
 | 停止 | PLL/HSI/HSE 停止 | 保留 | 从暂停处继续，但要恢复系统时钟 | 更低功耗且保留运行状态 |
 | 待机 | 1.8 V 域断电 | 丢失，后备域保留 | 相当于复位，从头启动 | 最低功耗、长待机 |
 
-![模式选择流程](../assets/ppt/slide-183.png)
+![模式选择流程](assets/ppt/slide-183.png)
 
 ## 2. 睡眠模式
 
@@ -28,7 +28,7 @@
 __WFI();  // Wait For Interrupt
 ```
 
-![睡眠模式](../assets/ppt/slide-184.png)
+![睡眠模式](assets/ppt/slide-184.png)
 
 串口 RXNE、定时器或 EXTI 等中断都可唤醒。唤醒后从 `__WFI()` 的下一条指令继续。进入前要避免遗留挂起中断，否则会立即醒来。
 
@@ -40,13 +40,13 @@ PWR_EnterSTOPMode(PWR_Regulator_ON, PWR_STOPEntry_WFI);
 SystemInit();  // 唤醒后恢复 PLL 和系统时钟
 ```
 
-![停止模式](../assets/ppt/slide-185.png)
+![停止模式](assets/ppt/slide-185.png)
 
 停止模式保留 SRAM，但高速时钟停了。若不恢复时钟，延时、串口波特率、定时器和其他依赖主频的外设都会异常。恢复后还应确认依赖时钟的模块是否需要重新同步。
 
 ## 4. 待机模式
 
-![待机模式](../assets/ppt/slide-186.png)
+![待机模式](assets/ppt/slide-186.png)
 
 可由 PA0 的 WKUP 上升沿、RTC 闹钟等事件唤醒。进入前清除唤醒/待机标志，配置唤醒源，然后调用 `PWR_EnterSTANDBYMode()`。唤醒后程序从复位流程重新运行，因此普通 SRAM 状态不存在；需要保留的信息放 BKP/RTC 或非易失存储器。
 
@@ -54,7 +54,7 @@ SystemInit();  // 唤醒后恢复 PLL 和系统时钟
 
 真正功耗还来自 OLED、传感器、上拉电阻、稳压器、调试器和悬空引脚。验证低功耗要用电流表测整机，而不是只看 MCU 模式。调试期间连接 ST-Link 也可能改变功耗和睡眠行为。
 
-## 6. 验收与排错
+## 6. 运行检查与常见问题
 
 睡眠用串口字节唤醒并回显；停止用 EXTI 唤醒并确认系统时钟恢复；待机用 WKUP/RTC 唤醒并通过复位标志判断来源。
 

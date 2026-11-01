@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" data-profile="freeform" viewBox="26 3 638 272" width="638" height="272" role="img" aria-labelledby="fig-title fig-desc">
+  <title id="fig-title">行列式的面积意义</title>
+  <desc id="fig-desc">左图是单位正方形，面积 1；右图是它在矩阵 A 作用下的像，两列张成的平行四边形，面积等于 det A = 5。</desc>
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <rect x="26" y="3" width="638" height="272" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow-ink" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#243746"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#176b9c"/>
+    </marker>
+  </defs>
+
+  <text x="330" y="36" text-anchor="middle" font-size="15" fill="#183047">单位正方形到平行四边形：面积由 1 变为 5</text>
+
+  <g data-role="axes" fill="none" stroke="#243746" stroke-width="1.2" marker-end="url(#arrow-ink)">
+    <path d="M48,240 H224"/>
+    <path d="M96,240 V64"/>
+    <path d="M352,240 H624"/>
+    <path d="M400,240 V64"/>
+  </g>
+
+  <g data-role="figure">
+    <path d="M96,240 L156,240 L156,180 L96,180 Z" fill="#e9f1f6" stroke="#176b9c" stroke-width="1.5"/>
+    <path d="M96,240 L156,240" fill="none" stroke="#176b9c" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+    <path d="M96,240 L96,180" fill="none" stroke="#176b9c" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+    <path d="M400,240 L580,180 L640,60 L460,120 Z" fill="#e9f1f6" stroke="#176b9c" stroke-width="1.5"/>
+    <path d="M400,240 L580,180" fill="none" stroke="#176b9c" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+    <path d="M400,240 L460,120" fill="none" stroke="#176b9c" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+  </g>
+
+  <g data-role="labels" fill="#183047">
+    <text x="104" y="56" font-size="11">（a）单位正方形</text>
+    <text x="408" y="56" font-size="11">（b）<tspan font-style="italic">A</tspan> 作用后的像</text>
+    <text x="164" y="252" font-size="11" fill="#176b9c" font-style="italic">e<tspan baseline-shift="sub" font-size="8">1</tspan></text>
+    <text x="88" y="174" text-anchor="end" font-size="11" fill="#176b9c" font-style="italic">e<tspan baseline-shift="sub" font-size="8">2</tspan></text>
+    <text x="590" y="176" font-size="11" fill="#176b9c" font-style="italic">Ae<tspan baseline-shift="sub" font-size="8">1</tspan></text>
+    <text x="450" y="112" text-anchor="end" font-size="11" fill="#176b9c" font-style="italic">Ae<tspan baseline-shift="sub" font-size="8">2</tspan></text>
+    <text x="100" y="170" font-size="11" fill="#d17518">面积 1</text>
+    <text x="520" y="154" text-anchor="middle" font-size="11" fill="#d17518">面积 5 = det <tspan font-style="italic">A</tspan></text>
+  </g>
+</svg>

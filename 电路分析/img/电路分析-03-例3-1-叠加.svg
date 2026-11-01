@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" data-profile="schematic" viewBox="14 31 611.5 253.8" width="611.5" height="253.8" role="img" aria-labelledby="fig-title fig-desc">
+  <title id="fig-title">叠加定理示例电路</title>
+  <desc id="fig-desc">10 伏电压源、6 欧与 4 欧电阻、4 安电流源和受控电压源 10I 组成的电路。</desc>
+  <style>text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }</style>
+  <rect x="0" y="0" width="680" height="340" fill="#ffffff"/>
+  <defs>
+    <symbol id="sym-r" viewBox="0 0 40 16"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,8 H8 M32,8 H40"/><rect x="8" y="2" width="24" height="12"/></g></symbol>
+    <symbol id="sym-r-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V8 M8,32 V40"/><rect x="2" y="8" width="12" height="24"/></g></symbol>
+    <symbol id="sym-c-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V17 M8,23 V40 M2,17 H14 M2,23 H14"/></g></symbol>
+    <symbol id="sym-l-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V8 M8,32 V40 M8,8 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6"/></g></symbol>
+    <symbol id="sym-switch" viewBox="0 0 40 16"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,8 H10 M30,8 H40 M10,8 L30,3"/><circle cx="10" cy="8" r="1.5" fill="#243746"/></g></symbol>
+    <symbol id="sym-vs-v" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 V4 M16,28 V32 M12,10 H20 M16,6 V14 M12,22 H20"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-vs" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,16 H4 M28,16 H32 M10,12 V20 M7,16 H13 M19,16 H25"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-cs-v" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 V4 M16,28 V32 M16,26 V20"/><polygon points="16,10 12,15 20,15" fill="#243746"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-cs-l" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,16 H4 M28,16 H32 M16,16 H22"/><polygon points="10,16 15,12 15,20" fill="#243746"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-vcvs" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M13,13 V19 M10,16 H16 M19,16 H25"/></g></symbol>
+    <symbol id="sym-vcvs-r" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M10,16 H16 M19,13 V19 M22,16 H28"/></g></symbol>
+    <symbol id="sym-vccs-l" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M17,16 H23"/><polygon points="11,16 16,13 16,19" fill="#243746"/></g></symbol>
+    <symbol id="sym-gnd" viewBox="0 0 24 20"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12,0 V6 M4,6 H20 M7,10 H17 M10,14 H14"/></g></symbol>
+
+    <marker id="arrow-ref" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 L2,4 z" fill="#176b9c"/></marker>
+  </defs>
+  <g data-role="wires" fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter">
+<path d="M80,100 V140"/>
+<path d="M80,172 V260"/>
+<path d="M80,100 H160"/>
+<path d="M200,100 H320"/>
+<path d="M320,100 V140"/>
+<path d="M320,180 V260"/>
+<path d="M320,100 H420"/>
+<path d="M452,100 H560"/>
+<path d="M592,100 V260"/>
+<path d="M80,260 H320"/>
+<path d="M320,260 H592"/>
+</g>
+<g data-role="junctions" fill="#243746"><circle cx="320" cy="100" r="2.8"/><circle cx="320" cy="260" r="2.8"/></g>
+<g data-role="symbols"><use href="#sym-vs-v" x="64" y="140" width="32" height="32"/><use href="#sym-r" x="160" y="92" width="40" height="16"/><use href="#sym-r-v" x="312" y="140" width="16" height="40"/><use href="#sym-cs-l" x="420" y="84" width="32" height="32"/><use href="#sym-vcvs-r" x="560" y="84" width="32" height="32"/></g>
+<g data-role="refs" fill="none" stroke="#176b9c" stroke-width="1.5"><path d="M220,84 H260" marker-end="url(#arrow-ref)"/></g>
+<g data-role="labels" fill="#183047"><text x="240" y="74" text-anchor="middle" font-size="12" fill="#183047" font-style="italic">I</text><text x="180" y="80" text-anchor="middle" font-size="11" fill="#183047">6 Ω</text><text x="340" y="146" text-anchor="start" font-size="11" fill="#183047">4 Ω</text><text x="436" y="136" text-anchor="middle" font-size="11" fill="#183047">4 A</text><text x="576" y="78" text-anchor="middle" font-size="12" fill="#183047">+</text><text x="600" y="78" text-anchor="middle" font-size="12" fill="#183047">−</text><text x="576" y="62" text-anchor="middle" font-size="12" fill="#183047" font-style="italic">10I</text><text x="436" y="70" text-anchor="middle" font-size="12" fill="#183047" font-style="italic">U<tspan baseline-shift="sub" font-size="8">i</tspan></text><text x="408" y="76" text-anchor="end" font-size="12" fill="#183047">+</text><text x="464" y="76" text-anchor="start" font-size="12" fill="#183047">−</text><text x="48" y="176" text-anchor="middle" font-size="11" fill="#183047">10 V</text><text x="96" y="140" text-anchor="middle" font-size="12" fill="#183047">+</text><text x="96" y="204" text-anchor="middle" font-size="12" fill="#183047">−</text></g>
+</svg>

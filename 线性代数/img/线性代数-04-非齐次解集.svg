@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" data-profile="freeform" viewBox="0 0 542 342" width="542" height="342" role="img" aria-labelledby="fig-title fig-desc">
+  <title id="fig-title">非齐次解集是齐次解集的平移</title>
+  <desc id="fig-desc">过原点的蓝色直线是 Ax=0 的解集，方向为 ξ；橙色直线是 Ax=b 的解集，经过特解 η，与蓝色直线平行。</desc>
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <rect x="0" y="0" width="542" height="342" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow-ink" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#243746"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#176b9c"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#d17518"/>
+    </marker>
+  </defs>
+
+  <text x="271" y="36" text-anchor="middle" font-size="15" fill="#183047">非齐次解集是齐次解集的平移</text>
+
+  <g data-role="axes" fill="none" stroke="#243746" stroke-width="1.2" marker-end="url(#arrow-ink)">
+    <path d="M60,220 H500"/>
+    <path d="M140,220 V60"/>
+  </g>
+  <g data-role="axes-labels" fill="#64748b" font-size="11">
+    <text x="506" y="224">x₁</text>
+    <text x="128" y="56" text-anchor="end">x₂</text>
+    <text x="126" y="236">O</text>
+  </g>
+
+  <g data-role="solution-lines" fill="none" stroke-width="1.8">
+    <path d="M20,160 L300,300" stroke="#176b9c"/>
+    <path d="M20,70 L430,275" stroke="#d17518"/>
+  </g>
+
+  <g data-role="vectors">
+    <path d="M140,220 L260,280" fill="none" stroke="#176b9c" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+    <path d="M140,220 L200,160" fill="none" stroke="#d17518" stroke-width="1.8" marker-end="url(#arrow-orange)"/>
+  </g>
+
+  <g data-role="labels" fill="#183047" font-size="11">
+    <text x="250" y="252" fill="#176b9c">Ax = 0</text>
+    <text x="360" y="224" fill="#d17518">Ax = b</text>
+    <text x="208" y="152" fill="#d17518">η</text>
+    <text x="268" y="270" fill="#176b9c" font-style="italic">ξ</text>
+    <text x="271" y="318" text-anchor="middle" fill="#64748b">x = η + tξ</text>
+  </g>
+</svg>

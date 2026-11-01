@@ -1,4 +1,4 @@
-# 第 9 章 USART 串口通信
+# 09-USART串口通信
 
 
 ## 1. 学习目标与工程
@@ -568,7 +568,7 @@ ST-Link Utility 通过 SWDIO、SWCLK、GND 和目标板供电下载，不需要�
 
 始终按“供电和共地 -> 发送 0x41 -> 单字节回显 -> 数据包 -> OLED/按键/LED”的顺序排查，一次只改一个变量。
 
-## 13. 验收清单与练习
+## 13. 本章检查
 
 - [ ] 会完成 TX-RX 交叉接线和共地。
 - [ ] 会解释 8N1、TXE、TC、RXNE。
@@ -579,4 +579,3 @@ ST-Link Utility 通过 SWDIO、SWCLK、GND 和目标板供电下载，不需要�
 - [ ] 能画出两个状态机并解释丢包边界。
 - [ ] 能区分 FlyMcu 的 USART1 Bootloader 与 ST-Link 的 SWD。
 
-练习：把 HEX 载荷扩展到 8 字节；加入长度和校验和；增加 LED_TOGGLE 文本指令；用环形缓冲区替换单字节邮箱；把 Serial_Printf 改成带长度限制的 vsnprintf。

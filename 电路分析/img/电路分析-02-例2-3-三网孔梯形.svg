@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" data-profile="schematic" viewBox="18 47.8 548 306.7" width="548" height="306.7" role="img" aria-labelledby="fig-title fig-desc">
+  <title id="fig-title">三网孔梯形电路</title>
+  <desc id="fig-desc">三个网孔共用两条 20 欧竖直支路，顶部三只 10 欧电阻，右网孔右侧另有 10 欧。</desc>
+  <style>text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }</style>
+  <rect x="0" y="0" width="620" height="360" fill="#ffffff"/>
+  <defs>
+    <symbol id="sym-r" viewBox="0 0 40 16"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,8 H8 M32,8 H40"/><rect x="8" y="2" width="24" height="12"/></g></symbol>
+    <symbol id="sym-r-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V8 M8,32 V40"/><rect x="2" y="8" width="12" height="24"/></g></symbol>
+    <symbol id="sym-c-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V17 M8,23 V40 M2,17 H14 M2,23 H14"/></g></symbol>
+    <symbol id="sym-l-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V8 M8,32 V40 M8,8 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6"/></g></symbol>
+    <symbol id="sym-switch" viewBox="0 0 40 16"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,8 H10 M30,8 H40 M10,8 L30,3"/><circle cx="10" cy="8" r="1.5" fill="#243746"/></g></symbol>
+    <symbol id="sym-vs-v" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 V4 M16,28 V32 M12,10 H20 M16,6 V14 M12,22 H20"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-vs" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,16 H4 M28,16 H32 M10,12 V20 M7,16 H13 M19,16 H25"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-cs-v" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 V4 M16,28 V32 M16,26 V20"/><polygon points="16,10 12,15 20,15" fill="#243746"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-cs-l" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,16 H4 M28,16 H32 M16,16 H22"/><polygon points="10,16 15,12 15,20" fill="#243746"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-vcvs" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M13,13 V19 M10,16 H16 M19,16 H25"/></g></symbol>
+    <symbol id="sym-vcvs-r" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M10,16 H16 M19,13 V19 M22,16 H28"/></g></symbol>
+    <symbol id="sym-vccs-l" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M17,16 H23"/><polygon points="11,16 16,13 16,19" fill="#243746"/></g></symbol>
+    <symbol id="sym-gnd" viewBox="0 0 24 20"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12,0 V6 M4,6 H20 M7,10 H17 M10,14 H14"/></g></symbol>
+
+    <marker id="arrow-ref" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 L2,4 z" fill="#176b9c"/></marker>
+  </defs>
+  <g data-role="wires" fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter">
+<path d="M80,100 H220"/>
+<path d="M220,100 H360"/>
+<path d="M360,100 H500"/>
+<path d="M80,300 H220"/>
+<path d="M220,300 H360"/>
+<path d="M360,300 H500"/>
+<path d="M80,100 V140"/>
+<path d="M80,172 V300"/>
+<path d="M220,100 V140"/>
+<path d="M220,180 V300"/>
+<path d="M360,100 V140"/>
+<path d="M360,180 V300"/>
+<path d="M500,100 V140"/>
+<path d="M500,180 V300"/>
+</g>
+<g data-role="junctions" fill="#243746"><circle cx="220" cy="100" r="2.8"/><circle cx="220" cy="300" r="2.8"/><circle cx="360" cy="100" r="2.8"/><circle cx="360" cy="300" r="2.8"/></g>
+<g data-role="symbols"><use href="#sym-vs-v" x="64" y="140" width="32" height="32"/><use href="#sym-r" x="140" y="92" width="40" height="16"/><use href="#sym-r" x="280" y="92" width="40" height="16"/><use href="#sym-r" x="420" y="92" width="40" height="16"/><use href="#sym-r-v" x="212" y="140" width="16" height="40"/><use href="#sym-r-v" x="352" y="140" width="16" height="40"/><use href="#sym-r-v" x="492" y="140" width="16" height="40"/></g>
+<g data-role="labels" fill="#183047"><text x="160" y="78" text-anchor="middle" font-size="11" fill="#183047">10 Ω</text><text x="300" y="78" text-anchor="middle" font-size="11" fill="#183047">10 Ω</text><text x="440" y="78" text-anchor="middle" font-size="11" fill="#183047">10 Ω</text><text x="240" y="166" text-anchor="start" font-size="11" fill="#183047">20 Ω</text><text x="380" y="166" text-anchor="start" font-size="11" fill="#183047">20 Ω</text><text x="520" y="166" text-anchor="start" font-size="11" fill="#183047">10 Ω</text><text x="52" y="176" text-anchor="middle" font-size="11" fill="#183047">24 V</text><text x="96" y="140" text-anchor="middle" font-size="12" fill="#183047">+</text><text x="96" y="204" text-anchor="middle" font-size="12" fill="#183047">−</text><text x="300" y="330" text-anchor="middle" font-size="10" fill="#183047">三个网孔电流均取顺时针</text></g>
+</svg>

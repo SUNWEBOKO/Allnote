@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" data-profile="schematic" viewBox="18 11 547 333.8" width="547" height="333.8" role="img" aria-labelledby="fig-title fig-desc">
+  <title id="fig-title">含受控源一端口的戴维南等效</title>
+  <desc id="fig-desc">左支路 10 伏电源与 3 欧，顶部受控电压源 2U1，右支路 1 欧与 2 欧，端口 a、b。</desc>
+  <style>text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }</style>
+  <rect x="0" y="0" width="680" height="380" fill="#ffffff"/>
+  <defs>
+    <symbol id="sym-r" viewBox="0 0 40 16"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,8 H8 M32,8 H40"/><rect x="8" y="2" width="24" height="12"/></g></symbol>
+    <symbol id="sym-r-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V8 M8,32 V40"/><rect x="2" y="8" width="12" height="24"/></g></symbol>
+    <symbol id="sym-c-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V17 M8,23 V40 M2,17 H14 M2,23 H14"/></g></symbol>
+    <symbol id="sym-l-v" viewBox="0 0 16 40"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8,0 V8 M8,32 V40 M8,8 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6 a3,3 0 0 0 0,6"/></g></symbol>
+    <symbol id="sym-switch" viewBox="0 0 40 16"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,8 H10 M30,8 H40 M10,8 L30,3"/><circle cx="10" cy="8" r="1.5" fill="#243746"/></g></symbol>
+    <symbol id="sym-vs-v" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 V4 M16,28 V32 M12,10 H20 M16,6 V14 M12,22 H20"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-vs" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,16 H4 M28,16 H32 M10,12 V20 M7,16 H13 M19,16 H25"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-cs-v" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 V4 M16,28 V32 M16,26 V20"/><polygon points="16,10 12,15 20,15" fill="#243746"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-cs-l" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M0,16 H4 M28,16 H32 M16,16 H22"/><polygon points="10,16 15,12 15,20" fill="#243746"/><circle cx="16" cy="16" r="12" fill="none"/></g></symbol>
+    <symbol id="sym-vcvs" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M13,13 V19 M10,16 H16 M19,16 H25"/></g></symbol>
+    <symbol id="sym-vcvs-r" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M10,16 H16 M19,13 V19 M22,16 H28"/></g></symbol>
+    <symbol id="sym-vccs-l" viewBox="0 0 32 32"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M16,0 L32,16 L16,32 L0,16 Z M17,16 H23"/><polygon points="11,16 16,13 16,19" fill="#243746"/></g></symbol>
+    <symbol id="sym-gnd" viewBox="0 0 24 20"><g fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12,0 V6 M4,6 H20 M7,10 H17 M10,14 H14"/></g></symbol>
+
+    <marker id="arrow-ref" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse"><path d="M0,0 L8,4 L0,8 L2,4 z" fill="#176b9c"/></marker>
+  </defs>
+  <g data-role="wires" fill="none" stroke="#243746" stroke-width="1.5" stroke-linecap="butt" stroke-linejoin="miter">
+<path d="M80,80 V120"/>
+<path d="M80,160 V240"/>
+<path d="M80,272 V320"/>
+<path d="M80,80 H160"/>
+<path d="M192,80 H320"/>
+<path d="M320,80 V120"/>
+<path d="M320,160 V200"/>
+<path d="M320,240 V320"/>
+<path d="M80,320 H320"/>
+<path d="M320,320 H520"/>
+<path d="M320,80 H520"/>
+</g>
+<g data-role="junctions" fill="#243746"><circle cx="320" cy="80" r="2.8"/><circle cx="320" cy="320" r="2.8"/></g>
+<g data-role="symbols"><use href="#sym-r-v" x="72" y="120" width="16" height="40"/><use href="#sym-vs-v" x="64" y="240" width="32" height="32"/><use href="#sym-vcvs-r" x="160" y="64" width="32" height="32"/><use href="#sym-r-v" x="312" y="120" width="16" height="40"/><use href="#sym-r-v" x="312" y="200" width="16" height="40"/></g>
+<g data-role="refs" fill="none" stroke="#176b9c" stroke-width="1.5"><path d="M296,180 V220" marker-end="url(#arrow-ref)"/></g>
+<g data-role="terminals"><circle cx="520" cy="80" r="2.5" fill="#ffffff" stroke="#243746" stroke-width="1.2"/><circle cx="520" cy="320" r="2.5" fill="#ffffff" stroke="#243746" stroke-width="1.2"/></g>
+<g data-role="labels" fill="#183047"><text x="536" y="76" text-anchor="start" font-size="12" fill="#183047" font-style="italic">a</text><text x="536" y="316" text-anchor="start" font-size="12" fill="#183047" font-style="italic">b</text><text x="160" y="58" text-anchor="middle" font-size="12" fill="#183047">−</text><text x="204" y="58" text-anchor="middle" font-size="12" fill="#183047">+</text><text x="180" y="42" text-anchor="middle" font-size="12" fill="#183047" font-style="italic">2U<tspan baseline-shift="sub" font-size="8">1</tspan></text><text x="340" y="216" text-anchor="start" font-size="12" fill="#183047">+</text><text x="340" y="244" text-anchor="start" font-size="12" fill="#183047">−</text><text x="356" y="232" text-anchor="start" font-size="12" fill="#183047" font-style="italic">U<tspan baseline-shift="sub" font-size="8">1</tspan></text><text x="296" y="232" text-anchor="end" font-size="11" fill="#183047">2 Ω</text><text x="296" y="146" text-anchor="end" font-size="11" fill="#183047">1 Ω</text><text x="280" y="200" text-anchor="middle" font-size="12" fill="#183047" font-style="italic">J</text><text x="52" y="260" text-anchor="middle" font-size="11" fill="#183047">10 V</text><text x="96" y="240" text-anchor="middle" font-size="12" fill="#183047">+</text><text x="96" y="292" text-anchor="middle" font-size="12" fill="#183047">−</text><text x="100" y="146" text-anchor="start" font-size="11" fill="#183047">3 Ω</text></g>
+</svg>

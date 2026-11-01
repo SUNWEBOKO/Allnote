@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" data-profile="freeform" viewBox="74 0 264 344" width="264" height="344" role="img" aria-labelledby="fig-title fig-desc">
+  <title id="fig-title">施密特正交化：减去投影</title>
+  <desc id="fig-desc">向量 a2 被分解为沿 a1 的投影与垂直分量 β2；β2 与 a1 正交，替换后张成空间不变。</desc>
+  <style>
+    text { font-family: 'PingFang SC', 'Microsoft YaHei', 'Noto Sans CJK SC', system-ui, sans-serif; }
+  </style>
+  <rect x="74" y="0" width="264" height="344" fill="#ffffff"/>
+  <defs>
+    <marker id="arrow-blue" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#176b9c"/>
+    </marker>
+    <marker id="arrow-teal" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#167c80"/>
+    </marker>
+    <marker id="arrow-orange" markerWidth="8" markerHeight="8" refX="2" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+      <path d="M0,0 L8,4 L0,8 L2,4 z" fill="#d17518"/>
+    </marker>
+  </defs>
+
+  <text x="206" y="36" text-anchor="middle" font-size="15" fill="#183047">施密特正交化：减去投影</text>
+
+  <path d="M94,288 L318,178" fill="none" stroke="#64748b" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <g data-role="vectors" fill="none" stroke-width="1.8">
+    <path d="M150,260 L262,204" stroke="#176b9c" marker-end="url(#arrow-blue)"/>
+    <path d="M150,260 L206,92" stroke="#167c80" marker-end="url(#arrow-teal)"/>
+    <path d="M262,204 L206,92" stroke="#d17518" marker-end="url(#arrow-orange)"/>
+  </g>
+
+  <path d="M251,199 L246,188 L257,193" fill="none" stroke="#243746" stroke-width="1.2"/>
+  <circle cx="150" cy="260" r="3" fill="#243746"/>
+
+  <g data-role="labels" fill="#183047" font-size="11">
+    <text x="272" y="200" fill="#176b9c" font-style="italic">a<tspan baseline-shift="sub" font-size="8">1</tspan></text>
+    <text x="198" y="82" text-anchor="end" fill="#167c80" font-style="italic">a<tspan baseline-shift="sub" font-size="8">2</tspan></text>
+    <text x="242" y="142" fill="#d17518" font-style="italic">β<tspan baseline-shift="sub" font-size="8">2</tspan></text>
+    <text x="140" y="274">O</text>
+    <text x="206" y="320" text-anchor="middle" fill="#64748b">a₂ = 投影 + β₂</text>
+  </g>
+</svg>
