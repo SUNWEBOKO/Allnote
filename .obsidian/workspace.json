@@ -1,40 +1,20 @@
 {
   "main": {
-    "id": "d88170e500d0c4a5",
+    "id": "aba954d3f4f93d9f",
     "type": "split",
     "children": [
       {
-<<<<<<< Updated upstream
-        "id": "c5e82ac6585ab2d4",
+        "id": "ce47dfd4ec7a7431",
         "type": "tabs",
         "children": [
           {
-            "id": "6d740530662f93c2",
-=======
-        "id": "a2a856f8ffa638c1",
-        "type": "tabs",
-        "children": [
-          {
-            "id": "fe74642056d57b27",
->>>>>>> Stashed changes
+            "id": "55fef81a11985cac",
             "type": "leaf",
             "state": {
-              "type": "markdown",
-              "state": {
-<<<<<<< Updated upstream
-                "file": "STM32HAL库入门教程/README.md",
-=======
-                "file": "STM32倒立摆/03 基础驱动：CubeMX与HAL库实现.md",
->>>>>>> Stashed changes
-                "mode": "source",
-                "source": false
-              },
+              "type": "empty",
+              "state": {},
               "icon": "lucide-file",
-<<<<<<< Updated upstream
-              "title": "README"
-=======
-              "title": "03 基础驱动：CubeMX与HAL库实现"
->>>>>>> Stashed changes
+              "title": "新标签页"
             }
           }
         ]
@@ -43,15 +23,15 @@
     "direction": "vertical"
   },
   "left": {
-    "id": "0f45913d3366934f",
+    "id": "4969c445fc757377",
     "type": "split",
     "children": [
       {
-        "id": "b9f019a9b121a06a",
+        "id": "f3172b08e32d5a6e",
         "type": "tabs",
         "children": [
           {
-            "id": "ea4e104d3309e775",
+            "id": "5447a9ac8a049521",
             "type": "leaf",
             "state": {
               "type": "file-explorer",
@@ -66,7 +46,7 @@
             }
           },
           {
-            "id": "6136022e343d8f58",
+            "id": "60d05d1537c0ca19",
             "type": "leaf",
             "state": {
               "type": "search",
@@ -83,11 +63,14 @@
             }
           },
           {
-            "id": "9e367b6907005ede",
+            "id": "dafc66a8a6cff11a",
             "type": "leaf",
             "state": {
               "type": "bookmarks",
-              "state": {},
+              "state": {
+                "showSearch": false,
+                "searchQuery": ""
+              },
               "icon": "lucide-bookmark",
               "title": "书签"
             }
@@ -96,23 +79,22 @@
       }
     ],
     "direction": "horizontal",
-    "width": 314.16926193237305
+    "width": 300
   },
   "right": {
-    "id": "c1c5e03e9b49331f",
+    "id": "8bf73cae27205933",
     "type": "split",
     "children": [
       {
-        "id": "1679777c802e9fc2",
+        "id": "bf09be3ca27c6cbc",
         "type": "tabs",
         "children": [
           {
-            "id": "daf64a6a000e80a8",
+            "id": "e16cf5c001ce3711",
             "type": "leaf",
             "state": {
               "type": "backlink",
               "state": {
-                "file": "电路分析/06 三相电路.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -122,25 +104,24 @@
                 "unlinkedCollapsed": true
               },
               "icon": "links-coming-in",
-              "title": "06 三相电路 的反向链接列表"
+              "title": "反向链接"
             }
           },
           {
-            "id": "4eca34df1f9aead3",
+            "id": "3f76b212528d6028",
             "type": "leaf",
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "电路分析/06 三相电路.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               },
               "icon": "links-going-out",
-              "title": "06 三相电路 的出链列表"
+              "title": "出链"
             }
           },
           {
-            "id": "6a64478e6ed5b551",
+            "id": "6cc387210cdecb18",
             "type": "leaf",
             "state": {
               "type": "tag",
@@ -155,7 +136,7 @@
             }
           },
           {
-            "id": "5761740d80a488c0",
+            "id": "7db46976e2d331f4",
             "type": "leaf",
             "state": {
               "type": "all-properties",
@@ -169,12 +150,11 @@
             }
           },
           {
-            "id": "9be4d080cd03b30e",
+            "id": "6afc04ca5c5efacb",
             "type": "leaf",
             "state": {
               "type": "outline",
               "state": {
-                "file": "STM32标准库入门教程/05-中断与EXTI.md",
                 "followCursor": false,
                 "showSearch": false,
                 "searchQuery": ""
@@ -182,30 +162,16 @@
               "icon": "lucide-list",
               "title": "大纲"
             }
-          },
-          {
-            "id": "7c226807890a009c",
-            "type": "leaf",
-            "state": {
-              "type": "nutstore-sync-chatbox",
-              "state": {},
-              "icon": "bot",
-              "title": "Chatbox"
-            }
           }
-        ],
-        "currentTab": 4
+        ]
       }
     ],
     "direction": "horizontal",
-    "width": 606.5,
+    "width": 300,
     "collapsed": true
   },
   "left-ribbon": {
     "hiddenItems": {
-      "nutstore-sync:开始同步": false,
-      "nutstore-sync:停止同步": false,
-      "nutstore-sync:打开 Chatbox": false,
       "switcher:打开快速切换": false,
       "graph:查看关系图谱": false,
       "canvas:新建白板": false,
@@ -213,111 +179,49 @@
       "templates:插入模板": false,
       "command-palette:打开命令面板": false,
       "bases:新建数据库": false,
+      "nutstore-sync:开始同步": false,
+      "nutstore-sync:停止同步": false,
+      "nutstore-sync:打开 Chatbox": false,
       "obsidian-excalidraw-plugin:New drawing": false,
       "pdf-plus:PDF++: Toggle auto-copy": false,
       "pdf-plus:PDF++: Toggle auto-focus": false,
-      "pdf-plus:PDF++: Toggle auto-paste": false,
-      "markdown-importer:打开 Markdown 格式转换器": false
+      "pdf-plus:PDF++: Toggle auto-paste": false
     }
   },
-<<<<<<< Updated upstream
-  "active": "6d740530662f93c2",
+  "active": "5447a9ac8a049521",
   "lastOpenFiles": [
-    "STM32HAL库入门教程/11 SPI：SPI 时序与 W25Q64 读写.md",
-    "STM32HAL库入门教程/10 MPU6050：软硬件 I2C 读写六轴数据.md",
-    "STM32HAL库入门教程/09 I2C：总线时序与软件 I2C 驱动 OLED.md",
-    "STM32HAL库入门教程/08 串口通信：轮询、中断、DMA 与蓝牙协议.md",
-    "STM32HAL库入门教程/07 DMA：数据搬运与 ADC 多通道采集.md",
-    "STM32HAL库入门教程/06 ADC：量化、采样时间与单次转换.md",
-    "STM32HAL库入门教程/05 定时器：时基、PWM、输入捕获与电机控制.md",
-    "STM32HAL库入门教程/04 中断系统：EXTI 与 NVIC 优先级.md",
-    "STM32HAL库入门教程/03 时钟系统：时钟树、PLL 与 HAL 配置.md",
-    "STM32HAL库入门教程/02 OLED 调试：I2C 显示数据流.md",
-    "STM32HAL库入门教程/01 GPIO：引脚、八种模式与 HAL 读写.md",
-    "STM32HAL库入门教程/00 从零建立HAL工程.md",
-    "STM32HAL库入门教程/README.md",
-    "STM32HAL库入门教程/06 ADC：量化、采样时间与单次转换.md.tmp.54432.4710e2dddb98",
-    "STM32HAL库入门教程/06 ADC：量化、采样时间与单次转换.md.tmp.54432.fd8e3f9e1421",
-    "STM32HAL库入门教程/06 ADC：量化、采样时间与单次转换.md.tmp.54432.6dcfa005375c",
-    "STM32HAL库入门教程/06 ADC：量化、采样时间与单次转换.md.tmp.54432.07e0d54ee1dc",
-    "STM32HAL库入门教程/06 ADC：量化、采样时间与单次转换.md.tmp.54432.ebac69ee1ec6",
-    "STM32HAL库入门教程/sedFFylfj",
-    "STM32倒立摆HAL库/00 从零复刻HAL工程.md",
-    "STM32HAL库入门教程/06 ADC：量化、采样时间与定时器触发.md",
-    "倒立摆HAL库/00 从零复刻HAL工程.md",
-    "复变函数与积分变换/02 解析函数.md",
-    "STM32倒立摆/05 四种单环控制实验.md",
-    "STM32倒立摆/04 基础驱动与观测实验.md",
-    "STM32倒立摆/03 离散PID与状态更新.md",
-    "STM32倒立摆/02 PID基本原理.md",
-    "STM32倒立摆/12 自动起摆状态机.md",
-    "STM32倒立摆/13 综合验收与调试记录.md",
-    "STM32倒立摆/01 实验平台与资料使用.md",
-    "STM32倒立摆/00 课程导航.md",
-    "PID入门教程资料/倒立摆使用手册/顶丝未固定典型特征.mp4",
-    "PID入门教程资料/倒立摆使用手册/未完全对准切面的典型特征.mp4",
-    "C++/04 条件语句：if 与 else 分支.md.tmp.7176.6417d401fe5b",
-    "C++/03 变量：类型、初始化与 auto.md.tmp.7176.95a9a5e1c8d3",
-    "电路分析/img/电路分析-06-CB功率表.svg",
-    "电路分析/img/电路分析-02-超结点.svg",
-    "电路分析/img/电路分析-02-串并联.svg",
-    "电路分析/img/电路分析-10-动态电容.svg",
-    "电路分析/img/电路分析-09-电压峰值.svg",
-    "电路分析/img/电路分析-04-脉冲波形.svg",
-    "电路分析/img/电路分析-04-瞬间等效.svg",
-    "电路分析/img/电路分析-07-并联点号.svg",
-    "电路分析/img/电路分析-03-互易例.svg",
-    "电路分析/img/电路分析-01-电感斜率.svg",
-=======
-  "active": "fe74642056d57b27",
-  "lastOpenFiles": [
-    "PCB设计入门与强化篇/02 基本元件、数据手册与电路定理.md",
-    "PCB设计入门与强化篇/03 原理图读写与PCB基础知识.md",
-    "PCB设计入门与强化篇/01 课程导论与PCB技术发展史.md",
-    "线性代数/01 行列式.md",
-    "高等数学/04 一元函数微分学的应用.md",
-    "线性代数/06 特征值、相似对角化与二次型.md",
-    "线性代数/05 向量空间、内积与基.md",
+    "STM32倒立摆/image/pid-discretization.png",
+    "STM32倒立摆/image/closed-loop-block.png",
+    "STM32倒立摆/image/pid-system-block.png",
+    "STM32倒立摆/image/d-slope-geometry.png",
+    "STM32倒立摆/image/open-loop-block.png",
+    "STM32倒立摆/image/d-wave-kd-0-2-4.png",
+    "STM32倒立摆/image/pi-kp050-ki050.png",
+    "STM32倒立摆/image/pi-kp050-ki020.png",
+    "STM32倒立摆/image/pi-kp025-ki050.png",
+    "STM32倒立摆/image/pi-kp025-ki020.png",
+    "STM32倒立摆/image/pi-kp025-ki005.png",
+    "C++/07 vector：动态数组与元素添加.md",
+    "C++/20 实用工具：命名空间、随机数与文件.md",
+    "C++/06 迭代器、算法与并行 STL.md",
+    "C++/19 并发：线程、锁与原子操作.md",
+    "STM32倒立摆/PID入门教程.pptx",
+    "大学物理实验/液体表面张力系数的测定-徐峰.pdf",
+    "大学物理实验/02 液体表面张力系数的测定.md",
+    "大学物理实验/大学物理实验绪论-徐峰.pdf",
     "线性代数/04 向量组与线性方程组解结构.md",
-    "线性代数/03 初等变换、秩与线性方程组.md",
-    "电路分析/02 电阻电路的等效变换.md",
-    "复变函数与积分变换/03 复变函数的积分.md",
-    "复变函数与积分变换/01 复数与复变函数.md",
-    "概率论/06 样本与抽样分布.md",
-    "概率论/05 大数定律与中心极限定理.md",
-    "概率论/03 多维随机变量及其分布.md",
-    "概率论/01 随机事件与概率.md",
-    "电路分析/11 非线性电路与小信号分析.md",
-    "电路分析/10 非正弦周期电流电路.md",
-    "电路分析/03 电阻电路的一般分析.md",
-    "电路分析/01 电路模型和电路定律.md",
-    "电路分析/00 电路分析 MOC.md",
-    "模拟电子技术基础/02 三极管及放大电路基础.md",
-    "模拟电子技术基础/字幕/txt/P119_利用对数运算电路指数运算电路构成乘法运算电路.txt",
-    "模拟电子技术基础/字幕/txt/P062_有源负载共射放大电路与有源负载差分放大电路.txt",
-    "模拟电子技术基础/字幕/txt/P110_反相比例运算电路改进和同相比例运算电路.txt",
-    "模拟电子技术基础/字幕/txt/P043_放大电路建模以及为什么需要多级放大电路.txt",
-    "模拟电子技术基础/字幕/txt/P099_反馈放大电路中对放大倍数符号的解释.txt",
-    "模拟电子技术基础/字幕/txt/P097_深度负反馈放大电路放大倍数的分析续.txt",
-    "模拟电子技术基础/字幕/txt/P096_深度负反馈放大电路放大倍数的分析.txt",
-    "模拟电子技术基础/字幕/txt/P042_复合管放大电路与共射共基放大电路.txt",
-    "模拟电子技术基础/字幕/txt/P061_多集电极电流源与场效应管电流源.txt",
-    "模拟电子技术基础/字幕/txt/P066_集成运放的构成及电压传输特性.txt",
-    "模拟电子技术基础/01 二极管及其基本电路.md",
-    "模拟电子技术基础/04 模拟集成电路.md",
-    "模拟电子技术基础/03 场效应管及其放大电路.md",
-    "模拟电子技术基础/00 模拟电子技术基础 MOC.md",
-    "线性代数/img/线性代数-06-二次型主轴.svg",
-    "线性代数/img/线性代数-05-四大子空间.svg",
-    "线性代数/img/线性代数-01-行列式的面积.svg",
-    "模拟电子技术/img/模电-07-共漏放大倍数.svg",
-    "模拟电子技术/_probe_zoom.png",
-    "模拟电子技术/_probe_zoom.svg",
-    "模拟电子技术/img/模电-02-固定偏置共射电路.svg",
-    "模拟电子技术/img/模电-05-转移特性曲线.svg",
-    "模拟电子技术/img/模电-04-增强型NMOS输出特性曲线族.svg",
-    "模拟电子技术/img/模电-06-共源放大电路.svg",
->>>>>>> Stashed changes
-    "未命名.canvas"
+    "C++/18 函数对象与 Lambda.md",
+    "C++/17 类模板、概念与编译时编程.md",
+    "C++/12 构造、析构与拷贝控制.md",
+    "C++/14 移动语义与移动构造.md",
+    "C++/13 运算符重载与比较.md",
+    "C++/02 变量、类型与分支.md",
+    "C++/16 抽象类与虚继承.md",
+    "C++/15 继承与多态基础.md",
+    "C++/09 指针与动态内存.md",
+    "C++/05 函数模板与特化.md",
+    "C++/04 函数与重载.md",
+    "STM32倒立摆/image",
+    "概率论/img"
   ]
 }

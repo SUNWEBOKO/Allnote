@@ -11,7 +11,7 @@
 
 ### 1.1 三份代码，三种归属
 
-本章以 STM32F103C8T6、CubeMX 6.18.1、STM32Cube FW_F1 V1.8.7 为基准， `E:\ProjectStm\PIDproject\01 PID`为工程文件；代码分三层：
+本章以 STM32F103C8T6、CubeMX 6.18.1、STM32Cube FW_F1 V1.8.7 为基准，只读核对本章写作时的工程副本 `E:\ProjectStm\PIDproject\01 PID`；后续章节若在上一版副本上继续修改，以实际工程路径为准。代码分三层：
 
 | 归属 | 位置 | 职责 |
 | --- | --- | --- |
@@ -19,20 +19,21 @@
 | 用户驱动层 | `led.c`、`key.c` 等及对应头文件 | 封装读写、外设启动与器件操作 |
 | 应用层 | `main.c` 的 USER CODE 区 | 实验变量、初始化调用、主循环与定时回调 |
 
-`MX_xxx_Init()` 通常完成外设配置；用户的 `XX_Init()` 是否还需启动硬件，要看具体驱动。例如 `Key_Init()` 是空函数，`LED_Init()` 只恢复默认电平，`Timer_Init()` 才会启动 TIM1。
+`MX_xxx_Init()` 通常完成外设配置；用户的 `XX_Init()` 是否还需启动硬件，要看具体驱动，不能仅凭函数名判断。例如 `Key_Init()` 是空函数，`LED_Init()` 只恢复默认电平，`Timer_Init()` 才会启动 TIM1。
 
-**本章所有独立实验均保留 CubeMX 生成的唯一 `main()`，不整段覆盖它。** 当前 [main.c](E:/ProjectStm/PIDproject/01%20PID/Core/Src/main.c) 的注释区保存了多个旧测试 `int main()`
+**本章所有独立实验均保留 CubeMX 生成的唯一 `main()`，不整段覆盖它。** 当前 [main.c](E:/ProjectStm/PIDproject/01%20PID/Core/Src/main.c) 的注释区保存了多个旧测试 `int main()`，其中缺少 `HAL_Init()`、时钟及 `MX_xxx_Init()`；直接取消注释会与生成的主函数重复，也会漏初始化。切换实验时按下表替换对应用户区内容，而不是解除旧 `main()` 的注释：
 
-| 内容      | 放置位置                                              |
-| ------- | ------------------------------------------------- |
-| 驱动头文件   | `/* USER CODE BEGIN Includes */`                  |
-| 文件作用域变量 | `/* USER CODE BEGIN PV */`                        |
-| 用户初始化   | `/* USER CODE BEGIN 2 */`，在生成的 `MX_xxx_Init()` 之后 |
-| 循环体     | 已有 `while (1)` 内的 `/* USER CODE BEGIN 3 */` 区     |
-| 定时回调    | `/* USER CODE BEGIN 4 */`                         |
+| 内容 | 放置位置 |
+| --- | --- |
+| 驱动头文件 | `/* USER CODE BEGIN Includes */` |
+| 文件作用域变量 | `/* USER CODE BEGIN PV */` |
+| 用户初始化 | `/* USER CODE BEGIN 2 */`，在生成的 `MX_xxx_Init()` 之后 |
+| 循环体 | 已有 `while (1)` 内的 `/* USER CODE BEGIN 3 */` 区 |
+| 定时回调 | `/* USER CODE BEGIN 4 */`，全工程只有一个同名实现 |
 
+当前工程的串口实验循环写在 `USER CODE END WHILE` 之前。切换实验时先移除该旧循环体，再将新循环体放到 `BEGIN 3` 与 `END 3` 之间；保留外层 `while` 及所有生成标记。**各实验每次只选一个运行，不叠加变量、初始化或回调。** 使用 OLED 的实验同时保留第 10 节的驱动文件和接线，无需先运行 OLED 测试。
 
-驱动头文件放在 `Core/Inc`，各自加入头文件保护和 `#include <stdint.h>`。以下是按文件分组的声明：
+驱动头文件放在 `Core/Inc`，各自加入头文件保护和 `#include <stdint.h>`。以下是按文件分组的声明，不是合并成一个头文件：
 
 ```c
 /* led.h */
@@ -91,9 +92,10 @@ void Key_Tick(void);
 #endif
 ```
 
-OLED 保留现有 [oled.h](E:/ProjectStm/PIDproject/01%20PID/Core/Inc/oled.h) 的完整声明、字体宏及其 `oled_data.h` 依赖。
+OLED 保留现有 [oled.h](E:/ProjectStm/PIDproject/01%20PID/Core/Inc/oled.h) 的完整声明、字体宏及其 `oled_data.h` 依赖，不用本章的摘录替代整个头文件。每个驱动 `.c` 除下面列出的依赖外，也应包含自己的头文件，便于编译器检查声明与定义。
 
-自建工程时，把用户 `.c` 登记进根目录 [CMakeLists.txt](E:/ProjectStm/PIDproject/01%20PID/CMakeLists.txt) 的现有 `target_sources`；头文件目录由 `target_include_directories` 提供。当前 PID 已登记以下源文件：
+自建工程时，把用户 `.c` 登记进根目录 [CMakeLists.txt](E:/ProjectStm/PIDproject/01%20PID/CMakeLists.txt) 的现有 `target_sources`；头文件目录由 `target_include_directories` 提供。当前 PID 已登记以下源文件，已有项不要重复添加，也不要重复登记 CubeMX 生成的 `main.c` 等：
+
 ```cmake
 target_sources(${CMAKE_PROJECT_NAME} PRIVATE
     Core/Src/led.c
@@ -110,23 +112,23 @@ target_sources(${CMAKE_PROJECT_NAME} PRIVATE
 target_include_directories(${CMAKE_PROJECT_NAME} PRIVATE Core/Inc)
 ```
 
-应用层在 `USER CODE BEGIN Includes` 中包含本次用到的驱动头文件即可
+应用层在 `USER CODE BEGIN Includes` 中包含本次用到的驱动头文件即可；也可保留当前工程已经包含的全部驱动头文件。后文代码块标出的用户区名称是放置说明，不要求重复插入 CubeMX 标记。函数说明保留用途、参数、返回值与必要边界。
 
 ### 1.2 标准库与 HAL 的接口对照
 
 | 要做的事       | 标准库写法                                                | HAL 写法                                                     |
 | ---------- | ---------------------------------------------------- | ---------------------------------------------------------- |
-| 开外设时钟      | `RCC_APB2PeriphClockCmd(..., ENABLE)`                | `__HAL_RCC_xxx_CLK_ENABLE()`                               |
-| 配置 GPIO    | `GPIO_Init(GPIOC, &GPIO_InitStructure)`              | `HAL_GPIO_Init(GPIOC, &GPIO_InitStruct)`                   |
+| 开外设时钟      | `RCC_APB2PeriphClockCmd(..., ENABLE)`                | `__HAL_RCC_xxx_CLK_ENABLE()`（一般已由 CubeMX 生成）               |
+| 配置 GPIO    | `GPIO_Init(GPIOC, &GPIO_InitStructure)`              | `HAL_GPIO_Init(GPIOC, &GPIO_InitStruct)`（已生成）              |
 | 输出高/低电平    | `GPIO_SetBits` / `GPIO_ResetBits`                    | `HAL_GPIO_WritePin(端口, 引脚, GPIO_PIN_SET / GPIO_PIN_RESET)` |
 | 读引脚电平      | `GPIO_ReadInputDataBit`                              | `HAL_GPIO_ReadPin(端口, 引脚)`                                 |
 | 延时         | `Delay_ms(500)`                                      | `HAL_Delay(500)`                                           |
-| 配定时器时基     | `TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure)` | `HAL_TIM_Base_Init(&htim1)`                                |
+| 配定时器时基     | `TIM_TimeBaseInit(TIM1, &TIM_TimeBaseInitStructure)` | `HAL_TIM_Base_Init(&htim1)`（已生成）                           |
 | 开更新中断并启动   | `TIM_ITConfig(...)` + `TIM_Cmd(...)`                 | `HAL_TIM_Base_Start_IT(&htim1)`                            |
 | 设 PWM 的比较值 | `TIM_SetCompare1(TIM2, Compare)`                     | `__HAL_TIM_SET_COMPARE(&htim2, TIM_CHANNEL_1, Compare)`    |
 | 读写计数器      | `TIM_GetCounter` / `TIM_SetCounter`                  | `__HAL_TIM_GET_COUNTER` / `__HAL_TIM_SET_COUNTER`          |
-| printf 输出  | 重定向 `fputc`（Keil）                                    | 驱动自封的 `Serial_Printf()`                                    |
-| 配编码器接口     | `TIM_EncoderInterfaceConfig(...)`                    | `HAL_TIM_Encoder_Init(&htim3, &sConfig)`                   |
+| printf 输出  | 重定向 `fputc`（Keil）                                    | 本工程改用驱动自封的 `Serial_Printf()`                               |
+| 配编码器接口     | `TIM_EncoderInterfaceConfig(...)`                    | `HAL_TIM_Encoder_Init(&htim3, &sConfig)`（已生成）              |
 
 ADC 与串口的调用在后面各自的驱动里都有完整写法，这里不再逐行列举。
 
@@ -167,9 +169,27 @@ HAL 版由 CubeMX 在 `stm32f1xx_it.c` 生成 IRQ 入口，入口调用 HAL 处�
 
 ### 1.5 与入门教程共用驱动
 
-本项目的原版基准是标准库 `01-基础驱动代码`；[[STM32HAL库入门教程/README|入门教程]]使用 `E:\ProjectStm\驱动库` 的宏定义版，默认配置相同；
+本项目的原版基准是标准库 `01-基础驱动代码`，不是入门教程的宏版；本章的固定引脚和参数以它为准。[[STM32HAL库入门教程/README|入门教程]]使用 `E:\ProjectStm\驱动库` 的宏定义版，两者默认配置相同；MOTOR/PWM 两版现在都直接写 CCR、不控 STBY，限幅由主程序负责。本章的 KEY、ENCODER 采用原版/教程库实现，SERIAL 回到原版的 `vsprintf`、8 位索引与无临界区（入门教程库是 `vsnprintf`）。串口波特率已按原版在参考工程中改为 9600；引脚、参数以当前源码与 `.ioc` 为准。
 
-与入门教程库逐项对照：LED、TIMER、RP、OLED 的默认引脚、外设配置和公开 API 一致；PWM/MOTOR 的默认引脚与外设配置一致，`Motor_SetPWM()` 的调用语义相同；KEY、ENCODER 采用单次采样与读后清零；SERIAL 采用 `vsprintf`、`uint8_t` 索引和无临界区。
+| 驱动 | 宏版配置位置 | 对应 PID 当前配置 |
+| --- | --- | --- |
+| LED | `led.h`：`LED_PORT/PIN`、`LED_ON_LEVEL` | PC13，低有效 |
+| KEY | `key.h`：`KEY1~4_PORT/PIN`、`KEY_PRESSED_LEVEL` | PB10、PB11、PA11、PA12，上拉、低有效；TIM1 每 1 ms 调 `Key_Tick()`，20 分频后单次采样，松手生成键码；`Key_GetNum()` 读后清零，不加临界区 |
+| TIMER | `timer.h`：`TIMER_HANDLE/INSTANCE` | `htim1/TIM1`，PSC=71、ARR=999，更新周期 1 ms |
+| RP | `rp.h`：`RP_ADC_HANDLE`、`RP1~4_CHANNEL`、`RP_SAMPLING_TIME` | ADC2，CH2～CH5，55.5 cycles；单次、非扫描、软件触发 |
+| PWM | `pwm.h`：`PWM_HANDLE/CHANNEL`、`PWM_PERIOD_COUNTS` | TIM2_CH1/PA0，PSC=35、ARR=99，20 kHz，100 个周期计数 |
+| MOTOR | `motor.h`：方向引脚 | PB12/PB13；`Motor_SetPWM()` 直接写 CCR，主程序限幅；当前工程不由 GPIO 控制 STBY |
+| ENCODER | `encoder.h`：`ENCODER_HANDLE` | TIM3/PA6/PA7，TI12，ARR=65535，IC2 反相、两路滤波 0xF；`Encoder_Get()` 读 CNT 后清零，返回上次调用以来的增量，只允许一个调用者 |
+| SERIAL | `serial.h`：`SERIAL_HANDLE/INSTANCE` | USART1/PA9/PA10，9600 8N1，单字节中断接收；`vsprintf`、8 位字符串索引、读标志无临界区，与标准库原版一致 |
+| OLED | 软件版 `OLED.c` 顶部 GPIO 宏 | PB8/PB9，软件 I2C；公开显示接口相同 |
+
+时钟、GPIO 模式、ADC 触发方式、定时器 PSC/ARR、编码器极性及串口波特率仍由 CubeMX 配置；只改驱动宏不会自动修改这些外设参数。基础实验占用资源各不相同，进入 PID 综合实验时须按本章总表统一恢复，不能把各章 `.ioc` 的引脚直接拼接。
+
+宏版与固定版的 `Motor_SetPWM()` 现在都直接写 `|PWM|` 到 CCR：宏版用 `int16_t` 容纳较大的 CCR，固定版用 `int8_t`（本工程 PWM 周期 100）。两版都不做 STBY，限幅由主程序按 `ARR+1` 负责。PID 未分配 STBY GPIO，不代表 STBY 已被板上拉高，电机实验前仍须确认硬件使能。本章的按键、编码器按原版/教程库实现，串口按标准库原版实现；不再加入判稳、快照差分或临界区，公开函数签名不变。
+
+与原版和入门教程库逐项对照：LED、TIMER、RP、OLED 的默认引脚、外设配置和公开 API 一致；PWM/MOTOR 的默认引脚与外设配置一致，`Motor_SetPWM()` 的调用语义相同但参数宽度不同（宏版 `int16_t`，固定版 `int8_t`）；KEY、ENCODER 采用原版/教程库的单次采样与读后清零；SERIAL 采用原版 `vsprintf`、`uint8_t` 索引和无临界区（入门教程库是 `vsnprintf`）。
+
+入门教程的 01、02、05、06、08 章分别对应本章的 LED/按键、OLED、定时器与电机/编码器、RP、串口；09 章的 MPU6050 与 10 章的 W25Q64 不在本工程基础版内。入门教程在 06/07 章用硬件 I2C2 接 OLED，09/10 章改用软件 I2C；本工程固定使用 `PB8/PB9` 软件 I2C，不受这些实验切换影响。
 
 ## 2. 动手之前：套件状态、供电与下载
 
